@@ -1,0 +1,46 @@
+version: 2
+updates:
+  # Enable version updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "02:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "onlyhooops"
+    assignees:
+      - "onlyhooops"
+
+  # Enable version updates for Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "02:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "onlyhooops"
+    assignees:
+      - "onlyhooops"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+
+  # Enable version updates for Python dependencies in requirements-dev.txt
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "02:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "onlyhooops"
+    assignees:
+      - "onlyhooops"
+    commit-message:
+      prefix: "deps-dev"
+      include: "scope"

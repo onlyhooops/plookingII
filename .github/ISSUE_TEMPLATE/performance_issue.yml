@@ -1,0 +1,99 @@
+name: ⚡ Performance Issue
+description: Report a performance issue or optimization request
+title: "[Performance]: "
+labels: ["performance", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a performance issue! Please provide detailed information about the performance problem.
+
+  - type: dropdown
+    id: performance-type
+    attributes:
+      label: Performance Issue Type
+      description: What type of performance issue are you experiencing?
+      options:
+        - Slow Image Loading
+        - High Memory Usage
+        - Slow Application Startup
+        - UI Lag/Freezing
+        - Network Performance (SMB)
+        - Cache Performance
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Performance Issue Description
+      description: A clear and concise description of the performance issue.
+      placeholder: Describe the performance issue...
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the performance issue
+      placeholder: |
+        1. Open PlookingII
+        2. Load a folder with many images
+        3. Navigate through images quickly
+        4. Observe performance degradation
+    validations:
+      required: true
+
+  - type: input
+    id: expected-time
+    attributes:
+      label: Expected Performance
+      description: What performance did you expect?
+      placeholder: e.g., Images should load in under 1 second
+
+  - type: input
+    id: actual-time
+    attributes:
+      label: Actual Performance
+      description: What performance are you actually seeing?
+      placeholder: e.g., Images take 5+ seconds to load
+
+  - type: textarea
+    id: system-info
+    attributes:
+      label: System Information
+      description: Please provide system information
+      placeholder: |
+        - macOS Version: 
+        - Mac Model: 
+        - RAM: 
+        - Storage Type (SSD/HDD): 
+        - Number of images in folder: 
+        - Average image size:
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Performance Logs
+      description: If applicable, add any performance-related logs or metrics.
+      placeholder: Paste performance logs here...
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context about the performance issue here.
+      placeholder: Any additional information...
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our Code of Conduct
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true

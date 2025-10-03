@@ -2,9 +2,11 @@
 
 macOS 原生图片浏览器 - 高性能、智能化的图片浏览体验
 
-[![CI](https://github.com/onlyhooops/plookingII/workflows/CI/badge.svg)](https://github.com/onlyhooops/plookingII/actions/workflows/ci.yml)
-[![Documentation](https://github.com/onlyhooops/plookingII/workflows/Documentation/badge.svg)](https://github.com/onlyhooops/plookingII/actions/workflows/docs.yml)
+[![CI](https://github.com/onlyhooops/plookingII/actions/workflows/ci.yml/badge.svg)](https://github.com/onlyhooops/plookingII/actions/workflows/ci.yml)
+[![Documentation](https://github.com/onlyhooops/plookingII/actions/workflows/docs.yml/badge.svg)](https://github.com/onlyhooops/plookingII/actions/workflows/docs.yml)
 [![codecov](https://codecov.io/gh/onlyhooops/plookingII/branch/main/graph/badge.svg)](https://codecov.io/gh/onlyhooops/plookingII)
+[![Security](https://github.com/onlyhooops/plookingII/actions/workflows/security.yml/badge.svg)](https://github.com/onlyhooops/plookingII/actions/workflows/security.yml)
+[![Release](https://github.com/onlyhooops/plookingII/actions/workflows/release.yml/badge.svg)](https://github.com/onlyhooops/plookingII/actions/workflows/release.yml)
 [![Python 3.9-3.12](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12-blue)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
@@ -13,9 +15,15 @@ macOS 原生图片浏览器 - 高性能、智能化的图片浏览体验
 ## 🚀 快速开始
 
 ### 安装使用
-1. 下载最新版本：[Releases](https://github.com/your-username/plookingII/releases)
+1. 下载最新版本：[Releases](https://github.com/onlyhooops/plookingII/releases)
 2. 解压并运行 `PlookingII.app`
 3. 拖拽文件夹到窗口开始浏览
+
+### 系统要求
+- **macOS**: 10.15 (Catalina) 或更高版本
+- **内存**: 建议 4GB 以上
+- **存储**: 至少 100MB 可用空间
+- **网络**: 支持 SMB 远程存储访问
 
 ### 基本操作
 - **左右箭头键** - 切换图片
@@ -132,8 +140,9 @@ git commit -m "refactor: refactor code"   # 代码重构
 
 ## 📞 支持
 
-- 问题反馈：[GitHub Issues](https://github.com/your-username/plookingII/issues)
-- 功能建议：[GitHub Discussions](https://github.com/your-username/plookingII/discussions)
+- 问题反馈：[GitHub Issues](https://github.com/onlyhooops/plookingII/issues)
+- 功能建议：[GitHub Discussions](https://github.com/onlyhooops/plookingII/discussions)
+- 安全报告：请通过 [GitHub Security Advisories](https://github.com/onlyhooops/plookingII/security/advisories) 报告安全问题
 
 ---
 

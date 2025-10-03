@@ -1,0 +1,31 @@
+# Global owners
+* @onlyhooops
+
+# Core application files
+/plookingII/ @onlyhooops
+/app/ @onlyhooops
+/core/ @onlyhooops
+/ui/ @onlyhooops
+
+# Configuration files
+*.yml @onlyhooops
+*.yaml @onlyhooops
+*.toml @onlyhooops
+*.ini @onlyhooops
+
+# Documentation
+/docs/ @onlyhooops
+*.md @onlyhooops
+
+# CI/CD
+/.github/ @onlyhooops
+
+# Tests
+/tests/ @onlyhooops
+/test_*.py @onlyhooops
+
+# Build and deployment
+/Makefile @onlyhooops
+/setup.py @onlyhooops
+/pyproject.toml @onlyhooops
+/requirements*.txt @onlyhooops

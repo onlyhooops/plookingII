@@ -1,0 +1,68 @@
+[project]
+name = "plookingII"
+version = "1.4.0"
+description = "macOS native image viewer with high performance"
+authors = [{name = "PlookingII Team"}]
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+extend-exclude = ["build", "dist", "archive"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "W", "PL", "TRY", "N", "C90"]
+ignore = []
+
+# Pylint rules
+[tool.ruff.lint.pylint]
+max-args = 8              # 函数最多8个参数
+max-branches = 15         # 函数最多15个分支
+max-returns = 8           # 函数最多8个return语句
+max-statements = 60       # 函数最多60条语句
+
+# McCabe complexity
+[tool.ruff.lint.mccabe]
+max-complexity = 15       # 圈复杂度阈值（15是合理的中等严格度）
+
+[tool.ruff.format]
+quote-style = "preserve"
+indent-style = "space"
+
+[tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
+version_variables = ["plookingII/config/constants.py:VERSION"]
+branch = "main"
+upload_to_pypi = false
+upload_to_release = true
+build_command = "python tools/package_release.py --build"
+changelog_file = "CHANGELOG.md"
+changelog_placeholder = "<!--next-version-->"
+
+[tool.semantic_release.commit_parser_options]
+allowed_tags = ["feat", "fix", "docs", "style", "refactor", "perf", "test", "build", "ci", "chore", "revert"]
+minor_tags = ["feat"]
+patch_tags = ["fix", "perf", "refactor"]
+
+[tool.semantic_release.remote]
+type = "github"
+token = {env = "GITHUB_TOKEN"}
+
+[tool.semantic_release.publish]
+dist_glob_patterns = ["release/*.zip", "release/*.sha256"]
+upload_to_vcs_release = true
+
+

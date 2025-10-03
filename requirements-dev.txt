@@ -1,0 +1,29 @@
+# Development-only dependencies
+pytest>=7.4
+pytest-asyncio>=0.23
+pytest-cov>=4.1
+flake8>=7.0
+radon>=6.0
+pip-audit>=2.7
+ruff>=0.6
+mypy>=1.10
+
+# Commit message standardization
+commitizen>=3.13.0
+
+# Documentation generation
+sphinx>=7.0.0
+sphinx-rtd-theme>=2.0.0
+sphinx-autodoc-typehints>=1.25.0
+myst-parser>=2.0.0
+
+# Semantic versioning and release automation
+python-semantic-release>=8.7.0
+
+# If any web stack was used for tooling in the past, keep isolated here
+# fastapi
+# starlette
+# python-multipart
+# python-jose
+# jinja2
+# DO NOT include these in runtime requirements unless truly needed.

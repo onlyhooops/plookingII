@@ -1,0 +1,111 @@
+# Ruff配置文件
+# 文档: https://docs.astral.sh/ruff/configuration/
+
+# 目标Python版本
+target-version = "py311"
+
+# 行长度
+line-length = 120
+
+[lint]
+# 选择要启用的规则
+select = [
+    "E",      # pycodestyle错误
+    "W",      # pycodestyle警告
+    "F",      # Pyflakes
+    "I",      # isort
+    "N",      # pep8-naming
+    "UP",     # pyupgrade
+    "YTT",    # flake8-2020
+    "ASYNC",  # flake8-async
+    "B",      # flake8-bugbear
+    "A",      # flake8-builtins
+    "C4",     # flake8-comprehensions
+    "DTZ",    # flake8-datetimez
+    "T10",    # flake8-debugger
+    "EXE",    # flake8-executable
+    "ISC",    # flake8-implicit-str-concat
+    "ICN",    # flake8-import-conventions
+    "G",      # flake8-logging-format
+    "PIE",    # flake8-pie
+    "T20",    # flake8-print
+    "PYI",    # flake8-pyi
+    "PT",     # flake8-pytest-style
+    "Q",      # flake8-quotes
+    "RSE",    # flake8-raise
+    "RET",    # flake8-return
+    "SLF",    # flake8-self
+    "SLOT",   # flake8-slots
+    "SIM",    # flake8-simplify
+    "TID",    # flake8-tidy-imports
+    "TCH",    # flake8-type-checking
+    "ARG",    # flake8-unused-arguments
+    "PTH",    # flake8-use-pathlib
+    "ERA",    # eradicate
+    "PL",     # Pylint
+    "TRY",    # tryceratops
+    "FLY",    # flynt
+    "PERF",   # Perflint
+    "RUF",    # Ruff-specific rules
+]
+
+# 忽略特定规则
+ignore = [
+    # macOS Objective-C开发相关
+    "N802",    # Objective-C方法命名（函数名应该小写）
+    "N803",    # Objective-C参数命名（参数名应该小写）
+    "N806",    # 变量名大写（用于常量）
+    
+    # 日志相关
+    "TRY401",  # logging.exception中的冗余异常对象（允许显示变量值）
+    
+    # 导入相关
+    "PLC0415", # 模块顶层导入（允许延迟导入避免循环依赖）
+    "E402",    # 模块级导入不在文件顶部（某些模块需要先设置环境）
+    
+    # 魔术数字（逐步改进）
+    "PLR2004", # 比较中的魔术值
+    
+    # 复杂度相关（逐步改进）
+    "PLR0911", # 返回语句过多
+    "PLR0912", # 分支过多
+    "PLR0913", # 参数过多
+    "PLR0915", # 语句过多
+    
+    # Objective-C self重新赋值模式
+    "PLW0642", # self变量重新赋值（Objective-C初始化模式）
+    
+    # try-else块
+    "TRY300",  # 考虑将语句移到else块（某些情况下不需要）
+]
+
+[lint.per-file-ignores]
+# 测试文件可以使用assert和print
+"tests/**/*.py" = ["S101", "T20"]
+
+# __init__.py文件允许未使用的导入（用于公共API）
+"**/__init__.py" = ["F401", "F403"]
+
+# UI相关文件（Objective-C桥接）
+"plookingII/ui/**/*.py" = ["N802", "N803", "PLW0642"]
+
+[lint.isort]
+known-first-party = ["plookingII"]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+
+[lint.pylint]
+max-args = 8
+max-branches = 15
+max-returns = 8
+max-statements = 60
+
+[format]
+# 使用双引号
+quote-style = "double"
+
+# 缩进风格
+indent-style = "space"
+
+# 行尾处理
+line-ending = "auto"
+

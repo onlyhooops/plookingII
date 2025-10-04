@@ -123,13 +123,21 @@ class EditMenuBuilder:
         """
         edit_menu_item = NSMenuItem.alloc().init()
         edit_menu = NSMenu.alloc().initWithTitle_("编辑")
+        
+        # 禁用菜单的自动验证，防止系统自动修改菜单项
+        try:
+            edit_menu.setAutoenablesItems_(False)
+        except Exception:
+            pass
 
         # 撤销菜单项（术语统一：精选）
+        # 使用自定义 action 避免系统自动覆盖为 "Undo"
         undo_item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
-            get_ui_string("menu", "undo_selection", "撤销精选"), "undo:", "z"
+            get_ui_string("menu", "undo_selection", "撤销精选"), "undoSelection:", "z"
         )
         undo_item.setKeyEquivalentModifierMask_(NSEventModifierFlagCommand)
         undo_item.setTarget_(self.window)
+        undo_item.setEnabled_(True)
         edit_menu.addItem_(undo_item)
 
         edit_menu.addItem_(NSMenuItem.separatorItem())
@@ -140,6 +148,7 @@ class EditMenuBuilder:
         )
         copy_item.setKeyEquivalentModifierMask_(NSEventModifierFlagCommand)
         copy_item.setTarget_(self.window)
+        copy_item.setEnabled_(True)
         edit_menu.addItem_(copy_item)
 
         edit_menu.addItem_(NSMenuItem.separatorItem())
@@ -150,6 +159,7 @@ class EditMenuBuilder:
         )
         rotate_right_item.setKeyEquivalentModifierMask_(NSEventModifierFlagCommand | NSEventModifierFlagOption)
         rotate_right_item.setTarget_(self.window)
+        rotate_right_item.setEnabled_(True)
         edit_menu.addItem_(rotate_right_item)
 
         # 向左旋转90°菜单项 (原来在编辑菜单中)
@@ -158,6 +168,7 @@ class EditMenuBuilder:
         )
         rotate_left_item.setKeyEquivalentModifierMask_(NSEventModifierFlagCommand | NSEventModifierFlagOption)
         rotate_left_item.setTarget_(self.window)
+        rotate_left_item.setEnabled_(True)
         edit_menu.addItem_(rotate_left_item)
 
         edit_menu_item.setSubmenu_(edit_menu)

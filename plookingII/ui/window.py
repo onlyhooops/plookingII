@@ -247,27 +247,29 @@ class MainWindow(NSWindow):
         窗口关闭事件处理
 
         当用户点击窗口关闭按钮时调用。保存当前任务进度并隐藏窗口，
-        而不是销毁窗口，以保持应用程序状态。
+        而不是销毁窗口。这样用户点击 Dock 图标时可以重新显示窗口。
 
         Args:
             sender: 事件发送者对象
 
         Returns:
-            bool: False表示不关闭窗口，只隐藏
+            bool: False 表示不销毁窗口，只隐藏
         """
         try:
             # 保存当前任务进度
             self.system_controller.save_task_progress_immediate()
 
-            # 清理会话资源
+            # 清理会话资源（但不销毁窗口）
             if hasattr(self, "status_bar_controller") and self.status_bar_controller:
                 self.status_bar_controller.cleanup()
 
-            # 隐藏窗口，不销毁
+            # 隐藏窗口而不销毁，点击 Dock 图标可以恢复
             self.orderOut_(None)
+            return False  # 不允许销毁窗口
         except Exception as e:
             logger.warning(f"窗口关闭处理失败: {e}")
-        return False
+            self.orderOut_(None)
+            return False
 
     def setFrame_display_(self, frameRect, flag):
         """
@@ -695,12 +697,16 @@ class MainWindow(NSWindow):
     # ==================== 菜单动作适配（与菜单构建器一致） ====================
 
     def undo_(self, sender):
-        """撤销保留（匹配编辑菜单的 undo: 动作）"""
+        """撤销保留（兼容系统标准 undo: 动作）"""
         try:
             if hasattr(self, "operation_manager") and self.operation_manager:
                 self.operation_manager.undo_keep_action()
         except Exception as e:
             logger.warning(f"撤销保留失败: {e}")
+    
+    def undoSelection_(self, sender):
+        """撤销精选（自定义 action，避免系统覆盖菜单标题）"""
+        self.undo_(sender)
 
     def copy_(self, sender):
         """复制当前图片路径到剪贴板（匹配编辑菜单的 copy: 动作）"""

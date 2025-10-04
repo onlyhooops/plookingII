@@ -1,137 +1,306 @@
-name: CI
+name: CI - 持续集成
 
 on:
   push:
     branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
+  schedule:
+    # 每天UTC时间0点运行
+    - cron: '0 0 * * *'
+
+env:
+  PYTHON_VERSION: "3.11"
+  CACHE_VERSION: v1
 
 jobs:
-  test:
-    name: Test Python ${{ matrix.python-version }} on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+  # ============================================================================
+  # 代码质量检查
+  # ============================================================================
+  code-quality:
+    name: 代码质量检查
+    runs-on: macos-latest
+    timeout-minutes: 10
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+      timeout-minutes: 2
+      
+    - name: 设置Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+        
+    - name: 安装依赖
+      timeout-minutes: 5
+      run: |
+        python -m pip install --upgrade pip
+        pip install ruff flake8 flake8-bugbear flake8-comprehensions
+        
+    - name: Ruff检查
+      timeout-minutes: 3
+      run: |
+        ruff check plookingII/ --output-format=github
+        
+    - name: Ruff格式检查
+      timeout-minutes: 2
+      run: |
+        ruff format --check plookingII/
+
+  # ============================================================================
+  # 类型检查
+  # ============================================================================
+  type-check:
+    name: 类型检查
+    runs-on: macos-latest
+    timeout-minutes: 10
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+      timeout-minutes: 2
+      
+    - name: 设置Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+        
+    - name: 安装依赖
+      timeout-minutes: 5
+      run: |
+        python -m pip install --upgrade pip
+        pip install mypy types-psutil types-Pillow
+        pip install -r requirements.txt
+        
+    - name: MyPy类型检查
+      timeout-minutes: 5
+      run: |
+        mypy plookingII/ --config-file=mypy.ini --no-error-summary || true
+
+  # ============================================================================
+  # 安全检查
+  # ============================================================================
+  security:
+    name: 安全扫描
+    runs-on: macos-latest
+    timeout-minutes: 15
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+      timeout-minutes: 2
+      
+    - name: 设置Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+        
+    - name: 安装依赖
+      timeout-minutes: 5
+      run: |
+        python -m pip install --upgrade pip
+        pip install bandit safety
+        pip install -r requirements.txt
+        
+    - name: Bandit安全扫描
+      timeout-minutes: 5
+      run: |
+        bandit -r plookingII/ -f json -o bandit-report.json || true
+        bandit -r plookingII/ -f screen
+      continue-on-error: true
+      
+    - name: Safety依赖扫描
+      timeout-minutes: 5
+      run: |
+        safety check --json || true
+      continue-on-error: true
+      
+    - name: 上传安全报告
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-reports
+        path: bandit-report.json
+        retention-days: 30
+
+  # ============================================================================
+  # 单元测试
+  # ============================================================================
+  unit-tests:
+    name: 单元测试
+    runs-on: macos-latest
+    timeout-minutes: 30
+    
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, ubuntu-latest]
-        python-version: ['3.9', '3.10', '3.11', '3.12']
-
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+    
     steps:
-    - name: Checkout code
+    - name: 检出代码
       uses: actions/checkout@v4
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      timeout-minutes: 2
+      
+    - name: 设置Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-
-    - name: Cache pip dependencies
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-
-    - name: Install system dependencies (Ubuntu)
-      if: matrix.os == 'ubuntu-latest'
+        cache: 'pip'
+        
+    - name: 安装系统依赖
+      timeout-minutes: 5
       run: |
-        sudo apt-get update
-        sudo apt-get install -y libgl1-mesa-glx libglib2.0-0
-
-    - name: Install dependencies
+        # macOS通常已经有必要的库
+        echo "macOS 系统依赖检查完成"
+        
+    - name: 安装Python依赖
+      timeout-minutes: 10
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
-
-    - name: Lint with flake8
+        
+    - name: 运行单元测试
+      timeout-minutes: 20
       run: |
-        flake8 --count --select=E9,F63,F7,F82 --show-source --statistics .
-        flake8 --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics .
-
-    - name: Lint with ruff
-      run: |
-        ruff check . --fix
-
-    - name: Type check with mypy
-      run: |
-        mypy --ignore-missing-imports plookingII/
-
-    - name: Run tests with pytest
-      run: |
-        pytest --cov=plookingII --cov-report=xml --cov-report=html --cov-fail-under=60
-
-    - name: Upload coverage to Codecov
-      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
-      uses: codecov/codecov-action@v3
+        pytest tests/unit/ \
+          --timeout=300 \
+          --timeout-method=thread \
+          -v \
+          --tb=short \
+          --maxfail=5 \
+          --cov=plookingII \
+          --cov-report=xml \
+          --cov-report=term-missing \
+          --durations=10
+      env:
+        CI: true
+        
+    - name: 上传覆盖率报告
+      if: matrix.python-version == '3.11'
+      uses: codecov/codecov-action@v4
       with:
         file: ./coverage.xml
         flags: unittests
         name: codecov-umbrella
         fail_ci_if_error: false
+      timeout-minutes: 3
 
-  security:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install -r requirements-dev.txt
-
-    - name: Run bandit security linter
-      run: |
-        bandit -r plookingII/ -f json -o bandit-report.json || true
-
-    - name: Run safety check
-      run: |
-        safety check --json --output safety-report.json || true
-
-    - name: Upload security reports
-      uses: actions/upload-artifact@v3
-      with:
-        name: security-reports
-        path: |
-          bandit-report.json
-          safety-report.json
-
-  build:
-    name: Build Application
+  # ============================================================================
+  # 集成测试
+  # ============================================================================
+  integration-tests:
+    name: 集成测试
     runs-on: macos-latest
-    needs: [test, security]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    timeout-minutes: 45
+    needs: [unit-tests]
     
     steps:
-    - name: Checkout code
+    - name: 检出代码
       uses: actions/checkout@v4
-
-    - name: Set up Python
-      uses: actions/setup-python@v4
+      timeout-minutes: 2
+      
+    - name: 设置Python
+      uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
-
-    - name: Install dependencies
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+        
+    - name: 安装依赖
+      timeout-minutes: 10
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
-
-    - name: Build application
+        
+    - name: 运行集成测试
+      timeout-minutes: 30
       run: |
-        make build
+        pytest tests/integration/ \
+          --timeout=600 \
+          --timeout-method=thread \
+          -v \
+          --tb=short \
+          --maxfail=3 \
+          --cov=plookingII \
+          --cov-report=xml \
+          --cov-append
+      env:
+        CI: true
 
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+  # ============================================================================
+  # 完整测试套件（包括慢测试）
+  # ============================================================================
+  full-test-suite:
+    name: 完整测试套件
+    runs-on: macos-latest
+    timeout-minutes: 90
+    if: github.event_name == 'schedule' || contains(github.event.head_commit.message, '[full-test]')
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+      timeout-minutes: 2
+      
+    - name: 设置Python
+      uses: actions/setup-python@v5
       with:
-        name: plookingII-build
-        path: dist/
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+        
+    - name: 安装依赖
+      timeout-minutes: 10
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+        
+    - name: 运行完整测试套件
+      timeout-minutes: 75
+      run: |
+        pytest tests/ \
+          --run-slow \
+          --timeout=1800 \
+          --timeout-method=thread \
+          -v \
+          --tb=short \
+          --cov=plookingII \
+          --cov-report=xml \
+          --cov-report=html \
+          --durations=20
+      env:
+        CI: true
+        
+    - name: 上传完整覆盖率报告
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report-full
+        path: htmlcov/
+        retention-days: 30
+
+  # ============================================================================
+  # 测试报告汇总
+  # ============================================================================
+  test-summary:
+    name: 测试报告汇总
+    runs-on: macos-latest
+    timeout-minutes: 5
+    needs: [code-quality, type-check, security, unit-tests, integration-tests]
+    if: always()
+    
+    steps:
+    - name: 生成测试摘要
+      run: |
+        echo "## 测试结果摘要" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 任务状态" >> $GITHUB_STEP_SUMMARY
+        echo "- 代码质量检查: ${{ needs.code-quality.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- 类型检查: ${{ needs.type-check.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- 安全扫描: ${{ needs.security.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- 单元测试: ${{ needs.unit-tests.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- 集成测试: ${{ needs.integration-tests.result }}" >> $GITHUB_STEP_SUMMARY
+

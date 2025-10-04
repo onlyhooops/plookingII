@@ -114,6 +114,14 @@ class AdvancedImageCacheAdapter:
         self.cache_hits = 0
         self.cache_misses = 0
 
+    def clear_all(self) -> None:
+        """清空所有缓存（兼容旧接口）"""
+        self.clear()
+
+    def put_new(self, key: str, value: Any, size_mb: float = 0) -> bool:
+        """存储新缓存项（兼容旧接口）"""
+        return self.put(key, value, size_mb=size_mb)
+
     def get_stats(self) -> dict[str, Any]:
         """获取统计信息（兼容旧接口）
 

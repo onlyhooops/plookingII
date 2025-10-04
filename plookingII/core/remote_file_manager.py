@@ -68,6 +68,7 @@ class RemoteFileManager:
 
     def __init__(self):
         self.logger = get_enhanced_logger()
+        self.logging = self.logger  # 为兼容性提供别名
         self.remote_detector = get_remote_detector()
         self.smb_optimizer = get_smb_optimizer()
         self.network_cache = get_network_cache()
@@ -471,12 +472,14 @@ class RemoteFileManager:
         """预加载文件"""
         try:
             # 先尝试缓存文件
+            from_cache = False
             if self.auto_cache_enabled:
                 cache_path = self.network_cache.cache_remote_file(file_path)
                 if cache_path:
                     # 从缓存读取
                     with open(cache_path, "rb") as f:
                         data = f.read()
+                    from_cache = True
                 else:
                     # 直接读取
                     with open(file_path, "rb") as f:
@@ -495,7 +498,7 @@ class RemoteFileManager:
                 success=True,
                 loading_mode=LoadingMode.PRELOAD,
                 latency_ms=latency_ms,
-                from_cache=self.auto_cache_enabled
+                from_cache=from_cache
             )
 
         except Exception as e:

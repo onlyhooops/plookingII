@@ -1,110 +1,113 @@
-name: 🐛 Bug Report
-description: Report a bug or unexpected behavior
+name: 🐛 Bug报告
+description: 报告一个bug以帮助我们改进
 title: "[Bug]: "
 labels: ["bug", "needs-triage"]
+assignees: []
+
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to fill out this bug report! Please provide as much detail as possible.
-
-  - type: dropdown
-    id: bug-type
-    attributes:
-      label: Bug Type
-      description: What type of bug is this?
-      options:
-        - UI/UX Issue
-        - Performance Issue
-        - Crash/Hang
-        - Feature Not Working
-        - Other
-    validations:
-      required: true
+        感谢您花时间填写此bug报告！
 
   - type: textarea
     id: description
     attributes:
-      label: Bug Description
-      description: A clear and concise description of what the bug is.
-      placeholder: Describe the bug...
+      label: Bug描述
+      description: 清晰简洁地描述这个bug
+      placeholder: 告诉我们您遇到了什么问题
     validations:
       required: true
 
   - type: textarea
-    id: steps
+    id: reproduction
     attributes:
-      label: Steps to Reproduce
-      description: Steps to reproduce the behavior
+      label: 复现步骤
+      description: 如何复现这个问题
       placeholder: |
-        1. Go to '...'
-        2. Click on '....'
-        3. Scroll down to '....'
-        4. See error
+        1. 进入 '...'
+        2. 点击 '...'
+        3. 滚动到 '...'
+        4. 看到错误
     validations:
       required: true
 
   - type: textarea
     id: expected
     attributes:
-      label: Expected Behavior
-      description: What you expected to happen
-      placeholder: A clear and concise description of what you expected to happen.
+      label: 期望行为
+      description: 描述您期望发生什么
     validations:
       required: true
 
   - type: textarea
     id: actual
     attributes:
-      label: Actual Behavior
-      description: What actually happened
-      placeholder: A clear and concise description of what actually happened.
+      label: 实际行为
+      description: 描述实际发生了什么
     validations:
       required: true
 
   - type: textarea
     id: screenshots
     attributes:
-      label: Screenshots
-      description: If applicable, add screenshots to help explain your problem.
-      placeholder: Drag and drop screenshots here...
-
-  - type: dropdown
-    id: os
-    attributes:
-      label: Operating System
-      description: What OS are you running?
-      options:
-        - macOS 14 (Sonoma)
-        - macOS 13 (Ventura)
-        - macOS 12 (Monterey)
-        - macOS 11 (Big Sur)
-        - macOS 10.15 (Catalina)
-        - Other
-    validations:
-      required: true
+      label: 截图
+      description: 如果适用，添加截图来帮助解释问题
 
   - type: input
     id: version
     attributes:
-      label: PlookingII Version
-      description: What version of PlookingII are you using?
-      placeholder: e.g., v1.4.0
+      label: PlookingII版本
+      description: 您使用的PlookingII版本
+      placeholder: "1.4.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: 操作系统
+      description: 您使用的操作系统
+      options:
+        - macOS 14 (Sonoma)
+        - macOS 13 (Ventura)
+        - macOS 12 (Monterey)
+        - 其他
+    validations:
+      required: true
+
+  - type: input
+    id: python-version
+    attributes:
+      label: Python版本
+      description: Python版本号
+      placeholder: "3.11.0"
     validations:
       required: true
 
   - type: textarea
     id: logs
     attributes:
-      label: Logs
-      description: If applicable, add any relevant logs or error messages.
-      placeholder: Paste logs here...
+      label: 相关日志
+      description: 请粘贴任何相关的日志输出
+      render: shell
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 附加信息
+      description: 添加关于问题的任何其他信息
 
   - type: checkboxes
     id: terms
     attributes:
-      label: Code of Conduct
-      description: By submitting this issue, you agree to follow our Code of Conduct
+      label: 检查清单
+      description: 在提交前请确认
       options:
-        - label: I agree to follow this project's Code of Conduct
+        - label: 我已经搜索了现有的issues，没有找到重复的
           required: true
+        - label: 我已经阅读了文档
+          required: true
+        - label: 这是一个可以复现的bug
+          required: true
+

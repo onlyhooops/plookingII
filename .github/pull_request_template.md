@@ -1,70 +1,81 @@
-## 📝 Pull Request Description
+## 变更说明
 
-### What does this PR do?
-<!-- Provide a brief description of the changes in this PR -->
+### 变更类型
+<!-- 请勾选适用的选项 -->
+- [ ] 🐛 Bug修复
+- [ ] ✨ 新功能
+- [ ] 📝 文档更新
+- [ ] 🎨 代码格式/样式改进
+- [ ] ♻️ 重构
+- [ ] ⚡️ 性能优化
+- [ ] ✅ 测试相关
+- [ ] 🔧 配置/构建
+- [ ] 🔒 安全修复
 
-### Type of Change
-<!-- Mark the relevant option with an "x" -->
-- [ ] 🐛 Bug fix (non-breaking change which fixes an issue)
-- [ ] ✨ New feature (non-breaking change which adds functionality)
-- [ ] 💥 Breaking change (fix or feature that would cause existing functionality to not work as expected)
-- [ ] 📚 Documentation update
-- [ ] 🔧 Refactoring (no functional changes)
-- [ ] ⚡ Performance improvement
-- [ ] 🧪 Test coverage improvement
-- [ ] 🔒 Security improvement
+### 变更描述
+<!-- 详细描述你的变更内容 -->
 
-### Related Issues
-<!-- Link any related issues -->
-- Fixes #
-- Closes #
-- Related to #
 
-### Changes Made
-<!-- List the main changes made in this PR -->
-- 
-- 
-- 
+### 相关Issue
+<!-- 如果有相关Issue，请在此引用 -->
+Closes #
 
-### Testing
-<!-- Describe the tests you ran to verify your changes -->
-- [ ] Unit tests pass
-- [ ] Integration tests pass
-- [ ] Manual testing completed
-- [ ] Performance testing (if applicable)
 
-### Screenshots (if applicable)
-<!-- Add screenshots to help explain your changes -->
+## 测试
 
-### Checklist
-<!-- Mark completed items with an "x" -->
-- [ ] My code follows the project's style guidelines
-- [ ] I have performed a self-review of my own code
-- [ ] I have commented my code, particularly in hard-to-understand areas
-- [ ] I have made corresponding changes to the documentation
-- [ ] My changes generate no new warnings
-- [ ] I have added tests that prove my fix is effective or that my feature works
-- [ ] New and existing unit tests pass locally with my changes
-- [ ] Any dependent changes have been merged and published
+### 测试覆盖
+- [ ] 添加了单元测试
+- [ ] 添加了集成测试
+- [ ] 更新了现有测试
+- [ ] 所有测试通过
 
-### Performance Impact
-<!-- If this PR affects performance, describe the impact -->
-- [ ] No performance impact
-- [ ] Performance improvement
-- [ ] Performance regression (explain below)
+### 手动测试步骤
+<!-- 描述如何手动测试这个变更 -->
+1. 
+2. 
+3. 
 
-### Breaking Changes
-<!-- If this PR contains breaking changes, describe them -->
-- [ ] No breaking changes
-- [ ] Breaking changes (explain below)
+### 测试结果
+```bash
+# 粘贴测试命令和结果
+```
 
-### Additional Notes
-<!-- Add any additional notes or context about the PR -->
 
----
+## 代码质量检查
 
-**Reviewer Guidelines:**
-- Please test the changes thoroughly
-- Check for any potential performance impacts
-- Verify that documentation is updated if needed
-- Ensure code follows project conventions
+- [ ] 代码通过了ruff检查
+- [ ] 代码通过了mypy类型检查
+- [ ] 代码通过了bandit安全扫描
+- [ ] 代码覆盖率满足要求（≥60%）
+- [ ] 所有测试在规定时间内完成（无超时）
+
+
+## 附加信息
+
+### 性能影响
+<!-- 这个变更对性能有什么影响？ -->
+
+
+### 破坏性变更
+<!-- 这是一个破坏性变更吗？如果是，请详细说明 -->
+- [ ] 是
+- [ ] 否
+
+### 迁移指南
+<!-- 如果有破坏性变更，提供迁移指南 -->
+
+
+### 截图/录屏
+<!-- 如果适用，添加截图或录屏来说明变更 -->
+
+
+### 检查清单
+- [ ] 代码遵循项目的代码规范
+- [ ] 进行了自我代码审查
+- [ ] 代码添加了适当的注释
+- [ ] 更新了相关文档
+- [ ] 变更不会生成新的警告
+- [ ] 添加了证明修复有效或功能正常的测试
+- [ ] 新测试和现有测试在本地通过
+- [ ] 依赖的变更已经合并并发布
+

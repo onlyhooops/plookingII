@@ -1,31 +1,25 @@
-# Global owners
-* @onlyhooops
+# 代码所有者配置
+# 这个文件定义了项目不同部分的代码审查责任人
 
-# Core application files
-/plookingII/ @onlyhooops
-/app/ @onlyhooops
-/core/ @onlyhooops
-/ui/ @onlyhooops
+# 全局所有者
+* @plookingII-team
 
-# Configuration files
-*.yml @onlyhooops
-*.yaml @onlyhooops
-*.toml @onlyhooops
-*.ini @onlyhooops
+# 测试相关
+/tests/ @plookingII-team
+pytest.ini @plookingII-team
+requirements-dev.txt @plookingII-team
 
-# Documentation
-/docs/ @onlyhooops
-*.md @onlyhooops
+# CI/CD配置
+/.github/ @plookingII-team
 
-# CI/CD
-/.github/ @onlyhooops
+# 核心代码
+/plookingII/core/ @plookingII-team
+/plookingII/config/ @plookingII-team
 
-# Tests
-/tests/ @onlyhooops
-/test_*.py @onlyhooops
+# UI代码
+/plookingII/ui/ @plookingII-team
 
-# Build and deployment
-/Makefile @onlyhooops
-/setup.py @onlyhooops
-/pyproject.toml @onlyhooops
-/requirements*.txt @onlyhooops
+# 文档
+/docs/ @plookingII-team
+*.md @plookingII-team
+

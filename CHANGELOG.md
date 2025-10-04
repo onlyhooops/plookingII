@@ -8,10 +8,76 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### 🎯 Planned
+- 实施UI与业务逻辑分离架构重构（v2.0计划）
 - API 文档自动生成（Sphinx）
 - 多 Python 版本支持测试
 - 语义化版本自动发布
-- 性能回归测试基线对比
+
+---
+
+## [1.5.0] - 2025-10-04
+
+### 🎯 主要变更
+- **重大里程碑**: 完成测试系统全面升级，为架构重构做准备
+- **测试覆盖率**: 从 33.03% 提升至 36.67% (+3.64%)
+- **测试重构**: 测试数量从 1403 减少到 615，提升测试质量和效率
+- **架构规划**: 发布《UI与业务逻辑分离架构改进提案》
+
+### ✨ Added
+- 完整的测试系统重构（单元测试 + 集成测试）
+- 新增 615 个高质量测试用例（替代原 1403 个低质量测试）
+- 测试超时保护机制（单个测试 30s，总运行 10m）
+- 测试系统完整文档（快速开始、部署报告、文件清单）
+- UI与业务逻辑分离架构提案（v2.0 规划文档）
+- GitHub 工作流优化（CI/CD 改进）
+
+### 🔧 Changed
+- 重构测试架构：从混乱的测试文件到规范的 `tests/{unit,integration}` 结构
+- 优化测试运行速度：从 75s 降至约 30s
+- 提升测试 ROI：从 0.22% per test 提升至 0.59% per test（2.7倍提升）
+- 改进核心模块测试覆盖率（多个模块提升至 70%+）
+- 清理过时和重复测试文件（移除 60+ 个过时测试文件）
+
+### 📋 Documentation
+- 新增 `TESTING_QUICKSTART.md` - 测试快速入门指南
+- 新增 `TEST_SYSTEM_SUMMARY.md` - 测试系统完整总结
+- 新增 `TEST_SYSTEM_FILES.md` - 测试文件清单
+- 新增 `测试系统部署报告.md` - 中文测试部署文档
+- 新增 `docs/architecture/UI_BUSINESS_SEPARATION_PROPOSAL.md` - 架构改进提案
+- 新增 `docs/testing/` 目录 - 完整测试文档集合
+
+### 🚀 Performance
+- 测试运行时间优化：75s → ~30s（60% 提升）
+- 测试效率提升：每个测试平均覆盖率贡献提升 2.7 倍
+- 移除低质量测试，专注高价值测试
+
+### 🔒 Quality
+- 引入 Bandit 安全扫描
+- 引入 Ruff 代码质量检查
+- 完善类型注解和文档字符串
+- 改进错误处理和边界条件测试
+
+### 📊 Test Coverage Details
+
+#### 整体覆盖率
+- **Total**: 33.03% → 36.67% (+3.64%)
+- **Tests**: 1403 → 615 (-788, 提升质量)
+- **ROI**: 0.22% → 0.59% per test (+2.7x)
+
+#### 模块提升亮点
+- `core/functions.py`: 95.39% (+65.66%)
+- `core/cleanup_utils.py`: 93.01% (新模块)
+- `core/optimized_algorithms.py`: 87.50% (新模块)
+- `core/cache/adapters.py`: 77.61% (+39.85%)
+- `core/threading.py`: 66.45% (+18.10%)
+- `core/session_manager.py`: 61.74% (新模块)
+
+### 🎯 Next Steps
+准备实施 v2.0 架构重构：
+1. Phase 1: 领域模型层 + 服务层（2周）
+2. Phase 2: Presenter 层实现（2周）
+3. Phase 3: 集成与迁移（1.5周）
+4. Phase 4: 优化与完善（1周）
 
 ---
 

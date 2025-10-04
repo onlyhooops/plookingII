@@ -34,7 +34,7 @@ class ComponentConfig:
     enabled: bool = True
     timeout: float = 30.0
     max_retries: int = 3
-    custom_params: dict[str, Any] = field(default_factory=dict, Optional)
+    custom_params: dict[str, Any] = field(default_factory=dict)
 
 
 class StatisticsMixin:
@@ -313,7 +313,15 @@ class BaseComponent(StatisticsMixin, ConfigurationMixin, ErrorHandlingMixin, Log
         Returns:
             bool: 是否健康
         """
-        return self.is_enabled() and self._stats["failures"] < self._stats["operations"] * 0.5
+        if not self.is_enabled():
+            return False
+
+        # 如果没有操作历史，默认认为是健康的
+        if self._stats["operations"] == 0:
+            return True
+
+        # 失败率应该小于50%
+        return self._stats["failures"] < self._stats["operations"] * 0.5
 
     @contextmanager
     def operation_context(self, operation_name: str):

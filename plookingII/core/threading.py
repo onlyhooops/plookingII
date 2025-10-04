@@ -21,10 +21,11 @@ Author: PlookingII Team
 Version: 1.0.0
 """
 
-from ..imports import _cf, _os
+import os
+from concurrent.futures import ThreadPoolExecutor
 
 
-class _PatchedThreadPoolExecutor(_cf.ThreadPoolExecutor):
+class _PatchedThreadPoolExecutor(ThreadPoolExecutor):
     """优化的线程池执行器
 
     继承自 concurrent.futures.ThreadPoolExecutor，提供智能的线程数量配置。
@@ -62,7 +63,7 @@ class _PatchedThreadPoolExecutor(_cf.ThreadPoolExecutor):
         """
         if max_workers is None:
             # 获取 CPU 核心数，如果获取失败则默认为 1
-            cpu = _os.cpu_count() or 1
+            cpu = os.cpu_count() or 1
 
             # 计算最优线程数：CPU核心数 * 4，但不超过 64
             # 这个比例适合 I/O 密集型任务，如图像文件读取

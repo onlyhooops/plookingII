@@ -321,10 +321,10 @@ class NetworkCache:
 
                 self._save_metadata()
 
-                self.logging.getLogger(__name__).log(LogLevel.INFO, LogCategory.SYSTEM, "All cache cleared")
+                self.logger.log(LogLevel.INFO, LogCategory.SYSTEM, "All cache cleared")
 
         except Exception as e:
-            self.logging.getLogger(__name__).log_error(e, "clear_all_cache")
+            self.logger.log_error(e, "clear_all_cache")
 
     def get_cache_stats(self) -> dict[str, any]:
         """获取缓存统计信息"""
@@ -455,7 +455,7 @@ class NetworkCache:
             self.stats["cache_evictions"] += evicted_count
 
         if evicted_count > 0:
-            self.logging.getLogger(__name__).log(LogLevel.INFO,
+            self.logger.log(LogLevel.INFO,
                 LogCategory.CACHE,
                 f"Evicted {evicted_count} cache entries ({evicted_size} bytes)"
             )

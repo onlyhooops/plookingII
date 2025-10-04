@@ -1,99 +1,121 @@
-name: ⚡ Performance Issue
-description: Report a performance issue or optimization request
+name: ⚡ 性能问题
+description: 报告性能相关的问题
 title: "[Performance]: "
 labels: ["performance", "needs-triage"]
+assignees: []
+
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for reporting a performance issue! Please provide detailed information about the performance problem.
-
-  - type: dropdown
-    id: performance-type
-    attributes:
-      label: Performance Issue Type
-      description: What type of performance issue are you experiencing?
-      options:
-        - Slow Image Loading
-        - High Memory Usage
-        - Slow Application Startup
-        - UI Lag/Freezing
-        - Network Performance (SMB)
-        - Cache Performance
-        - Other
-    validations:
-      required: true
+        感谢您报告性能问题！
 
   - type: textarea
     id: description
     attributes:
-      label: Performance Issue Description
-      description: A clear and concise description of the performance issue.
-      placeholder: Describe the performance issue...
+      label: 性能问题描述
+      description: 清晰地描述性能问题
+      placeholder: 当我执行...时，应用变得很慢
     validations:
       required: true
 
   - type: textarea
-    id: steps
+    id: reproduction
     attributes:
-      label: Steps to Reproduce
-      description: Steps to reproduce the performance issue
+      label: 复现步骤
+      description: 如何复现这个性能问题
       placeholder: |
-        1. Open PlookingII
-        2. Load a folder with many images
-        3. Navigate through images quickly
-        4. Observe performance degradation
+        1. 打开一个包含1000张图片的文件夹
+        2. 快速浏览
+        3. 观察到卡顿
     validations:
       required: true
-
-  - type: input
-    id: expected-time
-    attributes:
-      label: Expected Performance
-      description: What performance did you expect?
-      placeholder: e.g., Images should load in under 1 second
-
-  - type: input
-    id: actual-time
-    attributes:
-      label: Actual Performance
-      description: What performance are you actually seeing?
-      placeholder: e.g., Images take 5+ seconds to load
 
   - type: textarea
-    id: system-info
+    id: metrics
     attributes:
-      label: System Information
-      description: Please provide system information
+      label: 性能指标
+      description: 提供具体的性能数据（如果有）
       placeholder: |
-        - macOS Version: 
-        - Mac Model: 
-        - RAM: 
-        - Storage Type (SSD/HDD): 
-        - Number of images in folder: 
-        - Average image size:
+        - CPU使用率: 95%
+        - 内存使用: 2GB
+        - 响应时间: 5秒
+        - 帧率: 10 FPS
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: 严重程度
+      description: 这个性能问题有多严重？
+      options:
+        - 轻微 - 稍有影响但可用
+        - 中等 - 明显影响使用体验
+        - 严重 - 应用几乎无法使用
+        - 关键 - 应用完全无法使用
     validations:
       required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: PlookingII版本
+      description: 您使用的版本
+      placeholder: "1.4.0"
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: 操作系统和版本
+      description: 操作系统信息
+      placeholder: "macOS 14.0"
+    validations:
+      required: true
+
+  - type: textarea
+    id: hardware
+    attributes:
+      label: 硬件信息
+      description: CPU、内存等硬件信息
+      placeholder: |
+        - CPU: Apple M1
+        - RAM: 16GB
+        - 存储: SSD
+
+  - type: textarea
+    id: dataset
+    attributes:
+      label: 数据集信息
+      description: 图片数量、大小、类型等
+      placeholder: |
+        - 图片数量: 5000
+        - 平均大小: 5MB
+        - 格式: JPEG, PNG
 
   - type: textarea
     id: logs
     attributes:
-      label: Performance Logs
-      description: If applicable, add any performance-related logs or metrics.
-      placeholder: Paste performance logs here...
+      label: 性能日志
+      description: 相关的性能日志或分析报告
+      render: shell
 
   - type: textarea
     id: additional
     attributes:
-      label: Additional Context
-      description: Add any other context about the performance issue here.
-      placeholder: Any additional information...
+      label: 附加信息
+      description: 任何其他相关信息
 
   - type: checkboxes
     id: terms
     attributes:
-      label: Code of Conduct
-      description: By submitting this issue, you agree to follow our Code of Conduct
+      label: 检查清单
+      description: 在提交前请确认
       options:
-        - label: I agree to follow this project's Code of Conduct
+        - label: 我已经搜索了现有的issues
           required: true
+        - label: 我已经尝试过最新版本
+          required: true
+        - label: 问题可以稳定复现
+          required: true
+

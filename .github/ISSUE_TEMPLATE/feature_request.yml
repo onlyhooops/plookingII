@@ -1,95 +1,78 @@
-name: ✨ Feature Request
-description: Suggest an idea for this project
+name: ✨ 功能请求
+description: 建议一个新功能
 title: "[Feature]: "
 labels: ["enhancement", "needs-triage"]
+assignees: []
+
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for suggesting a new feature! Please provide as much detail as possible.
-
-  - type: textarea
-    id: description
-    attributes:
-      label: Feature Description
-      description: A clear and concise description of the feature you'd like to see.
-      placeholder: Describe the feature...
-    validations:
-      required: true
+        感谢您提出功能建议！
 
   - type: textarea
     id: problem
     attributes:
-      label: Problem Statement
-      description: Is your feature request related to a problem? Please describe.
-      placeholder: A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+      label: 问题描述
+      description: 您遇到的问题是什么？
+      placeholder: 我总是很沮丧当...
     validations:
       required: true
 
   - type: textarea
     id: solution
     attributes:
-      label: Proposed Solution
-      description: Describe the solution you'd like
-      placeholder: A clear and concise description of what you want to happen.
+      label: 建议的解决方案
+      description: 您希望如何解决这个问题？
+      placeholder: 我希望能够...
     validations:
       required: true
 
   - type: textarea
     id: alternatives
     attributes:
-      label: Alternative Solutions
-      description: Describe any alternative solutions or features you've considered.
-      placeholder: A clear and concise description of any alternative solutions or features you've considered.
+      label: 替代方案
+      description: 您考虑过哪些替代解决方案或功能？
 
   - type: dropdown
     id: priority
     attributes:
-      label: Priority
-      description: How important is this feature to you?
+      label: 优先级
+      description: 这个功能对您有多重要？
       options:
-        - Low
-        - Medium
-        - High
-        - Critical
+        - 低 - Nice to have
+        - 中 - 会提高体验
+        - 高 - 对我的工作流程很关键
     validations:
       required: true
 
   - type: dropdown
-    id: category
+    id: willing
     attributes:
-      label: Feature Category
-      description: What category does this feature fall under?
+      label: 贡献意愿
+      description: 您愿意帮助实现这个功能吗？
       options:
-        - UI/UX
-        - Performance
-        - File Management
-        - Image Processing
-        - Remote Storage
-        - Accessibility
-        - Other
+        - 是，我可以提交PR
+        - 是，我可以帮助测试
+        - 否，但我可以提供反馈
+        - 否
     validations:
       required: true
 
   - type: textarea
-    id: mockups
-    attributes:
-      label: Mockups/Examples
-      description: If applicable, add mockups, wireframes, or examples to help explain your feature.
-      placeholder: Drag and drop images here...
-
-  - type: textarea
     id: additional
     attributes:
-      label: Additional Context
-      description: Add any other context or screenshots about the feature request here.
-      placeholder: Any additional information...
+      label: 附加信息
+      description: 添加任何其他关于功能请求的信息、截图或示例
 
   - type: checkboxes
     id: terms
     attributes:
-      label: Code of Conduct
-      description: By submitting this issue, you agree to follow our Code of Conduct
+      label: 检查清单
+      description: 在提交前请确认
       options:
-        - label: I agree to follow this project's Code of Conduct
+        - label: 我已经搜索了现有的issues，没有找到重复的
           required: true
+        - label: 这个功能符合项目的目标和范围
+          required: true
+

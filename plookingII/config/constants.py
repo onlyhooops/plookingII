@@ -17,7 +17,7 @@
     - 易于维护：分类清晰，便于查找和修改
 
 Author: PlookingII Team
-Version: 1.5.0
+Version: 1.6.0
 """
 
 from ..imports import QUARTZ_AVAILABLE, os
@@ -29,7 +29,7 @@ APP_NAME = "PlookingII"
 
 # 应用版本：遵循语义化版本规范 (major.minor.patch)
 # 单一真源（normalized，无前缀）
-VERSION = "1.5.0"
+VERSION = "1.6.0"
 # 对外暴露的统一版本别名，供打包与外部工具读取
 APP_VERSION = VERSION
 

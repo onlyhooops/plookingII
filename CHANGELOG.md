@@ -15,6 +15,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.6.0] - 2025-10-06
+
+### 🎯 主要变更
+- **项目精简**: 完成大规模项目清理，移除非必要文档、测试脚本、临时文件
+- **结构优化**: 项目结构精简为纯开发环境，提升维护性
+- **空间优化**: 清理构建产物、缓存文件、过时文档
+
+### ✅ Removed
+- 构建和分发产物：`__pycache__/`, `build/`, `dist/`, `htmlcov/`
+- 测试覆盖率文件：`coverage.json`, `coverage.xml`, `.coverage`, `tests.log`
+- 归档文档目录：`docs/archive/`, `doc/reports/`, `docs/architecture/`
+- 临时测试文档：所有 `TEST_SYSTEM_*.md`, `测试系统部署报告.md` 等
+- 过时报告文档：`FINAL_*.md`, `DEPLOYMENT_GUIDE.md`, `API_DOCUMENTATION.md` 等
+- 旧版本文件：`release/`, `original/`, `setup.py`, `PlookingII.spec`
+- 工具脚本目录：`tools/`, `scripts/`
+- 各类缓存目录：`.benchmarks/`, `.mypy_cache/`, `.pytest_cache/`, `.ruff_cache/`, `.tasks/`, `.trae/`, `.idea/`
+- 系统临时文件：所有 `.DS_Store` 文件
+- 测试配置文件：`Makefile.test`, `tox.ini`, `.pre-commit-config.yaml.template`
+- 完整文档体系：`docs/api/`, `docs/developer/`, `docs/user/` 等
+- 所有空目录
+
+### 🔧 Changed
+- 项目结构精简为核心组件
+- 保留必要的开发配置和基础文档
+- 优化 .gitignore 规则
+
+### 📋 Retained Core Files
+- 源代码：`plookingII/` 目录
+- 测试代码：`tests/` 目录  
+- 基础文档：`README.md`, `CHANGELOG.md`, `LICENSE`
+- 项目配置：`pyproject.toml`, `pytest.ini`, `requirements*.txt`
+- 开发配置：`Makefile`, `mypy.ini`, linter 配置文件
+- GitHub 配置：`.github/` 工作流
+
+### 📊 Impact
+- 清理文件数：80+ 个文档和配置文件
+- 清理目录数：15+ 个临时和缓存目录
+- 项目结构：从复杂的多层文档体系简化为清晰的开发环境
+- 维护性：显著提升，聚焦核心代码和功能
+
+### 🎯 Project Focus
+项目现在专注于：
+- ✅ 核心功能开发和维护
+- ✅ 高质量测试覆盖
+- ✅ 简洁清晰的项目结构
+- ✅ 必要的开发文档
+
+---
+
 ## [1.5.0] - 2025-10-04
 
 ### 🎯 主要变更
@@ -299,7 +348,9 @@ PlookingII 正式发布！一款专为 macOS 设计的原生图片浏览器。
 - 📋 文档 (Documentation)
 - ⚡ 性能 (Performance)
 
-[Unreleased]: https://github.com/onlyhooops/plookingII/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/onlyhooops/plookingII/compare/v1.6.0...HEAD
+[1.6.0]: https://github.com/onlyhooops/plookingII/compare/v1.5.0...v1.6.0
+[1.5.0]: https://github.com/onlyhooops/plookingII/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/onlyhooops/plookingII/compare/v1.3.1...v1.4.0
 [1.3.1]: https://github.com/onlyhooops/plookingII/compare/v1.2.5...v1.3.1
 [1.2.5]: https://github.com/onlyhooops/plookingII/compare/v1.2.4...v1.2.5

@@ -1,6 +1,6 @@
 [project]
 name = "plookingII"
-version = "1.4.0"
+version = "1.6.0"
 description = "macOS native image viewer with high performance"
 authors = [{name = "PlookingII Team"}]
 readme = "README.md"

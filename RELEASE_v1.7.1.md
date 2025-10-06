@@ -1,0 +1,236 @@
+# PlookingII v1.7.1 发布说明
+
+**发布日期**: 2025-10-06  
+**版本**: 1.7.1  
+**类型**: 补丁版本（Patch Release）
+
+---
+
+## 🎯 发布概述
+
+PlookingII v1.7.1 是一个小型改进版本，引入了**智能版本管理系统 V2.0**，彻底解决了版本号管理的痛点，使版本发布流程更加简单和可靠。
+
+**核心改进**：
+- 🎯 版本号单一真源（SSOT）
+- 🤖 自动化版本提升工具
+- 📦 动态版本读取
+- ✅ 零手动同步风险
+
+---
+
+## 🚀 新增功能
+
+### 1. 智能版本管理系统 V2.0
+
+#### 版本号单一真源
+
+创建了 `plookingII/__version__.py` 作为版本号的**唯一定义处**：
+
+```python
+# plookingII/__version__.py
+__version__ = "1.7.1"  # 🎯 唯一修改点
+
+# 其他所有地方自动导入
+VERSION = __version__
+APP_VERSION = __version__
+VERSION_INFO = (1, 7, 1)
+```
+
+**优势**：
+- ✅ 版本号只在一个地方定义
+- ✅ 所有模块自动导入最新版本
+- ✅ 完全消除版本号不一致风险
+
+#### 自动化版本提升工具
+
+新增 `scripts/bump_version.py` 工具：
+
+```bash
+# Bug修复（1.7.0 → 1.7.1）
+python3 scripts/bump_version.py patch
+
+# 功能新增（1.7.0 → 1.8.0）
+python3 scripts/bump_version.py minor
+
+# 重大更新（1.7.0 → 2.0.0）
+python3 scripts/bump_version.py major
+
+# 指定版本
+python3 scripts/bump_version.py 2.0.0
+```
+
+**功能**：
+- 自动提升版本号
+- 自动更新发布日期
+- 内置版本一致性验证
+- 提供详细的下一步操作指引
+
+#### 动态版本读取
+
+更新 `pyproject.toml` 使用动态版本：
+
+```toml
+[project]
+dynamic = ["version"]
+
+[tool.setuptools.dynamic]
+version = {attr = "plookingII.__version__.__version__"}
+```
+
+**好处**：
+- 打包时自动读取版本号
+- 符合 PEP 621 标准
+- 无需手动同步
+
+---
+
+## 🔧 改进项
+
+### 1. 配置层优化
+
+**之前**：
+```python
+# constants.py - 硬编码
+VERSION = "1.7.0"  # ❌ 需要手动更新
+```
+
+**现在**：
+```python
+# constants.py - 动态导入
+from ..__version__ import VERSION  # ✅ 自动同步
+```
+
+### 2. 向后兼容
+
+- ✅ 所有现有 API 保持不变
+- ✅ UI 显示自动同步
+- ✅ 打包流程无需修改
+- ✅ 现有代码无需更改
+
+---
+
+## 📚 文档更新
+
+### 新增文档
+
+1. **VERSION_MANAGEMENT_V2.md** - 智能版本管理系统完整指南
+   - 详细使用说明
+   - 最佳实践
+   - V1 vs V2 对比
+   - 常见问题解答
+
+2. **FINAL_RELEASE_SUMMARY.md** - v1.7.0 最终发布总结
+
+---
+
+## 📊 版本管理对比
+
+| 特性 | V1（旧方案） | V2（新方案） |
+|------|-------------|-------------|
+| **版本号定义** | 2个文件手动同步 | 1个文件自动同步 ✅ |
+| **修改点** | pyproject.toml + constants.py | 仅 __version__.py ✅ |
+| **自动化** | 无 | bump_version.py ✅ |
+| **验证** | 手动运行脚本 | 自动验证 ✅ |
+| **出错风险** | 容易遗漏同步 | 零风险 ✅ |
+
+---
+
+## 🎓 使用示例
+
+### 对用户
+
+**无需任何操作**，版本号显示完全正常：
+
+```
+关于 PlookingII
+┌─────────────────────────────────┐
+│        PlookingII              │
+│        V 1.7.1                 │  ← 自动显示新版本
+│  为 macOS 设计的原生图片浏览器 │
+└─────────────────────────────────┘
+```
+
+### 对开发者
+
+**发布新版本只需 3 步**：
+
+```bash
+# 1. 提升版本号
+$ python3 scripts/bump_version.py minor
+当前版本: 1.7.1
+新版本:   1.8.0
+✅ 版本号已提升
+
+# 2. 更新 CHANGELOG.md
+$ vim CHANGELOG.md
+
+# 3. 提交并推送
+$ git add -A
+$ git commit -m "chore: bump version to 1.8.0"
+$ git tag -a v1.8.0 -m "Release v1.8.0"
+$ git push origin main && git push origin v1.8.0
+```
+
+---
+
+## 🔄 升级指南
+
+### 对普通用户
+
+直接下载新版本即可，**完全兼容**旧版本数据。
+
+### 对开发者
+
+如果您 fork 了本项目，建议采用新的版本管理方式：
+
+1. 拉取最新代码
+2. 使用 `bump_version.py` 管理版本
+3. 查看 `VERSION_MANAGEMENT_V2.md` 了解详情
+
+**现有代码无需修改**，向后完全兼容。
+
+---
+
+## 🆚 v1.7.0 vs v1.7.1
+
+| 项目 | v1.7.0 | v1.7.1 |
+|------|--------|--------|
+| **核心功能** | 相同 | 相同 |
+| **版本管理** | 手动同步 | 智能自动化 ✅ |
+| **开发体验** | 中等 | 优秀 ✅ |
+| **出错风险** | 存在 | 消除 ✅ |
+
+---
+
+## 📦 下载
+
+- **源代码**: [GitHub Releases](https://github.com/onlyhooops/plookingII/releases/tag/v1.7.1)
+- **macOS 应用**: `PlookingII-1.7.1.dmg` (如有)
+
+---
+
+## 🐛 已知问题
+
+与 v1.7.0 相同，无新增问题。
+
+---
+
+## 🔮 下一步计划 (v1.8.0)
+
+- 提升 UI 测试覆盖率至 60%+
+- 进一步优化内存使用
+- 增强网络文件支持
+- 新增图片编辑功能
+- 完善国际化支持
+
+---
+
+## 📞 反馈
+
+如有问题或建议，请：
+- 提交 [GitHub Issue](https://github.com/onlyhooops/plookingII/issues)
+
+---
+
+**PlookingII Team**  
+*2025年10月6日*

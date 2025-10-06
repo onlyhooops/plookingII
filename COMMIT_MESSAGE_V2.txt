@@ -1,0 +1,30 @@
+feat: 实现智能版本管理系统 V2.0
+
+🎯 核心改进：
+- 创建 __version__.py 作为版本号唯一真源（SSOT）
+- 所有模块自动导入，无需手动同步
+- 新增 bump_version.py 自动提升工具
+- pyproject.toml 动态读取版本号
+
+✨ 新增功能：
+- plookingII/__version__.py: 版本号单一真源
+- scripts/bump_version.py: 版本自动提升工具
+- 支持 major/minor/patch 语义化版本提升
+- 自动更新发布日期
+- 内置版本一致性验证
+
+🔧 重构：
+- constants.py: 从 __version__.py 自动导入
+- pyproject.toml: 使用 dynamic version
+- semantic-release: 更新配置指向新源
+
+📚 文档：
+- 新增 VERSION_MANAGEMENT_V2.md 完整指南
+- 详细的使用说明和最佳实践
+
+🎉 效果：
+- 发布新版本只需修改一个文件
+- 零手动同步，零出错风险
+- 完整的自动化工具链
+
+BREAKING CHANGE: 无（完全向后兼容）

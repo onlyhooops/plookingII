@@ -18,6 +18,7 @@ from ...imports import logging, threading, time
 
 logger = logging.getLogger(APP_NAME)
 
+
 class NavigationController:
     """导航控制器，负责键盘导航和防抖逻辑
 
@@ -98,9 +99,7 @@ class NavigationController:
             modifier_flags = event.modifierFlags()
 
             # 检查 Command + Option 键组合（旋转功能）
-            if (modifier_flags & NSEventModifierFlagCommand) and (
-                modifier_flags & NSEventModifierFlagOption
-            ):
+            if (modifier_flags & NSEventModifierFlagCommand) and (modifier_flags & NSEventModifierFlagOption):
                 if chars.lower() == "r":  # Command + Option + R：向右旋转90°
                     logger.debug("检测到Command+Option+R快捷键，执行向右旋转")
                     self._execute_rotation_safely("clockwise")
@@ -114,19 +113,25 @@ class NavigationController:
             elif modifier_flags & NSEventModifierFlagCommand:
                 if chars.lower() == "z":
                     # 允许缺少 operation_manager 的精简窗口在测试中通过
-                    if hasattr(self.main_window, "operation_manager") and hasattr(self.main_window.operation_manager, "undo_keep_action"):
+                    if hasattr(self.main_window, "operation_manager") and hasattr(
+                        self.main_window.operation_manager, "undo_keep_action"
+                    ):
                         self.main_window.operation_manager.undo_keep_action()
                     elif hasattr(self.main_window, "undo_keep_action"):
                         self.main_window.undo_keep_action()
                     return True
                 if chars == "\uf703":  # Command + 右方向键：跳过当前文件夹
-                    if hasattr(self.main_window, "folder_manager") and hasattr(self.main_window.folder_manager, "skip_current_folder"):
+                    if hasattr(self.main_window, "folder_manager") and hasattr(
+                        self.main_window.folder_manager, "skip_current_folder"
+                    ):
                         self.main_window.folder_manager.skip_current_folder()
                     elif hasattr(self.main_window, "skip_current_folder"):
                         self.main_window.skip_current_folder()
                     return True
                 if chars == "\uf702":  # Command + 左方向键：撤销跳过文件夹
-                    if hasattr(self.main_window, "folder_manager") and hasattr(self.main_window.folder_manager, "undo_skip_folder"):
+                    if hasattr(self.main_window, "folder_manager") and hasattr(
+                        self.main_window.folder_manager, "undo_skip_folder"
+                    ):
                         self.main_window.folder_manager.undo_skip_folder()
                     elif hasattr(self.main_window, "undo_skip_folder"):
                         self.main_window.undo_skip_folder()
@@ -140,7 +145,9 @@ class NavigationController:
                 self._handle_navigation_key("right")
                 return True
             if chars == "\uf701":  # 下方向键，保留图片
-                if hasattr(self.main_window, "operation_manager") and hasattr(self.main_window.operation_manager, "keep_current_image"):
+                if hasattr(self.main_window, "operation_manager") and hasattr(
+                    self.main_window.operation_manager, "keep_current_image"
+                ):
                     self.main_window.operation_manager.keep_current_image()
                 elif hasattr(self.main_window, "keep_current_image"):
                     self.main_window.keep_current_image()
@@ -149,7 +156,9 @@ class NavigationController:
                 # 功能预留，当前无特殊操作
                 return True
             if event.keyCode() == 53:  # ESC 键
-                if hasattr(self.main_window, "operation_manager") and hasattr(self.main_window.operation_manager, "exit_current_folder"):
+                if hasattr(self.main_window, "operation_manager") and hasattr(
+                    self.main_window.operation_manager, "exit_current_folder"
+                ):
                     self.main_window.operation_manager.exit_current_folder()
                 elif hasattr(self.main_window, "exit_current_folder"):
                     self.main_window.exit_current_folder()
@@ -237,20 +246,24 @@ class NavigationController:
                     optimization = self._perf_optimizer.optimize_navigation(from_idx, to_idx, total)
                     adaptive_delay = optimization.get("optimal_debounce_sec", self._key_debounce_delay)
 
-                    logger.debug(f"Adaptive debounce: {adaptive_delay*1000:.1f}ms, velocity: {optimization.get('navigation_velocity', 0):.2f} img/s")
+                    logger.debug(
+                        f"Adaptive debounce: {adaptive_delay * 1000:.1f}ms, velocity: {optimization.get('navigation_velocity', 0):.2f} img/s"
+                    )
                 except Exception as e:
                     logger.debug(f"Failed to calculate optimal debounce: {e}")
                     # 回退到原有的自适应逻辑
-                    adaptive_delay = 0.005 if (prev_time and (current_time - prev_time) < 0.12) else self._key_debounce_delay
+                    adaptive_delay = (
+                        0.005 if (prev_time and (current_time - prev_time) < 0.12) else self._key_debounce_delay
+                    )
             else:
                 # 如果优化器不可用，使用原有的自适应逻辑
-                adaptive_delay = 0.005 if (prev_time and (current_time - prev_time) < 0.12) else self._key_debounce_delay
+                adaptive_delay = (
+                    0.005 if (prev_time and (current_time - prev_time) < 0.12) else self._key_debounce_delay
+                )
 
             # 设置新的防抖定时器（selector 需带冒号，方法需接收timer参数）
-            self._key_debounce_timer = (
-                NSTimer.scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(
-                    adaptive_delay, self.main_window, "executePendingNavigation:", None, False
-                )
+            self._key_debounce_timer = NSTimer.scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(
+                adaptive_delay, self.main_window, "executePendingNavigation:", None, False
             )
 
             # 确保计时器在 CommonModes 下也能触发（避免事件跟踪阶段阻塞）
@@ -318,7 +331,7 @@ class NavigationController:
 
         try:
             # 计算总步进：基础一次 + 累积队列
-            total_steps = ( -1 if pending_action == "left" else (1 if pending_action == "right" else 0) ) + queued
+            total_steps = (-1 if pending_action == "left" else (1 if pending_action == "right" else 0)) + queued
 
             # 若为文件夹跳转指令，优先处理
             if pending_action == "jump_prev":
@@ -335,7 +348,9 @@ class NavigationController:
                 target = cur + total_steps
                 if target < 0:
                     # 超过左边界 → 跳转上一个文件夹
-                    if hasattr(self.main_window, "folder_manager") and hasattr(self.main_window.folder_manager, "jump_to_previous_folder"):
+                    if hasattr(self.main_window, "folder_manager") and hasattr(
+                        self.main_window.folder_manager, "jump_to_previous_folder"
+                    ):
                         self.main_window.folder_manager.jump_to_previous_folder()
                     elif hasattr(self.main_window, "_jump_to_previous_folder"):
                         self.main_window._jump_to_previous_folder()
@@ -343,7 +358,9 @@ class NavigationController:
                         self.main_window.jump_to_previous_folder()
                 elif target >= n:
                     # 超过右边界 → 跳转下一个文件夹
-                    if hasattr(self.main_window, "folder_manager") and hasattr(self.main_window.folder_manager, "jump_to_next_folder"):
+                    if hasattr(self.main_window, "folder_manager") and hasattr(
+                        self.main_window.folder_manager, "jump_to_next_folder"
+                    ):
                         self.main_window.folder_manager.jump_to_next_folder()
                     elif hasattr(self.main_window, "_jump_to_next_folder"):
                         self.main_window._jump_to_next_folder()
@@ -361,9 +378,7 @@ class NavigationController:
                     elif self.main_window.images and self.main_window.current_index == 0:
                         self.main_window.folder_manager.jump_to_previous_folder()
                 elif pending_action == "right":
-                    if self.main_window.images and (
-                        self.main_window.current_index < len(self.main_window.images) - 1
-                    ):
+                    if self.main_window.images and (self.main_window.current_index < len(self.main_window.images) - 1):
                         self.main_window.current_index += 1
                         self.main_window._show_current_image_optimized()
                     elif self.main_window.images and (

@@ -2,15 +2,15 @@ name: CI - 持续集成
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
   schedule:
     # 每天UTC时间0点运行
-    - cron: '0 0 * * *'
+  - cron: 0 0 * * *
 
 env:
-  PYTHON_VERSION: "3.11"
+  PYTHON_VERSION: '3.11'
   CACHE_VERSION: v1
 
 jobs:
@@ -21,22 +21,22 @@ jobs:
     name: 版本号一致性验证
     runs-on: macos-latest
     timeout-minutes: 5
-    
+
     steps:
     - name: 检出代码
       uses: actions/checkout@v4
       timeout-minutes: 2
-      
+
     - name: 设置Python
       uses: actions/setup-python@v5
       with:
         python-version: ${{ env.PYTHON_VERSION }}
-        
+
     - name: 验证版本号一致性
       timeout-minutes: 2
       run: |
         python3 scripts/verify_version_consistency.py
-        
+
     - name: 版本信息摘要
       if: always()
       run: |
@@ -53,29 +53,29 @@ jobs:
     name: 代码质量检查
     runs-on: macos-latest
     timeout-minutes: 10
-    
+
     steps:
     - name: 检出代码
       uses: actions/checkout@v4
       timeout-minutes: 2
-      
+
     - name: 设置Python
       uses: actions/setup-python@v5
       with:
         python-version: ${{ env.PYTHON_VERSION }}
-        cache: 'pip'
-        
+        cache: pip
+
     - name: 安装依赖
       timeout-minutes: 5
       run: |
         python -m pip install --upgrade pip
         pip install ruff flake8 flake8-bugbear flake8-comprehensions
-        
+
     - name: Ruff检查
       timeout-minutes: 3
       run: |
         ruff check plookingII/ --output-format=github
-        
+
     - name: Ruff格式检查
       timeout-minutes: 2
       run: |
@@ -88,25 +88,25 @@ jobs:
     name: 类型检查
     runs-on: macos-latest
     timeout-minutes: 10
-    
+
     steps:
     - name: 检出代码
       uses: actions/checkout@v4
       timeout-minutes: 2
-      
+
     - name: 设置Python
       uses: actions/setup-python@v5
       with:
         python-version: ${{ env.PYTHON_VERSION }}
-        cache: 'pip'
-        
+        cache: pip
+
     - name: 安装依赖
       timeout-minutes: 5
       run: |
         python -m pip install --upgrade pip
         pip install mypy types-psutil types-Pillow
         pip install -r requirements.txt
-        
+
     - name: MyPy类型检查
       timeout-minutes: 5
       run: |
@@ -119,38 +119,38 @@ jobs:
     name: 安全扫描
     runs-on: macos-latest
     timeout-minutes: 15
-    
+
     steps:
     - name: 检出代码
       uses: actions/checkout@v4
       timeout-minutes: 2
-      
+
     - name: 设置Python
       uses: actions/setup-python@v5
       with:
         python-version: ${{ env.PYTHON_VERSION }}
-        cache: 'pip'
-        
+        cache: pip
+
     - name: 安装依赖
       timeout-minutes: 5
       run: |
         python -m pip install --upgrade pip
         pip install bandit safety
         pip install -r requirements.txt
-        
+
     - name: Bandit安全扫描
       timeout-minutes: 5
       run: |
         bandit -r plookingII/ -f json -o bandit-report.json || true
         bandit -r plookingII/ -f screen
       continue-on-error: true
-      
+
     - name: Safety依赖扫描
       timeout-minutes: 5
       run: |
         safety check --json || true
       continue-on-error: true
-      
+
     - name: 上传安全报告
       if: always()
       uses: actions/upload-artifact@v4
@@ -166,36 +166,36 @@ jobs:
     name: 单元测试
     runs-on: macos-latest
     timeout-minutes: 30
-    
+
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
-    
+        python-version: ['3.9', '3.10', '3.11', '3.12']
+
     steps:
     - name: 检出代码
       uses: actions/checkout@v4
       timeout-minutes: 2
-      
+
     - name: 设置Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-        cache: 'pip'
-        
+        cache: pip
+
     - name: 安装系统依赖
       timeout-minutes: 5
       run: |
         # macOS通常已经有必要的库
         echo "macOS 系统依赖检查完成"
-        
+
     - name: 安装Python依赖
       timeout-minutes: 10
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
-        
+
     - name: 运行单元测试
       timeout-minutes: 20
       run: |
@@ -211,7 +211,7 @@ jobs:
           --durations=10
       env:
         CI: true
-        
+
     - name: 上传覆盖率报告
       if: matrix.python-version == '3.11'
       uses: codecov/codecov-action@v4
@@ -230,25 +230,25 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 45
     needs: [unit-tests]
-    
+
     steps:
     - name: 检出代码
       uses: actions/checkout@v4
       timeout-minutes: 2
-      
+
     - name: 设置Python
       uses: actions/setup-python@v5
       with:
         python-version: ${{ env.PYTHON_VERSION }}
-        cache: 'pip'
-        
+        cache: pip
+
     - name: 安装依赖
       timeout-minutes: 10
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
-        
+
     - name: 运行集成测试
       timeout-minutes: 30
       run: |
@@ -272,25 +272,25 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 90
     if: github.event_name == 'schedule' || contains(github.event.head_commit.message, '[full-test]')
-    
+
     steps:
     - name: 检出代码
       uses: actions/checkout@v4
       timeout-minutes: 2
-      
+
     - name: 设置Python
       uses: actions/setup-python@v5
       with:
         python-version: ${{ env.PYTHON_VERSION }}
-        cache: 'pip'
-        
+        cache: pip
+
     - name: 安装依赖
       timeout-minutes: 10
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
-        
+
     - name: 运行完整测试套件
       timeout-minutes: 75
       run: |
@@ -306,7 +306,7 @@ jobs:
           --durations=20
       env:
         CI: true
-        
+
     - name: 上传完整覆盖率报告
       uses: actions/upload-artifact@v4
       with:
@@ -323,7 +323,7 @@ jobs:
     timeout-minutes: 5
     needs: [version-check, code-quality, type-check, security, unit-tests, integration-tests]
     if: always()
-    
+
     steps:
     - name: 生成测试摘要
       run: |
@@ -336,4 +336,3 @@ jobs:
         echo "- 安全扫描: ${{ needs.security.result }}" >> $GITHUB_STEP_SUMMARY
         echo "- 单元测试: ${{ needs.unit-tests.result }}" >> $GITHUB_STEP_SUMMARY
         echo "- 集成测试: ${{ needs.integration-tests.result }}" >> $GITHUB_STEP_SUMMARY
-

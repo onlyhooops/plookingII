@@ -6,8 +6,7 @@
 
 import logging
 import threading
-import time
-from unittest.mock import MagicMock, Mock, call, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -84,10 +83,7 @@ class TestErrorInfo:
         """测试创建错误信息"""
         error = ValueError("test error")
         info = ErrorInfo(
-            error=error,
-            category=ErrorCategory.SYSTEM,
-            severity=ErrorSeverity.HIGH,
-            context="test context"
+            error=error, category=ErrorCategory.SYSTEM, severity=ErrorSeverity.HIGH, context="test context"
         )
         assert info.error == error
         assert info.category == ErrorCategory.SYSTEM
@@ -99,11 +95,7 @@ class TestErrorInfo:
     def test_error_info_with_defaults(self):
         """测试默认值"""
         error = ValueError("test")
-        info = ErrorInfo(
-            error=error,
-            category=ErrorCategory.SYSTEM,
-            severity=ErrorSeverity.MEDIUM
-        )
+        info = ErrorInfo(error=error, category=ErrorCategory.SYSTEM, severity=ErrorSeverity.MEDIUM)
         assert info.context == ""
         assert info.stack_trace == ""
         assert info.recovery_action is None
@@ -113,12 +105,7 @@ class TestErrorInfo:
         """测试带元数据的错误信息"""
         error = ValueError("test")
         metadata = {"key": "value", "number": 42}
-        info = ErrorInfo(
-            error=error,
-            category=ErrorCategory.SYSTEM,
-            severity=ErrorSeverity.LOW,
-            metadata=metadata
-        )
+        info = ErrorInfo(error=error, category=ErrorCategory.SYSTEM, severity=ErrorSeverity.LOW, metadata=metadata)
         assert info.metadata == metadata
 
 
@@ -295,10 +282,10 @@ class TestErrorHandlerHandleError:
         handler = ErrorHandler()
         custom_handler = Mock(return_value="handled")
         handler.register_handler(ValueError, custom_handler)
-        
+
         error = ValueError("test")
         result = handler.handle_error(error)
-        
+
         assert custom_handler.called
         assert result == "handled"
 
@@ -307,7 +294,7 @@ class TestErrorHandlerHandleError:
         handler = ErrorHandler()
         bad_handler = Mock(side_effect=Exception("handler error"))
         handler.register_handler(ValueError, bad_handler)
-        
+
         error = ValueError("test")
         # 不应该抛出异常
         result = handler.handle_error(error)
@@ -322,10 +309,10 @@ class TestErrorCategorization:
     def test_categorize_config_error(self):
         """测试配置错误分类"""
         handler = ErrorHandler()
-        
+
         class ConfigError(Exception):
             pass
-        
+
         error = ConfigError("test")
         category = handler._categorize_error(error)
         assert category == ErrorCategory.CONFIGURATION
@@ -333,10 +320,10 @@ class TestErrorCategorization:
     def test_categorize_network_error(self):
         """测试网络错误分类"""
         handler = ErrorHandler()
-        
+
         class NetworkError(Exception):
             pass
-        
+
         error = NetworkError("test")
         category = handler._categorize_error(error)
         assert category == ErrorCategory.NETWORK
@@ -351,10 +338,10 @@ class TestErrorCategorization:
     def test_categorize_memory_error(self):
         """测试内存错误分类"""
         handler = ErrorHandler()
-        
+
         class OutOfMemoryError(Exception):
             pass
-        
+
         error = OutOfMemoryError("test")
         category = handler._categorize_error(error)
         assert category == ErrorCategory.MEMORY
@@ -375,10 +362,10 @@ class TestErrorSeverityAssessment:
     def test_assess_critical_severity(self):
         """测试严重错误评估"""
         handler = ErrorHandler()
-        
+
         class CriticalError(Exception):
             pass
-        
+
         error = CriticalError("test")
         severity = handler._assess_severity(error)
         assert severity == ErrorSeverity.CRITICAL
@@ -386,10 +373,10 @@ class TestErrorSeverityAssessment:
     def test_assess_memory_severity(self):
         """测试内存错误严重度"""
         handler = ErrorHandler()
-        
+
         class OutOfMemoryError(Exception):
             pass
-        
+
         error = OutOfMemoryError("test")
         severity = handler._assess_severity(error)
         assert severity == ErrorSeverity.HIGH
@@ -419,7 +406,7 @@ class TestErrorHandlerFindHandler:
         handler = ErrorHandler()
         custom_handler = Mock()
         handler.register_handler(ValueError, custom_handler)
-        
+
         found = handler._find_handler(ValueError)
         assert found == custom_handler
 
@@ -428,7 +415,7 @@ class TestErrorHandlerFindHandler:
         handler = ErrorHandler()
         custom_handler = Mock()
         handler.register_handler(Exception, custom_handler)
-        
+
         found = handler._find_handler(ValueError)
         assert found == custom_handler
 
@@ -437,7 +424,7 @@ class TestErrorHandlerFindHandler:
         handler = ErrorHandler()
         # 清空处理器
         handler._error_handlers.clear()
-        
+
         found = handler._find_handler(ValueError)
         assert found is None
 
@@ -450,12 +437,8 @@ class TestErrorRecording:
     def test_record_error(self):
         """测试记录错误"""
         handler = ErrorHandler()
-        error_info = ErrorInfo(
-            error=ValueError("test"),
-            category=ErrorCategory.SYSTEM,
-            severity=ErrorSeverity.MEDIUM
-        )
-        
+        error_info = ErrorInfo(error=ValueError("test"), category=ErrorCategory.SYSTEM, severity=ErrorSeverity.MEDIUM)
+
         initial_count = len(handler._error_history)
         handler._record_error(error_info)
         assert len(handler._error_history) == initial_count + 1
@@ -465,30 +448,26 @@ class TestErrorRecording:
         handler = ErrorHandler()
         # 清空初始历史记录
         handler._error_history.clear()
-        
+
         # Mock日志记录以提高测试速度
-        with patch.object(handler.logger, 'log'):
+        with patch.object(handler.logger, "log"):
             # 添加1001个错误，触发截断
             for i in range(1001):
                 error_info = ErrorInfo(
-                    error=ValueError(f"test {i}"),
-                    category=ErrorCategory.SYSTEM,
-                    severity=ErrorSeverity.MEDIUM
+                    error=ValueError(f"test {i}"), category=ErrorCategory.SYSTEM, severity=ErrorSeverity.MEDIUM
                 )
                 handler._record_error(error_info)
-            
+
             # 在第1001个时应该触发截断，保留最后500个
             assert len(handler._error_history) == 500
-            
+
             # 继续添加100个
             for i in range(1001, 1101):
                 error_info = ErrorInfo(
-                    error=ValueError(f"test {i}"),
-                    category=ErrorCategory.SYSTEM,
-                    severity=ErrorSeverity.MEDIUM
+                    error=ValueError(f"test {i}"), category=ErrorCategory.SYSTEM, severity=ErrorSeverity.MEDIUM
                 )
                 handler._record_error(error_info)
-            
+
             # 现在应该有600个（500 + 100）
             assert len(handler._error_history) == 600
 
@@ -499,10 +478,10 @@ class TestErrorRecording:
             error=ValueError("test error"),
             category=ErrorCategory.SYSTEM,
             severity=ErrorSeverity.HIGH,
-            context="test context"
+            context="test context",
         )
-        
-        with patch.object(handler.logger, 'log') as mock_log:
+
+        with patch.object(handler.logger, "log") as mock_log:
             handler._log_error(error_info)
             assert mock_log.called
             # 验证日志级别
@@ -517,48 +496,53 @@ class TestErrorDecorator:
 
     def test_error_handler_decorator_success(self):
         """测试装饰器正常执行"""
+
         @error_handler()
         def test_func():
             return "success"
-        
+
         result = test_func()
         assert result == "success"
 
     def test_error_handler_decorator_exception(self):
         """测试装饰器捕获异常"""
+
         @error_handler()
         def test_func():
             raise ValueError("test error")
-        
+
         # 装饰器会重新抛出无法恢复的异常
         with pytest.raises(ValueError):
             test_func()
 
     def test_error_handler_decorator_with_category(self):
         """测试装饰器带类别"""
+
         @error_handler(category=ErrorCategory.NETWORK)
         def test_func():
             raise ValueError("test error")
-        
+
         # 装饰器会重新抛出异常
         with pytest.raises(ValueError):
             test_func()
 
     def test_error_handler_decorator_with_args(self):
         """测试装饰器带参数的函数"""
+
         @error_handler()
         def test_func(a, b):
             return a + b
-        
+
         result = test_func(1, 2)
         assert result == 3
 
     def test_error_handler_decorator_with_kwargs(self):
         """测试装饰器带关键字参数"""
+
         @error_handler()
         def test_func(a, b=10):
             return a + b
-        
+
         result = test_func(5, b=15)
         assert result == 20
 
@@ -573,7 +557,7 @@ class TestErrorContext:
         result = []
         with error_context("test context"):
             result.append("executed")
-        
+
         assert result == ["executed"]
 
     def test_error_context_exception(self):
@@ -596,15 +580,15 @@ class TestErrorContext:
 class TestErrorLogging:
     """测试错误日志设置"""
 
-    @patch('os.makedirs')
-    @patch('logging.handlers.RotatingFileHandler')
+    @patch("os.makedirs")
+    @patch("logging.handlers.RotatingFileHandler")
     def test_setup_error_logging(self, mock_handler, mock_makedirs):
         """测试设置错误日志"""
         mock_handler_instance = MagicMock()
         mock_handler.return_value = mock_handler_instance
-        
+
         log_path = setup_error_logging()
-        
+
         assert isinstance(log_path, str)
         assert "plookingii" in log_path.lower()
         assert mock_makedirs.called
@@ -613,12 +597,13 @@ class TestErrorLogging:
         """测试获取未设置的日志路径"""
         # 确保全局变量被重置
         import plookingII.core.error_handling as eh_module
-        original = getattr(eh_module, '_ERROR_LOG_PATH', None)
+
+        original = getattr(eh_module, "_ERROR_LOG_PATH", None)
         eh_module._ERROR_LOG_PATH = None
-        
+
         result = get_error_log_path()
         assert result is None
-        
+
         # 恢复
         eh_module._ERROR_LOG_PATH = original
 
@@ -632,18 +617,18 @@ class TestErrorHandlerThreadSafety:
         """测试并发错误处理"""
         handler = ErrorHandler()
         errors = []
-        
+
         def handle_error(i):
             error = ValueError(f"test {i}")
             handler.handle_error(error)
             errors.append(i)
-        
+
         threads = [threading.Thread(target=handle_error, args=(i,)) for i in range(10)]
         for t in threads:
             t.start()
         for t in threads:
             t.join()
-        
+
         # 所有错误应该都被记录
         assert len(errors) == 10
         assert len(handler._error_history) >= 10
@@ -674,10 +659,10 @@ class TestErrorHandlerEdgeCases:
         handler = ErrorHandler()
         handler1 = Mock()
         handler2 = Mock()
-        
+
         handler.register_handler(ValueError, handler1)
         handler.register_handler(ValueError, handler2)
-        
+
         # 后注册的应该覆盖前面的
         assert handler._error_handlers[ValueError] == handler2
 
@@ -686,11 +671,10 @@ class TestErrorHandlerEdgeCases:
         handler = ErrorHandler()
         strategy = Mock(return_value="recovered")
         handler.register_recovery_strategy(ErrorCategory.NETWORK, strategy)
-        
+
         error = PlookingIIError("test", category=ErrorCategory.NETWORK)
         # 清空处理器以便测试恢复策略
         handler._error_handlers.clear()
         result = handler.handle_error(error)
-        
-        assert strategy.called
 
+        assert strategy.called

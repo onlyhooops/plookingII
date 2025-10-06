@@ -279,4 +279,3 @@ class TestCacheOptimizationConfigEdgeCases:
         assert config.enable_stats is False
         assert config.performance_monitoring is False
         assert config.auto_cleanup_enabled is False
-

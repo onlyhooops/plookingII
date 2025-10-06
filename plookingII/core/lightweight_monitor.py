@@ -24,6 +24,7 @@ from ..imports import logging
 
 logger = logging.getLogger(APP_NAME)
 
+
 class LightweightMonitor:
     """轻量级监控系统
 
@@ -41,28 +42,23 @@ class LightweightMonitor:
 
         # 关键指标
         self.metrics = {
-            "cache_hit_rate": 0.0,           # 缓存命中率
-            "avg_load_time": 0.0,            # 平均加载时间
-            "memory_usage_mb": 0.0,          # 内存使用量（MB）
-            "total_requests": 0,             # 总请求数
-            "error_count": 0,                # 错误数量
-            "last_update_time": 0.0          # 最后更新时间
+            "cache_hit_rate": 0.0,  # 缓存命中率
+            "avg_load_time": 0.0,  # 平均加载时间
+            "memory_usage_mb": 0.0,  # 内存使用量（MB）
+            "total_requests": 0,  # 总请求数
+            "error_count": 0,  # 错误数量
+            "last_update_time": 0.0,  # 最后更新时间
         }
 
         # 历史记录
         self.history = {
             "load_times": deque(maxlen=max_history),
             "memory_usage": deque(maxlen=max_history),
-            "cache_hit_rates": deque(maxlen=max_history)
+            "cache_hit_rates": deque(maxlen=max_history),
         }
 
         # 计数器
-        self.counters = {
-            "cache_hits": 0,
-            "cache_misses": 0,
-            "successful_loads": 0,
-            "failed_loads": 0
-        }
+        self.counters = {"cache_hits": 0, "cache_misses": 0, "successful_loads": 0, "failed_loads": 0}
 
         logger.info("Lightweight monitor initialized")
 
@@ -142,7 +138,7 @@ class LightweightMonitor:
             return {
                 "load_times": list(self.history["load_times"]),
                 "memory_usage": list(self.history["memory_usage"]),
-                "cache_hit_rates": list(self.history["cache_hit_rates"])
+                "cache_hit_rates": list(self.history["cache_hit_rates"]),
             }
 
     def get_summary(self) -> dict[str, Any]:
@@ -165,7 +161,7 @@ class LightweightMonitor:
                 "success_rate": success_rate,
                 "error_count": self.metrics["error_count"],
                 "total_loads": total_loads,
-                "last_update_time": self.metrics["last_update_time"]
+                "last_update_time": self.metrics["last_update_time"],
             }
 
     def reset(self):
@@ -177,7 +173,7 @@ class LightweightMonitor:
                 "memory_usage_mb": 0.0,
                 "total_requests": 0,
                 "error_count": 0,
-                "last_update_time": 0.0
+                "last_update_time": 0.0,
             }
 
             for history_list in self.history.values():
@@ -199,14 +195,14 @@ class LightweightMonitor:
         report = f"""
 PlookingII Performance Report
 ============================
-Cache Hit Rate: {summary['cache_hit_rate']:.2%}
-Average Load Time: {summary['avg_load_time']:.3f}s
-Memory Usage: {summary['memory_usage_mb']:.1f}MB
-Total Requests: {summary['total_requests']}
-Success Rate: {summary['success_rate']:.2%}
-Error Count: {summary['error_count']}
-Total Loads: {summary['total_loads']}
-Last Update: {time.ctime(summary['last_update_time'])}
+Cache Hit Rate: {summary["cache_hit_rate"]:.2%}
+Average Load Time: {summary["avg_load_time"]:.3f}s
+Memory Usage: {summary["memory_usage_mb"]:.1f}MB
+Total Requests: {summary["total_requests"]}
+Success Rate: {summary["success_rate"]:.2%}
+Error Count: {summary["error_count"]}
+Total Loads: {summary["total_loads"]}
+Last Update: {time.ctime(summary["last_update_time"])}
         """.strip()
 
         return report
@@ -253,6 +249,7 @@ Last Update: {time.ctime(summary['last_update_time'])}
 
         return recommendations
 
+
 class PerformanceTracker:
     """性能跟踪器"""
 
@@ -286,8 +283,10 @@ class PerformanceTracker:
         """
         self.operation_name = name
 
+
 # 全局监控实例
 lightweight_monitor = LightweightMonitor()
+
 
 def get_monitor() -> LightweightMonitor:
     """获取全局监控实例
@@ -296,6 +295,7 @@ def get_monitor() -> LightweightMonitor:
         监控实例
     """
     return lightweight_monitor
+
 
 def track_performance(operation_name: str = None):
     """性能跟踪装饰器
@@ -306,11 +306,14 @@ def track_performance(operation_name: str = None):
     Returns:
         装饰器函数
     """
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             with PerformanceTracker(lightweight_monitor) as tracker:
                 if operation_name:
                     tracker.set_operation_name(operation_name)
                 return func(*args, **kwargs)
+
         return wrapper
+
     return decorator

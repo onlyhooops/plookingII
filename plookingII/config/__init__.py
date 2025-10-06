@@ -28,22 +28,22 @@ Author: PlookingII Team
 """
 
 from .constants import (
-                        APP_NAME,
-                        AUTHOR,
-                        COPYRIGHT,
-                        IMAGE_PROCESSING_CONFIG,
-                        MAX_CACHE_SIZE,
-                        MEMORY_THRESHOLD_MB,
-                        SUPPORTED_IMAGE_EXTS,
-                        VERSION,
+    APP_NAME,
+    AUTHOR,
+    COPYRIGHT,
+    IMAGE_PROCESSING_CONFIG,
+    MAX_CACHE_SIZE,
+    MEMORY_THRESHOLD_MB,
+    SUPPORTED_IMAGE_EXTS,
+    VERSION,
 )
 from .image_processing_config import (
-                        CACHE_CONFIG,
-                        EXIF_PROCESSING_CONFIG,
-                        IMAGE_LOADING_OPTIMIZATIONS,
-                        PERFORMANCE_MONITORING,
-                        PIL_FALLBACK_CONFIG,
-                        QUARTZ_CONFIG,
+    CACHE_CONFIG,
+    EXIF_PROCESSING_CONFIG,
+    IMAGE_LOADING_OPTIMIZATIONS,
+    PERFORMANCE_MONITORING,
+    PIL_FALLBACK_CONFIG,
+    QUARTZ_CONFIG,
 )
 from .manager import Config, ConfigManager, ConfigSchema, ConfigType, get_config, get_config_manager, set_config
 

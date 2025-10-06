@@ -190,9 +190,7 @@ class UnifiedMonitor:
                 self.stats["failed_operations"] += 1
 
             self.stats["total_response_time"] += duration_ms
-            self.stats["avg_response_time"] = (
-                self.stats["total_response_time"] / self.stats["total_operations"]
-            )
+            self.stats["avg_response_time"] = self.stats["total_response_time"] / self.stats["total_operations"]
 
             # 更新缓存统计
             if cache_hit is not None:
@@ -257,12 +255,11 @@ class UnifiedMonitor:
         """根据内存使用率判断压力级别"""
         if percent < 70:
             return "low"
-        elif percent < self.memory_thresholds["cleanup"] * 100:
+        if percent < self.memory_thresholds["cleanup"] * 100:
             return "medium"
-        elif percent < self.memory_thresholds["critical"] * 100:
+        if percent < self.memory_thresholds["critical"] * 100:
             return "high"
-        else:
-            return "critical"
+        return "critical"
 
     def _generate_recommendations(self, pressure_level: str, percent: float) -> list[str]:
         """生成内存优化建议"""
@@ -300,10 +297,7 @@ class UnifiedMonitor:
                     status = self.get_memory_status()
                     if status.percent > self.memory_thresholds["cleanup"] * 100:
                         self.stats["memory_cleanups"] += 1
-                        logger.warning(
-                            f"内存压力: {status.pressure_level} "
-                            f"({status.percent:.1f}%), 建议清理缓存"
-                        )
+                        logger.warning(f"内存压力: {status.pressure_level} ({status.percent:.1f}%), 建议清理缓存")
 
                 except Exception as e:
                     logger.error(f"监控循环错误: {e}")
@@ -341,9 +335,7 @@ class UnifiedMonitor:
 
             # 添加成功率
             if stats["total_operations"] > 0:
-                stats["success_rate"] = (
-                    stats["successful_operations"] / stats["total_operations"]
-                )
+                stats["success_rate"] = stats["successful_operations"] / stats["total_operations"]
             else:
                 stats["success_rate"] = 0.0
 
@@ -383,9 +375,7 @@ _global_monitor: UnifiedMonitor | None = None
 _monitor_lock = threading.Lock()
 
 
-def get_unified_monitor(
-    level: MonitoringLevel = MonitoringLevel.STANDARD, **kwargs
-) -> UnifiedMonitor:
+def get_unified_monitor(level: MonitoringLevel = MonitoringLevel.STANDARD, **kwargs) -> UnifiedMonitor:
     """获取全局统一监控器实例
 
     Args:

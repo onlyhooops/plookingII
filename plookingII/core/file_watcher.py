@@ -34,21 +34,26 @@ from ..config.constants import APP_NAME
 
 logger = logging.getLogger(APP_NAME)
 
+
 class FileChangeType(Enum):
     """文件变化类型"""
+
     MODIFIED = "modified"  # 文件被修改
-    DELETED = "deleted"   # 文件被删除
-    CREATED = "created"   # 文件被创建
-    MOVED = "moved"       # 文件被移动/重命名
+    DELETED = "deleted"  # 文件被删除
+    CREATED = "created"  # 文件被创建
+    MOVED = "moved"  # 文件被移动/重命名
+
 
 @dataclass
 class FileChangeEvent:
     """文件变化事件"""
+
     file_path: str
     change_type: FileChangeType
     timestamp: float
     old_path: str | None = None  # 用于MOVED事件
     metadata: dict = None
+
 
 class FileWatcherStrategy:
     """文件监听策略基类"""
@@ -83,6 +88,7 @@ class FileWatcherStrategy:
         """停止监听"""
         raise NotImplementedError
 
+
 class PollingFileWatcher(FileWatcherStrategy):
     """基于轮询的文件监听器（兜底方案）
 
@@ -107,11 +113,7 @@ class PollingFileWatcher(FileWatcherStrategy):
         try:
             stat = os.stat(file_path)
             file_hash = self._calculate_file_hash(file_path)
-            self.watched_files[file_path] = {
-                "mtime": stat.st_mtime,
-                "size": stat.st_size,
-                "hash": file_hash
-            }
+            self.watched_files[file_path] = {"mtime": stat.st_mtime, "size": stat.st_size, "hash": file_hash}
 
             if not self.is_watching:
                 self._start_polling()
@@ -160,9 +162,7 @@ class PollingFileWatcher(FileWatcherStrategy):
                 if not os.path.exists(file_path):
                     # 文件被删除
                     event = FileChangeEvent(
-                        file_path=file_path,
-                        change_type=FileChangeType.DELETED,
-                        timestamp=time.time()
+                        file_path=file_path, change_type=FileChangeType.DELETED, timestamp=time.time()
                     )
                     self.notify_callbacks(event)
                     files_to_remove.append(file_path)
@@ -173,9 +173,7 @@ class PollingFileWatcher(FileWatcherStrategy):
                 current_mtime = stat.st_mtime
                 current_size = stat.st_size
 
-                if (current_mtime != old_info["mtime"] or
-                    current_size != old_info["size"]):
-
+                if current_mtime != old_info["mtime"] or current_size != old_info["size"]:
                     # 文件可能被修改，进一步验证哈希
                     current_hash = self._calculate_file_hash(file_path)
                     if current_hash != old_info["hash"]:
@@ -188,8 +186,8 @@ class PollingFileWatcher(FileWatcherStrategy):
                                 "old_mtime": old_info["mtime"],
                                 "new_mtime": current_mtime,
                                 "old_size": old_info["size"],
-                                "new_size": current_size
-                            }
+                                "new_size": current_size,
+                            },
                         )
                         self.notify_callbacks(event)
 
@@ -197,7 +195,7 @@ class PollingFileWatcher(FileWatcherStrategy):
                         self.watched_files[file_path] = {
                             "mtime": current_mtime,
                             "size": current_size,
-                            "hash": current_hash
+                            "hash": current_hash,
                         }
 
             except Exception as e:
@@ -209,7 +207,7 @@ class PollingFileWatcher(FileWatcherStrategy):
 
     def _calculate_file_hash(self, file_path: str, chunk_size: int = 8192) -> str:
         """计算文件哈希值（仅前64KB，性能优化）
-        
+
         Note: MD5用于文件变化检测，不用于安全目的
         """
         try:
@@ -223,6 +221,7 @@ class PollingFileWatcher(FileWatcherStrategy):
         except Exception as e:
             logger.debug(f"计算文件哈希失败 {file_path}: {e}")
             return ""
+
 
 try:
     # 尝试导入watchdog库（更高效的文件监听）
@@ -319,9 +318,7 @@ try:
             """文件修改事件"""
             if not event.is_directory and event.src_path in self.watched_files:
                 file_event = FileChangeEvent(
-                    file_path=event.src_path,
-                    change_type=FileChangeType.MODIFIED,
-                    timestamp=time.time()
+                    file_path=event.src_path, change_type=FileChangeType.MODIFIED, timestamp=time.time()
                 )
                 self.notify_callbacks(file_event)
 
@@ -329,9 +326,7 @@ try:
             """文件删除事件"""
             if not event.is_directory and event.src_path in self.watched_files:
                 file_event = FileChangeEvent(
-                    file_path=event.src_path,
-                    change_type=FileChangeType.DELETED,
-                    timestamp=time.time()
+                    file_path=event.src_path, change_type=FileChangeType.DELETED, timestamp=time.time()
                 )
                 self.notify_callbacks(file_event)
 
@@ -344,7 +339,7 @@ try:
                         file_path=event.dest_path,
                         change_type=FileChangeType.MOVED,
                         timestamp=time.time(),
-                        old_path=event.src_path
+                        old_path=event.src_path,
                     )
                     self.notify_callbacks(file_event)
 
@@ -355,6 +350,7 @@ try:
 except ImportError:
     # watchdog不可用，使用None标记
     WatchdogFileWatcher = None
+
 
 class FileWatcher:
     """文件监听器管理类

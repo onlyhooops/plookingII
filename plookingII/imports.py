@@ -17,6 +17,7 @@ PlookingII 共享导入模块
 
 Author: PlookingII Team
 """
+
 import hashlib as hashlib  # 公开 hashlib
 import logging as logging  # 公开 logging 以供 "from ..imports import logging"
 import os
@@ -37,12 +38,14 @@ _os = os
 # SQLite3 别名
 try:
     import sqlite3
+
     _sqlite3 = sqlite3
 except Exception:
     _sqlite3 = None
 
 try:
     from PIL import Image  # Pillow 可选
+
     try:
         # 提升像素阈值，减少超大图告警（仍保留 DOS 保护）
         Image.MAX_IMAGE_PIXELS = 150_000_000
@@ -54,6 +57,7 @@ except Exception:
 # ==================== PyObjC 桥接 ====================
 try:
     import objc as objc
+
     _objc = objc
 except Exception:
     objc = None
@@ -85,15 +89,9 @@ try:
     from Foundation import (
         NSURL,
     )
-    from Foundation import (
-        NSDefaultRunLoopMode as _NSDefaultRunLoopMode,
-    )
-    from Foundation import (
-        NSRunLoop as _NSRunLoop,
-    )
-    from Foundation import (
-        NSTimer as _NSTimer,  # 别名保留
-    )
+    from Foundation import NSDefaultRunLoopMode as _NSDefaultRunLoopMode
+    from Foundation import NSRunLoop as _NSRunLoop
+    from Foundation import NSTimer as _NSTimer  # 别名保留
 
     QUARTZ_AVAILABLE = True
 except Exception:

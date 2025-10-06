@@ -10,6 +10,7 @@ logger = logging.getLogger(APP_NAME)
 _dual_thread_start_logged = False
 _dual_thread_log_lock = threading.Lock()
 
+
 class HybridImageProcessor:
     """图像处理器 - 重构版
 
@@ -82,7 +83,7 @@ class HybridImageProcessor:
                 "kCGImageSourceShouldCache": True,
                 "kCGImageSourceShouldAllowFloat": True,
                 "kCGImageSourceCreateThumbnailFromImageAlways": True,
-                "kCGImageSourceCreateThumbnailWithTransform": True  # 启用EXIF方向处理
+                "kCGImageSourceCreateThumbnailWithTransform": True,  # 启用EXIF方向处理
             }
         except Exception:
             self.quartz_enabled = False
@@ -93,7 +94,7 @@ class HybridImageProcessor:
             "optimized": OptimizedLoadingStrategyFactory.create_strategy("optimized"),
             "preview": OptimizedLoadingStrategyFactory.create_strategy("preview"),
             "auto": OptimizedLoadingStrategyFactory.create_strategy("auto"),
-            "fast": OptimizedLoadingStrategyFactory.create_strategy("fast")
+            "fast": OptimizedLoadingStrategyFactory.create_strategy("fast"),
         }
 
     def load_image_optimized(self, file_path, target_size=None, progressive=False, strategy="auto"):
@@ -313,8 +314,9 @@ class HybridImageProcessor:
             return None
 
     # 兼容旧API
-    def _load_auto_optimized(self, file_path: str, file_size_mb=None, file_ext: str = None,
-                              target_size=None, progressive: bool = False):
+    def _load_auto_optimized(
+        self, file_path: str, file_size_mb=None, file_ext: str = None, target_size=None, progressive: bool = False
+    ):
         try:
             strategy = self.loading_strategies.get("auto") or self.loading_strategies.get("optimized")
             return strategy.load(file_path, target_size)
@@ -451,7 +453,7 @@ class HybridImageProcessor:
                 "successful_loads": 0,
                 "failed_loads": 0,
                 "total_time": 0.0,
-                "avg_time": 0.0
+                "avg_time": 0.0,
             }
 
         # 重置旋转统计

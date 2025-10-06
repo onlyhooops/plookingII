@@ -5,15 +5,12 @@
 Author: PlookingII Team
 """
 
-from unittest.mock import Mock, patch
-
-import pytest
-
 
 # 测试注意：cache.py已被重构为cache/子模块，这些是兼容性测试
 # 使用模拟类进行基本功能测试
 class SimpleCacheLayer:
     """简化的缓存层实现（用于测试）"""
+
     def __init__(self, max_size=50):
         self.cache = {}
         self.access_order = []
@@ -68,14 +65,16 @@ class SimpleCacheLayer:
             "max_size": self.max_size,
             "hits": self.hits,
             "misses": self.misses,
-            "hit_rate": hit_rate
+            "hit_rate": hit_rate,
         }
 
 
 class AdvancedImageCache:
     """高级图像缓存（用于测试）"""
+
     def __init__(self, max_size=20):
         import threading
+
         self.max_size = max_size
         self.cache = {}
         self.hits = 0
@@ -108,12 +107,7 @@ class AdvancedImageCache:
 
     def get_stats(self):
         with self._lock:
-            return {
-                "size": len(self.cache),
-                "cache_size": len(self.cache),
-                "hits": self.hits,
-                "misses": self.misses
-            }
+            return {"size": len(self.cache), "cache_size": len(self.cache), "hits": self.hits, "misses": self.misses}
 
 
 class TestSimpleCacheLayer:
@@ -131,7 +125,7 @@ class TestSimpleCacheLayer:
         """测试添加和获取"""
         cache = SimpleCacheLayer()
         cache.put("key1", "value1")
-        
+
         result = cache.get("key1")
         assert result == "value1"
         assert cache.hits == 1
@@ -140,7 +134,7 @@ class TestSimpleCacheLayer:
         """测试缓存未命中"""
         cache = SimpleCacheLayer()
         result = cache.get("nonexistent")
-        
+
         assert result is None
         assert cache.misses == 1
 
@@ -149,7 +143,7 @@ class TestSimpleCacheLayer:
         cache = SimpleCacheLayer()
         cache.put("key1", "value1")
         cache.put("key1", "value2")
-        
+
         assert cache.get("key1") == "value2"
         assert len(cache.cache) == 1
 
@@ -159,7 +153,7 @@ class TestSimpleCacheLayer:
         cache.put("key1", "value1")
         cache.put("key2", "value2")
         cache.put("key3", "value3")
-        
+
         # key1应该被淘汰（最旧的）
         assert cache.get("key1") is None
         assert cache.get("key2") == "value2"
@@ -170,13 +164,13 @@ class TestSimpleCacheLayer:
         cache = SimpleCacheLayer(max_size=2)
         cache.put("key1", "value1")
         cache.put("key2", "value2")
-        
+
         # 访问key1，更新其访问顺序
         cache.get("key1")
-        
+
         # 添加key3，key2应该被淘汰
         cache.put("key3", "value3")
-        
+
         assert cache.get("key1") == "value1"
         assert cache.get("key2") is None
         assert cache.get("key3") == "value3"
@@ -185,7 +179,7 @@ class TestSimpleCacheLayer:
         """测试移除"""
         cache = SimpleCacheLayer()
         cache.put("key1", "value1")
-        
+
         assert cache.remove("key1") is True
         assert cache.get("key1") is None
         assert cache.remove("key1") is False
@@ -195,9 +189,9 @@ class TestSimpleCacheLayer:
         cache = SimpleCacheLayer()
         cache.put("key1", "value1")
         cache.put("key2", "value2")
-        
+
         cache.clear()
-        
+
         assert len(cache.cache) == 0
         assert len(cache.access_order) == 0
 
@@ -207,7 +201,7 @@ class TestSimpleCacheLayer:
         cache.put("key1", "value1")
         cache.get("key1")  # hit
         cache.get("key2")  # miss
-        
+
         stats = cache.get_stats()
         assert stats["size"] == 1
         assert stats["max_size"] == 10
@@ -229,17 +223,17 @@ class TestAdvancedImageCache:
         """测试基本的添加和获取"""
         cache = AdvancedImageCache()
         test_data = {"image": "data"}
-        
+
         cache.put("test_key", test_data)
         result = cache.get("test_key")
-        
+
         assert result == test_data
 
     def test_contains(self):
         """测试contains方法"""
         cache = AdvancedImageCache()
         cache.put("key1", "value1")
-        
+
         assert cache.contains("key1") is True
         assert cache.contains("key2") is False
 
@@ -248,36 +242,37 @@ class TestAdvancedImageCache:
         cache = AdvancedImageCache()
         cache.put("key1", "value1")
         cache.put("key2", "value2")
-        
+
         cache.clear()
-        
+
         assert cache.get("key1") is None
         assert cache.get("key2") is None
 
     def test_thread_safety(self):
         """测试线程安全"""
         import threading
+
         cache = AdvancedImageCache()
-        
+
         def worker(thread_id):
             for i in range(10):
                 key = f"key_{thread_id}_{i}"
                 cache.put(key, f"value_{thread_id}_{i}")
                 cache.get(key)
-        
+
         threads = [threading.Thread(target=worker, args=(i,)) for i in range(3)]
         for t in threads:
             t.start()
         for t in threads:
             t.join()
-        
+
         # 应该没有抛出异常
 
     def test_get_size(self):
         """测试获取大小"""
         cache = AdvancedImageCache()
         assert cache.get_size() == 0
-        
+
         cache.put("key1", "value1")
         cache.put("key2", "value2")
         assert cache.get_size() == 2
@@ -288,9 +283,8 @@ class TestAdvancedImageCache:
         cache.put("key1", "value1")
         cache.get("key1")
         cache.get("key2")  # miss
-        
+
         stats = cache.get_stats()
         assert "size" in stats or "cache_size" in stats
         assert "hits" in stats
         assert "misses" in stats
-

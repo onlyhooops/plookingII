@@ -83,26 +83,16 @@ class LoadingConfig:
 
             return cls(
                 quartz_threshold=get_config("image_processing.quartz_threshold_mb", 10.0),
-                memory_map_threshold=get_config(
-                    "image_processing.memory_mapping_threshold_mb", 100.0
-                ),
+                memory_map_threshold=get_config("image_processing.memory_mapping_threshold_mb", 100.0),
                 preview_max_size=get_config("image_processing.preview_max_size", 512),
                 thumbnail_overscale_factor=(
                     1.0 if slim else get_config("image_processing.thumbnail_overscale_factor", 1.5)
                 ),
-                large_file_threshold_mb=get_config(
-                    "image_processing.large_file_overscale_threshold_mb", 50.0
-                ),
-                large_file_overscale_factor=get_config(
-                    "image_processing.large_file_overscale_factor", 1.2
-                ),
-                ultra_high_pixel_threshold_mp=get_config(
-                    "image_processing.ultra_high_pixel_threshold_mp", 150.0
-                ),
+                large_file_threshold_mb=get_config("image_processing.large_file_overscale_threshold_mb", 50.0),
+                large_file_overscale_factor=get_config("image_processing.large_file_overscale_factor", 1.2),
+                ultra_high_pixel_threshold_mp=get_config("image_processing.ultra_high_pixel_threshold_mp", 150.0),
                 high_pixel_threshold_mp=get_config("image_processing.high_pixel_threshold_mp", 50.0),
-                ultra_high_pixel_overscale=get_config(
-                    "image_processing.ultra_high_pixel_overscale", 1.0
-                ),
+                ultra_high_pixel_overscale=get_config("image_processing.ultra_high_pixel_overscale", 1.0),
                 high_pixel_overscale=get_config("image_processing.high_pixel_overscale", 1.1),
                 prefer_cgimage_pipeline=get_config("image_processing.prefer_cgimage_pipeline", True),
                 slim_mode=slim,
@@ -128,4 +118,3 @@ def set_default_config(config: LoadingConfig) -> None:
     """设置全局默认配置"""
     global _default_config
     _default_config = config
-

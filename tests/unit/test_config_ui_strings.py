@@ -5,8 +5,6 @@
 Author: PlookingII Team
 """
 
-import pytest
-
 from plookingII.config.ui_strings import (
     UIStringManager,
     UIStrings,
@@ -290,4 +288,3 @@ class TestUIStringsIntegration:
         assert "rotation_completed" in UIStrings.STATUS_MESSAGES
         assert "rotation_failed" in UIStrings.STATUS_MESSAGES
         assert "rotation_operation_failed" in UIStrings.ERROR_MESSAGES
-

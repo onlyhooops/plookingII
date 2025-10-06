@@ -30,6 +30,7 @@ from ..views import AdaptiveImageView, OverlayView
 
 logger = logging.getLogger(APP_NAME)
 
+
 class ImageViewController:
     """图像视图控制器，负责图像显示和UI交互
 
@@ -81,9 +82,7 @@ class ImageViewController:
         status_bar_height = 30
 
         # 创建主图片显示区域（容器视图）
-        main_image_frame = (
-            NSRect((0, status_bar_height), (frame.size.width, frame.size.height - status_bar_height))
-        )
+        main_image_frame = NSRect((0, status_bar_height), (frame.size.width, frame.size.height - status_bar_height))
         self.main_image_view = NSView.alloc().initWithFrame_(main_image_frame)
         self.main_image_view.setWantsLayer_(True)
         self.main_image_view.setBackgroundColor_(NSColor.windowBackgroundColor())
@@ -96,9 +95,7 @@ class ImageViewController:
         self.main_image_view.addSubview_(self.image_view)
 
         # 创建覆盖层（预留用于拖拽高亮等功能）
-        self.overlay = (
-            OverlayView.alloc().initWithFrame_andImageView_(image_view_frame, self.image_view)
-        )
+        self.overlay = OverlayView.alloc().initWithFrame_andImageView_(image_view_frame, self.image_view)
         self.main_image_view.addSubview_(self.overlay)
 
         # 缩放滑块现在在状态栏控制器中创建

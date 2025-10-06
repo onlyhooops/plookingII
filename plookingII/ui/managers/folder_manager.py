@@ -21,6 +21,7 @@ from ...services.recent import RecentFoldersManager
 
 logger = logging.getLogger(APP_NAME)
 
+
 class FolderManager:
     """文件夹管理器，负责文件夹扫描、导航和历史记录"""
 
@@ -84,7 +85,7 @@ class FolderManager:
         # 计算是否为"单文件夹模式"（严格：遍历目录仅包含根本身）
         try:
             dirs_for_mode = self._gather_directories_to_scan(root_folder)
-            self.single_folder_mode = (len(dirs_for_mode) == 1)
+            self.single_folder_mode = len(dirs_for_mode) == 1
         except Exception:
             self.single_folder_mode = False
 
@@ -128,7 +129,7 @@ class FolderManager:
         # 计算是否为“单文件夹模式”（严格：遍历目录仅包含根本身）
         try:
             dirs_for_mode = self._gather_directories_to_scan(root_folder)
-            self.single_folder_mode = (len(dirs_for_mode) == 1)
+            self.single_folder_mode = len(dirs_for_mode) == 1
         except Exception:
             self.single_folder_mode = False
 
@@ -154,15 +155,15 @@ class FolderManager:
     def _start_work_session(self):
         """启动工作会话"""
         try:
-            if hasattr(self.main_window, "status_bar_controller") and (
-                self.main_window.status_bar_controller
-            ):
+            if hasattr(self.main_window, "status_bar_controller") and (self.main_window.status_bar_controller):
                 # 启动状态栏控制器的会话管理
                 self.main_window.status_bar_controller.start_work_session()
 
                 # 设置会话数据 - 保留基础会话跟踪
                 if self.main_window.subfolders:
-                    self.main_window.status_bar_controller.session_manager.set_folder_count(len(self.main_window.subfolders))
+                    self.main_window.status_bar_controller.session_manager.set_folder_count(
+                        len(self.main_window.subfolders)
+                    )
 
                 logger.info("工作会话已启动")
 
@@ -172,9 +173,7 @@ class FolderManager:
     def _end_work_session(self):
         """结束工作会话"""
         try:
-            if hasattr(self.main_window, "status_bar_controller") and (
-                self.main_window.status_bar_controller
-            ):
+            if hasattr(self.main_window, "status_bar_controller") and (self.main_window.status_bar_controller):
                 self.main_window.status_bar_controller.end_work_session()
                 logger.info("工作会话已结束")
 
@@ -217,6 +216,7 @@ class FolderManager:
             subfolders: 结果列表
             scan_lock: 线程锁
         """
+
         def scan_directory(dirpath):
             try:
                 if self._dir_contains_images(dirpath, exts):
@@ -294,9 +294,7 @@ class FolderManager:
                         return
                 else:
                     # 文件夹存在，重新加载图片列表以确保一致性
-                    self.main_window.images = (
-                        self._load_folder_images(self.main_window.current_folder)
-                    )
+                    self.main_window.images = self._load_folder_images(self.main_window.current_folder)
                     if not self.main_window.images:
                         # 当前文件夹没有图片，寻找下一个非空文件夹
                         if not self._move_to_next_nonempty_folder():
@@ -310,7 +308,9 @@ class FolderManager:
 
         # 惰性创建：不在加载文件夹时创建“精选”目录，仅记录预期路径
         base_dir = self.main_window.current_folder or self.main_window.root_folder or ""
-        self.main_window.keep_folder = os.path.join(base_dir, self._compute_selection_folder_name(base_dir)) if base_dir else ""
+        self.main_window.keep_folder = (
+            os.path.join(base_dir, self._compute_selection_folder_name(base_dir)) if base_dir else ""
+        )
 
         # 恢复历史索引，否则始终从第一张图片开始
         if restore_index is not None and 0 <= restore_index < len(self.main_window.images):
@@ -322,29 +322,25 @@ class FolderManager:
         self.main_window.image_manager.sync_bidi_sequence(self.main_window.images)
 
         # 优化：预加载第一张图片到缓存，减少显示延迟
-        if self.main_window.images and (
-            self.main_window.current_index < len(self.main_window.images)
-        ):
+        if self.main_window.images and (self.main_window.current_index < len(self.main_window.images)):
             first_image_path = self.main_window.images[self.main_window.current_index]
             try:
-                file_size_mb = (
-                    self.main_window.image_manager.image_cache.get_file_size_mb(first_image_path)
-                )
+                file_size_mb = self.main_window.image_manager.image_cache.get_file_size_mb(first_image_path)
                 fast_threshold = IMAGE_PROCESSING_CONFIG.get("fast_load_threshold", 50)
-                if file_size_mb <= fast_threshold and (
-                    IMAGE_PROCESSING_CONFIG.get("fast_load_enabled", True)
-                ):
+                if file_size_mb <= fast_threshold and (IMAGE_PROCESSING_CONFIG.get("fast_load_enabled", True)):
                     # 小文件预加载到缓存
                     def preload_first_image():
                         try:
-                            image = (
-                                self.main_window.image_manager._load_image_optimized(first_image_path, target_size=None)
+                            image = self.main_window.image_manager._load_image_optimized(
+                                first_image_path, target_size=None
                             )
                             if image:
                                 # 将图片放入缓存，供后续显示使用
                                 # 计算目标尺寸用于缓存
                                 self.main_window.image_manager._get_target_size_for_view(scale_factor=2)
-                                self.main_window.image_manager.image_cache.put_new(first_image_path, image, layer="main")
+                                self.main_window.image_manager.image_cache.put_new(
+                                    first_image_path, image, layer="main"
+                                )
                         except Exception:
                             logger.debug("Preload first image failed", exc_info=True)
 
@@ -417,20 +413,20 @@ class FolderManager:
 
         if 0 <= next_folder_idx < len(self.main_window.subfolders):
             self.main_window.current_subfolder_index = next_folder_idx
-            self.main_window.images = (
-                self._load_folder_images(self.main_window.subfolders[self.main_window.current_subfolder_index])
+            self.main_window.images = self._load_folder_images(
+                self.main_window.subfolders[self.main_window.current_subfolder_index]
             )
             if not self.main_window.images:
                 self.jump_to_next_folder()
                 return
             # 无论是否倒序，都从第一张图片开始浏览
             self.main_window.current_index = 0
-            self.main_window.current_folder = (
-                self.main_window.subfolders[self.main_window.current_subfolder_index]
-            )
+            self.main_window.current_folder = self.main_window.subfolders[self.main_window.current_subfolder_index]
             # 惰性创建：仅记录预期“精选”目录路径，不落盘创建
             base_dir = self.main_window.current_folder or self.main_window.root_folder or ""
-            self.main_window.keep_folder = os.path.join(base_dir, self._compute_selection_folder_name(base_dir)) if base_dir else ""
+            self.main_window.keep_folder = (
+                os.path.join(base_dir, self._compute_selection_folder_name(base_dir)) if base_dir else ""
+            )
             # 同步双向缓存池序列
             self.main_window.image_manager.sync_bidi_sequence(self.main_window.images)
             self.main_window.image_manager.show_current_image()
@@ -512,17 +508,15 @@ class FolderManager:
 
         if 0 <= prev_folder_idx < len(self.main_window.subfolders):
             self.main_window.current_subfolder_index = prev_folder_idx
-            self.main_window.images = (
-                self._load_folder_images(self.main_window.subfolders[self.main_window.current_subfolder_index])
+            self.main_window.images = self._load_folder_images(
+                self.main_window.subfolders[self.main_window.current_subfolder_index]
             )
             if not self.main_window.images:
                 self.jump_to_previous_folder()
                 return
             # 无论是否倒序，都从最后一张图片开始浏览（向前跳转的逻辑）
             self.main_window.current_index = len(self.main_window.images) - 1
-            self.main_window.current_folder = (
-                self.main_window.subfolders[self.main_window.current_subfolder_index]
-            )
+            self.main_window.current_folder = self.main_window.subfolders[self.main_window.current_subfolder_index]
             # 统一惰性策略：仅记录“精选”目录路径，不在此处落盘创建
             base_dir = self.main_window.current_folder or self.main_window.root_folder or ""
             self.main_window.keep_folder = (
@@ -595,9 +589,7 @@ class FolderManager:
         # 从最后一张图片开始浏览
         self.main_window.current_index = len(images) - 1
         # 统一惰性策略：仅记录“精选”目录路径
-        self.main_window.keep_folder = os.path.join(
-            folder_path, self._compute_selection_folder_name(folder_path)
-        )
+        self.main_window.keep_folder = os.path.join(folder_path, self._compute_selection_folder_name(folder_path))
         # 同步双向缓存池序列
         self.main_window.image_manager.sync_bidi_sequence(self.main_window.images)
         self.main_window.image_manager.show_current_image()
@@ -631,7 +623,7 @@ class FolderManager:
         current_folder_info = {
             "folder_index": self.main_window.current_subfolder_index,
             "folder_path": self.main_window.current_folder,
-            "image_index": self.main_window.current_index
+            "image_index": self.main_window.current_index,
         }
 
         # 添加到历史记录
@@ -684,7 +676,9 @@ class FolderManager:
 
         # 更新精选文件夹路径（惰性记录）
         base_dir = self.main_window.current_folder or self.main_window.root_folder or ""
-        self.main_window.keep_folder = os.path.join(base_dir, self._compute_selection_folder_name(base_dir)) if base_dir else ""
+        self.main_window.keep_folder = (
+            os.path.join(base_dir, self._compute_selection_folder_name(base_dir)) if base_dir else ""
+        )
 
     def _compute_selection_folder_name(self, base_dir: str) -> str:
         """计算“精选”目录的名称
@@ -783,7 +777,9 @@ class FolderManager:
         self._save_task_progress_immediate()
 
         # 提供用户反馈
-        folder_name = os.path.basename(self.folder_path) if hasattr(self, "folder_path") and self.folder_path else "文件夹"
+        folder_name = (
+            os.path.basename(self.folder_path) if hasattr(self, "folder_path") and self.folder_path else "文件夹"
+        )
         self.main_window.status_bar_controller.set_status_message(f"已撤销跳过，返回到: {folder_name}")
 
     def _validate_task_history(self, history_data):
@@ -918,9 +914,7 @@ class FolderManager:
 
         def save_worker():
             try:
-                if self.main_window._pending_save_data is not None and (
-                    self.task_history_manager is not None
-                ):
+                if self.main_window._pending_save_data is not None and (self.task_history_manager is not None):
                     data_to_save = self.main_window._pending_save_data.copy()
                     self.task_history_manager.save_task_progress(data_to_save)
             except Exception:

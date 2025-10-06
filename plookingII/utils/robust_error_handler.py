@@ -6,7 +6,7 @@
 
 主要特性：
 - 优雅的错误恢复
-- 自动重试机制  
+- 自动重试机制
 - 边界情况处理
 - 详细的错误日志
 - 用户友好的错误提示
@@ -20,11 +20,12 @@ import time
 import traceback
 from collections import defaultdict
 from collections.abc import Callable
-from typing import Any, Optional
+from typing import Any
 
 from ..config.constants import APP_NAME
 
 logger = logging.getLogger(APP_NAME)
+
 
 class ErrorRecoveryStrategy:
     """错误恢复策略基类"""
@@ -61,7 +62,7 @@ class ErrorRecoveryStrategy:
             延迟时间（秒）
         """
         # 指数退避
-        return self.retry_delay * (2 ** attempt)
+        return self.retry_delay * (2**attempt)
 
     def on_error(self, exception: Exception, context: dict):
         """错误回调
@@ -70,10 +71,7 @@ class ErrorRecoveryStrategy:
             exception: 捕获的异常
             context: 错误上下文信息
         """
-        logger.error(
-            f"Error in {context.get('function', 'unknown')}: {exception!s}",
-            exc_info=True
-        )
+        logger.error(f"Error in {context.get('function', 'unknown')}: {exception!s}", exc_info=True)
 
     def on_retry(self, exception: Exception, attempt: int, context: dict):
         """重试回调
@@ -95,10 +93,8 @@ class ErrorRecoveryStrategy:
             exception: 捕获的异常
             context: 错误上下文信息
         """
-        logger.error(
-            f"All retries failed for {context.get('function', 'unknown')}: {exception!s}",
-            exc_info=True
-        )
+        logger.error(f"All retries failed for {context.get('function', 'unknown')}: {exception!s}", exc_info=True)
+
 
 class RobustErrorHandler:
     """鲁棒性错误处理器
@@ -115,11 +111,7 @@ class RobustErrorHandler:
         # 默认恢复策略
         self.default_strategy = ErrorRecoveryStrategy()
 
-    def register_strategy(
-        self,
-        error_type: type[Exception],
-        strategy: ErrorRecoveryStrategy
-    ):
+    def register_strategy(self, error_type: type[Exception], strategy: ErrorRecoveryStrategy):
         """注册错误恢复策略
 
         Args:
@@ -143,12 +135,7 @@ class RobustErrorHandler:
         return self.default_strategy
 
     def handle_with_retry(
-        self,
-        func: Callable,
-        *args,
-        fallback: Any = None,
-        context: Optional[dict] = None,
-        **kwargs
+        self, func: Callable, *args, fallback: Any = None, context: dict | None = None, **kwargs
     ) -> Any:
         """执行函数并自动处理错误和重试
 
@@ -189,7 +176,7 @@ class RobustErrorHandler:
                 self.last_errors[error_key] = {
                     "exception": str(e),
                     "time": time.time(),
-                    "traceback": traceback.format_exc()
+                    "traceback": traceback.format_exc(),
                 }
 
                 # 获取恢复策略
@@ -208,14 +195,7 @@ class RobustErrorHandler:
         # 所有重试都失败，返回回退值
         return fallback
 
-    def safe_call(
-        self,
-        func: Callable,
-        *args,
-        fallback: Any = None,
-        log_error: bool = True,
-        **kwargs
-    ) -> Any:
+    def safe_call(self, func: Callable, *args, fallback: Any = None, log_error: bool = True, **kwargs) -> Any:
         """安全调用函数，捕获所有异常
 
         Args:
@@ -249,7 +229,7 @@ class RobustErrorHandler:
         return {
             "total_errors": sum(self.error_stats.values()),
             "error_counts": dict(self.error_stats),
-            "recent_errors": self.last_errors
+            "recent_errors": self.last_errors,
         }
 
     def clear_stats(self):
@@ -257,12 +237,13 @@ class RobustErrorHandler:
         self.error_stats.clear()
         self.last_errors.clear()
 
+
 # 装饰器：自动重试
 def auto_retry(
     max_retries: int = 3,
     retry_delay: float = 0.1,
     fallback: Any = None,
-    exceptions: tuple[type[Exception], ...] = (Exception,)
+    exceptions: tuple[type[Exception], ...] = (Exception,),
 ):
     """自动重试装饰器
 
@@ -272,6 +253,7 @@ def auto_retry(
         fallback: 失败时的回退值
         exceptions: 要捕获的异常类型
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -282,21 +264,18 @@ def auto_retry(
                 except exceptions as e:
                     attempt += 1
                     if attempt >= max_retries:
-                        logger.error(
-                            f"All {max_retries} retries failed for {func.__name__}: {e}",
-                            exc_info=True
-                        )
+                        logger.error(f"All {max_retries} retries failed for {func.__name__}: {e}", exc_info=True)
                         return fallback
 
-                    logger.warning(
-                        f"Retry {attempt}/{max_retries} for {func.__name__} due to: {e}"
-                    )
+                    logger.warning(f"Retry {attempt}/{max_retries} for {func.__name__} due to: {e}")
                     time.sleep(retry_delay * (2 ** (attempt - 1)))  # 指数退避
 
             return fallback
 
         return wrapper
+
     return decorator
+
 
 # 装饰器：安全调用
 def safe_call(fallback: Any = None, log_error: bool = True):
@@ -306,6 +285,7 @@ def safe_call(fallback: Any = None, log_error: bool = True):
         fallback: 失败时的回退值
         log_error: 是否记录错误
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -317,14 +297,12 @@ def safe_call(fallback: Any = None, log_error: bool = True):
                 return fallback
 
         return wrapper
+
     return decorator
 
+
 # 装饰器：边界检查
-def boundary_check(
-    check_func: Callable[[Any], bool],
-    fallback: Any = None,
-    error_msg: str = "Boundary check failed"
-):
+def boundary_check(check_func: Callable[[Any], bool], fallback: Any = None, error_msg: str = "Boundary check failed"):
     """边界检查装饰器
 
     Args:
@@ -332,6 +310,7 @@ def boundary_check(
         fallback: 检查失败时的回退值
         error_msg: 错误消息
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -348,10 +327,13 @@ def boundary_check(
             return func(*args, **kwargs)
 
         return wrapper
+
     return decorator
+
 
 # 全局错误处理器实例
 _global_error_handler = None
+
 
 def get_error_handler() -> RobustErrorHandler:
     """获取全局错误处理器实例
@@ -366,11 +348,12 @@ def get_error_handler() -> RobustErrorHandler:
 
     return _global_error_handler
 
+
 __all__ = [
     "ErrorRecoveryStrategy",
     "RobustErrorHandler",
     "auto_retry",
     "boundary_check",
     "get_error_handler",
-    "safe_call"
+    "safe_call",
 ]

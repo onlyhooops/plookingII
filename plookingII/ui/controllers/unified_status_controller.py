@@ -26,6 +26,7 @@ from ...imports import logging, objc
 
 logger = logging.getLogger(APP_NAME)
 
+
 class UnifiedStatusController:
     """统一状态控制器
 
@@ -139,9 +140,7 @@ class UnifiedStatusController:
             # 创建状态指示器：放置于左下角（与原版一致）
             center_label_width = w - (right_label_width + right_margin) - 20
             center_label_width = max(center_label_width, 120)
-            self.center_status_label = NSTextField.alloc().initWithFrame_(
-                ((10, 5), (center_label_width, 20))
-            )
+            self.center_status_label = NSTextField.alloc().initWithFrame_(((10, 5), (center_label_width, 20)))
             self.center_status_label.setEditable_(False)
             self.center_status_label.setBordered_(False)
             self.center_status_label.setDrawsBackground_(False)
@@ -265,20 +264,35 @@ class UnifiedStatusController:
 
             # 水平居中
             center_x = NSLayoutConstraint.constraintWithItem_attribute_relatedBy_toItem_attribute_multiplier_constant_(
-                self.titlebar_info_label, NSLayoutAttributeCenterX, NSLayoutRelationEqual,
-                self.titlebar_container, NSLayoutAttributeCenterX, 1.0, 0.0
+                self.titlebar_info_label,
+                NSLayoutAttributeCenterX,
+                NSLayoutRelationEqual,
+                self.titlebar_container,
+                NSLayoutAttributeCenterX,
+                1.0,
+                0.0,
             )
 
             # 垂直居中
             center_y = NSLayoutConstraint.constraintWithItem_attribute_relatedBy_toItem_attribute_multiplier_constant_(
-                self.titlebar_info_label, NSLayoutAttributeCenterY, NSLayoutRelationEqual,
-                self.titlebar_container, NSLayoutAttributeCenterY, 1.0, 0.0
+                self.titlebar_info_label,
+                NSLayoutAttributeCenterY,
+                NSLayoutRelationEqual,
+                self.titlebar_container,
+                NSLayoutAttributeCenterY,
+                1.0,
+                0.0,
             )
 
             # 设置高度
             height = NSLayoutConstraint.constraintWithItem_attribute_relatedBy_toItem_attribute_multiplier_constant_(
-                self.titlebar_container, NSLayoutAttributeHeight, NSLayoutRelationEqual,
-                None, 0, 1.0, self._overlay_height
+                self.titlebar_container,
+                NSLayoutAttributeHeight,
+                NSLayoutRelationEqual,
+                None,
+                0,
+                1.0,
+                self._overlay_height,
             )
 
             # 激活约束
@@ -295,6 +309,7 @@ class UnifiedStatusController:
 
             # 简化的定时器实现，使用Python threading代替NSTimer
             import threading
+
             def update_timer():
                 while hasattr(self, "_session_update_timer_active") and self._session_update_timer_active:
                     try:
@@ -394,6 +409,7 @@ class UnifiedStatusController:
 
             # 使用Python threading.Timer代替NSTimer
             import threading
+
             self._status_timer = threading.Timer(duration, self.restoreStatusMessage_, [None])
             self._status_timer.start()
 
@@ -533,6 +549,7 @@ class UnifiedStatusController:
             if self.center_status_label and image_path:
                 # 只显示路径，不显示文件名
                 import os
+
                 directory_path = os.path.dirname(image_path)
                 if directory_path:
                     self.center_status_label.setStringValue_(directory_path)
@@ -583,6 +600,7 @@ class UnifiedStatusController:
     def __del__(self):
         """析构函数"""
         self.cleanup()
+
 
 # 向后兼容的别名
 StatusBarController = UnifiedStatusController

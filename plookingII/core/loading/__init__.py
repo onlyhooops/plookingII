@@ -8,10 +8,10 @@
 
 使用示例:
     from plookingII.core.loading import get_loader
-    
+
     loader = get_loader()  # 自动选择
     image = loader.load('image.jpg', target_size=(800, 600))
-    
+
 简化成果:
     • 代码行数: 1,118 → ~850 (↓24%)
     • 文件数: 1 → 5 (模块化)
@@ -36,4 +36,3 @@ __all__ = [
     "create_loader",
     "get_loader",
 ]
-

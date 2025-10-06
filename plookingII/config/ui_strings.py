@@ -8,6 +8,7 @@ UI文案管理模块
 Author: PlookingII Team
 """
 
+
 class UIStrings:
     """UI文案管理器"""
 
@@ -28,34 +29,28 @@ class UIStrings:
         "hide": "隐藏",
         "minimize": "最小化",
         "quit": "退出程序",
-
         # 文件菜单
         "file_menu": "文件",
         "open_folder": "打开文件夹…",
         "recent_files": "打开最近",
-
         # 编辑菜单
         "edit_menu": "编辑",
         "undo_selection": "撤销精选",
         "copy_path": "复制图片路径",
         "rotate_right": "向右旋转90°",
         "rotate_left": "向左旋转90°",
-
         # 前往菜单
         "go_menu": "前往",
         "jump_folder": "跳转文件夹",
         "goto_selection": "转到精选文件夹",
         "show_in_finder": "在Finder中显示",
-
         # 显示菜单
         "view_menu": "显示",
         "toggle_theme": "切换深浅模式",
-
         # 工具菜单
         "tools_menu": "工具",
         "clear_history": "清除历史记录",
         "reverse_folder_order": "文件夹倒序浏览",
-
         # 帮助菜单
         "help_menu": "帮助",
         "shortcuts": "快捷键",
@@ -82,14 +77,11 @@ class UIStrings:
         "down_arrow": "↓ 移动到精选文件夹",
         "esc_key": "Esc 退出当前文件夹",
         "space_drag": "空格键 拖拽查看",
-        
         "cmd_o": "⌘ O 打开文件夹",
         "cmd_z": "⌘ Z 撤销精选操作",
         "cmd_r": "⌘ R 在Finder中显示",
-        
         "cmd_right": "⌘ → 跳过当前文件夹",
         "cmd_left": "⌘ ← 撤回跳过",
-        
         "cmd_opt_r": "⌘ ⌥ R 向右旋转90°",
         "cmd_opt_l": "⌘ ⌥ L 向左旋转90°",
     }
@@ -169,10 +161,7 @@ class UIStrings:
     HISTORY_DIALOG = {
         "title": "发现历史记录",
         "info_template": (
-            "发现上次浏览记录：\n"
-            "• 文件夹进度：第 {} 个，共 {} 个\n"
-            "• 图片进度：第 {} 张\n"
-            "• 是否恢复上次的浏览位置？"
+            "发现上次浏览记录：\n• 文件夹进度：第 {} 个，共 {} 个\n• 图片进度：第 {} 张\n• 是否恢复上次的浏览位置？"
         ),
         "restore": "恢复",
         "restart": "重新开始",
@@ -195,6 +184,7 @@ class UIStrings:
         "cancel": "取消",
     }
 
+
 class UIStringManager:
     """UI文案管理器"""
 
@@ -205,18 +195,20 @@ class UIStringManager:
 
     def _load_default_strings(self):
         """加载默认文案"""
-        self._strings.update({
-            "app_info": UIStrings.APP_INFO,
-            "menu": UIStrings.MENU,
-            "buttons": UIStrings.BUTTONS,
-            "shortcuts_help": UIStrings.SHORTCUTS_HELP,
-            "about_dialog": UIStrings.ABOUT_DIALOG,
-            "status_messages": UIStrings.STATUS_MESSAGES,
-            "error_messages": UIStrings.ERROR_MESSAGES,
-            "history_dialog": UIStrings.HISTORY_DIALOG,
-            "jump_folder_dialog": UIStrings.JUMP_FOLDER_DIALOG,
-            "recent_files_dialog": UIStrings.RECENT_FILES_DIALOG,
-        })
+        self._strings.update(
+            {
+                "app_info": UIStrings.APP_INFO,
+                "menu": UIStrings.MENU,
+                "buttons": UIStrings.BUTTONS,
+                "shortcuts_help": UIStrings.SHORTCUTS_HELP,
+                "about_dialog": UIStrings.ABOUT_DIALOG,
+                "status_messages": UIStrings.STATUS_MESSAGES,
+                "error_messages": UIStrings.ERROR_MESSAGES,
+                "history_dialog": UIStrings.HISTORY_DIALOG,
+                "jump_folder_dialog": UIStrings.JUMP_FOLDER_DIALOG,
+                "recent_files_dialog": UIStrings.RECENT_FILES_DIALOG,
+            }
+        )
 
     def get(self, category: str, key: str, default: str = "") -> str:
         """获取文案字符串
@@ -308,8 +300,10 @@ class UIStringManager:
 
         return "\n".join(section for section in sections if section)
 
+
 # 全局文案管理器实例
 _ui_string_manager = None
+
 
 def get_ui_string_manager() -> UIStringManager:
     """获取全局UI文案管理器实例"""
@@ -317,6 +311,7 @@ def get_ui_string_manager() -> UIStringManager:
     if _ui_string_manager is None:
         _ui_string_manager = UIStringManager()
     return _ui_string_manager
+
 
 def get_ui_string(category: str, key: str, default: str = "") -> str:
     """便捷函数：获取UI文案字符串
@@ -330,6 +325,7 @@ def get_ui_string(category: str, key: str, default: str = "") -> str:
         str: 文案字符串
     """
     return get_ui_string_manager().get(category, key, default)
+
 
 def get_formatted_ui_string(category: str, key: str, *args, **kwargs) -> str:
     """便捷函数：获取格式化UI文案字符串

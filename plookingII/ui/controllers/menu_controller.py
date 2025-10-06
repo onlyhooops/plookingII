@@ -26,6 +26,7 @@ from ...utils.file_utils import FileUtils
 
 logger = logging.getLogger(APP_NAME)
 
+
 class MenuController:
     """
     菜单控制器
@@ -94,7 +95,7 @@ class MenuController:
             ui_strings = get_ui_string_manager()
 
             alert = NSAlert.alloc().init()
-            alert.setMessageText_(ui_strings.get('shortcuts_help', 'title', '快捷键'))
+            alert.setMessageText_(ui_strings.get("shortcuts_help", "title", "快捷键"))
 
             # 使用统一文案管理器获取快捷键帮助内容
             shortcuts_text = ui_strings.get_shortcuts_help_text()
@@ -128,9 +129,7 @@ class MenuController:
         try:
             menu = NSMenu.alloc().initWithTitle_("最近打开文件")
             # 清空操作
-            clearItem = (
-                NSMenuItem.alloc().initWithTitle_action_keyEquivalent_("清空最近记录", "clearRecentFiles:", "")
-            )
+            clearItem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_("清空最近记录", "clearRecentFiles:", "")
             clearItem.setTarget_(self.window)
             menu.addItem_(clearItem)
             menu.addItem_(NSMenuItem.separatorItem())
@@ -154,9 +153,7 @@ class MenuController:
                     continue
 
                 name = os.path.basename(path)
-                item = (
-                    NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(name, "openRecentFile:", "")
-                )
+                item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(name, "openRecentFile:", "")
                 item.setTarget_(self.window)
                 item.setRepresentedObject_(path)
                 item.setToolTip_(path)
@@ -304,4 +301,3 @@ class MenuController:
             return FileUtils.folder_contains_images(folder_path, recursive_depth=1)
         except Exception:
             return False
-

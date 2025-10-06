@@ -19,16 +19,20 @@ from .network_cache import get_network_cache
 from .remote_file_detector import MountInfo, MountType, get_remote_detector
 from .smb_optimizer import ReadStrategy, get_smb_optimizer
 
+
 class LoadingMode(Enum):
     """加载模式枚举"""
-    DIRECT = "direct"           # 直接加载
-    CACHED = "cached"          # 使用缓存
-    PRELOAD = "preload"        # 预加载
-    BATCH = "batch"            # 批量加载
+
+    DIRECT = "direct"  # 直接加载
+    CACHED = "cached"  # 使用缓存
+    PRELOAD = "preload"  # 预加载
+    BATCH = "batch"  # 批量加载
+
 
 @dataclass
 class RemoteFileInfo:
     """远程文件信息数据类"""
+
     path: str
     is_remote: bool
     mount_type: MountType
@@ -39,9 +43,11 @@ class RemoteFileInfo:
     cache_path: str | None = None
     loading_strategy: ReadStrategy = ReadStrategy.SEQUENTIAL
 
+
 @dataclass
 class LoadingResult:
     """加载结果数据类"""
+
     file_path: str
     data: bytes
     success: bool
@@ -49,6 +55,7 @@ class LoadingResult:
     latency_ms: float
     from_cache: bool
     error: Exception | None = None
+
 
 class RemoteFileManager:
     """
@@ -77,8 +84,7 @@ class RemoteFileManager:
 
         # 线程池
         self.executor = concurrent.futures.ThreadPoolExecutor(
-            max_workers=self.max_workers,
-            thread_name_prefix="RemoteFileManager"
+            max_workers=self.max_workers, thread_name_prefix="RemoteFileManager"
         )
 
         # 性能统计
@@ -90,7 +96,7 @@ class RemoteFileManager:
             "batch_operations": 0,
             "preload_operations": 0,
             "total_latency": 0.0,
-            "avg_latency": 0.0
+            "avg_latency": 0.0,
         }
         self.stats_lock = threading.RLock()
 
@@ -134,7 +140,7 @@ class RemoteFileManager:
                 loading_mode=LoadingMode.DIRECT,
                 latency_ms=0.0,
                 from_cache=False,
-                error=e
+                error=e,
             )
 
     def preload_remote_images(self, file_paths: list[str]) -> list[LoadingResult]:
@@ -157,9 +163,8 @@ class RemoteFileManager:
                 if not remote_files:
                     return []
 
-                self.logging.getLogger(__name__).log(LogLevel.DEBUG,
-                    LogCategory.PERFORMANCE,
-                    f"Starting preload for {len(remote_files)} remote files"
+                self.logging.getLogger(__name__).log(
+                    LogLevel.DEBUG, LogCategory.PERFORMANCE, f"Starting preload for {len(remote_files)} remote files"
                 )
 
                 # 批量预加载
@@ -167,7 +172,7 @@ class RemoteFileManager:
                 batch_size = min(self.batch_size, len(remote_files))
 
                 for i in range(0, len(remote_files), batch_size):
-                    batch = remote_files[i:i + batch_size]
+                    batch = remote_files[i : i + batch_size]
                     batch_results = self._preload_batch(batch)
                     results.extend(batch_results)
 
@@ -177,9 +182,8 @@ class RemoteFileManager:
                     self.stats["total_files_loaded"] += len(results)
                     self.stats["remote_files_loaded"] += len([r for r in results if r.success])
 
-                self.logging.getLogger(__name__).log(LogLevel.INFO,
-                    LogCategory.PERFORMANCE,
-                    f"Preload completed: {len(results)} files processed"
+                self.logging.getLogger(__name__).log(
+                    LogLevel.INFO, LogCategory.PERFORMANCE, f"Preload completed: {len(results)} files processed"
                 )
 
                 return results
@@ -261,7 +265,7 @@ class RemoteFileManager:
                             loading_mode=LoadingMode.BATCH,
                             latency_ms=result.latency_ms,
                             from_cache=False,
-                            error=result.error
+                            error=result.error,
                         )
                         results.append(loading_result)
 
@@ -277,7 +281,7 @@ class RemoteFileManager:
                             success=True,
                             loading_mode=LoadingMode.DIRECT,
                             latency_ms=0.0,
-                            from_cache=False
+                            from_cache=False,
                         )
                         results.append(loading_result)
 
@@ -289,7 +293,7 @@ class RemoteFileManager:
                             loading_mode=LoadingMode.DIRECT,
                             latency_ms=0.0,
                             from_cache=False,
-                            error=e
+                            error=e,
                         )
                         results.append(loading_result)
 
@@ -330,11 +334,13 @@ class RemoteFileManager:
 
             # 添加缓存统计
             cache_stats = self.network_cache.get_cache_stats()
-            stats.update({
-                "cache_hit_rate": cache_stats.get("cache_hit_rate", 0.0),
-                "cache_usage_mb": cache_stats.get("cache_usage_mb", 0.0),
-                "cached_files": cache_stats.get("total_cached_files", 0)
-            })
+            stats.update(
+                {
+                    "cache_hit_rate": cache_stats.get("cache_hit_rate", 0.0),
+                    "cache_usage_mb": cache_stats.get("cache_usage_mb", 0.0),
+                    "cached_files": cache_stats.get("total_cached_files", 0),
+                }
+            )
 
             return stats
 
@@ -381,7 +387,7 @@ class RemoteFileManager:
                 file_size=file_size,
                 is_cached=is_cached,
                 cache_path=cache_path,
-                loading_strategy=loading_strategy
+                loading_strategy=loading_strategy,
             )
 
         except Exception as e:
@@ -429,7 +435,7 @@ class RemoteFileManager:
                 loading_mode=loading_mode,
                 latency_ms=latency_ms,
                 from_cache=False,
-                error=e
+                error=e,
             )
 
     def _load_from_cache(self, file_path: str, file_info: RemoteFileInfo, start_time: float) -> LoadingResult:
@@ -447,7 +453,7 @@ class RemoteFileManager:
                 success=True,
                 loading_mode=LoadingMode.CACHED,
                 latency_ms=latency_ms,
-                from_cache=True
+                from_cache=True,
             )
 
         except Exception as e:
@@ -461,7 +467,7 @@ class RemoteFileManager:
                 loading_mode=LoadingMode.CACHED,
                 latency_ms=latency_ms,
                 from_cache=True,
-                error=e
+                error=e,
             )
 
     def _preload_file(self, file_path: str, file_info: RemoteFileInfo, start_time: float) -> LoadingResult:
@@ -494,7 +500,7 @@ class RemoteFileManager:
                 success=True,
                 loading_mode=LoadingMode.PRELOAD,
                 latency_ms=latency_ms,
-                from_cache=from_cache
+                from_cache=from_cache,
             )
 
         except Exception as e:
@@ -508,7 +514,7 @@ class RemoteFileManager:
                 loading_mode=LoadingMode.PRELOAD,
                 latency_ms=latency_ms,
                 from_cache=False,
-                error=e
+                error=e,
             )
 
     def _load_directly(self, file_path: str, file_info: RemoteFileInfo, start_time: float) -> LoadingResult:
@@ -526,7 +532,7 @@ class RemoteFileManager:
                 success=True,
                 loading_mode=LoadingMode.DIRECT,
                 latency_ms=latency_ms,
-                from_cache=False
+                from_cache=False,
             )
 
         except Exception as e:
@@ -540,7 +546,7 @@ class RemoteFileManager:
                 loading_mode=LoadingMode.DIRECT,
                 latency_ms=latency_ms,
                 from_cache=False,
-                error=e
+                error=e,
             )
 
     def _preload_batch(self, file_paths: list[str]) -> list[LoadingResult]:
@@ -549,10 +555,7 @@ class RemoteFileManager:
 
         # 使用线程池并发预加载
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            future_to_path = {
-                executor.submit(self._preload_single_file, path): path
-                for path in file_paths
-            }
+            future_to_path = {executor.submit(self._preload_single_file, path): path for path in file_paths}
 
             for future in concurrent.futures.as_completed(future_to_path):
                 path = future_to_path[future]
@@ -561,15 +564,17 @@ class RemoteFileManager:
                     results.append(result)
                 except Exception as e:
                     self.logging.getLogger(__name__).log_error(e, f"preload_batch_{path}")
-                    results.append(LoadingResult(
-                        file_path=path,
-                        data=b"",
-                        success=False,
-                        loading_mode=LoadingMode.PRELOAD,
-                        latency_ms=0.0,
-                        from_cache=False,
-                        error=e
-                    ))
+                    results.append(
+                        LoadingResult(
+                            file_path=path,
+                            data=b"",
+                            success=False,
+                            loading_mode=LoadingMode.PRELOAD,
+                            latency_ms=0.0,
+                            from_cache=False,
+                            error=e,
+                        )
+                    )
 
         return results
 
@@ -601,7 +606,7 @@ class RemoteFileManager:
                 success=True,
                 loading_mode=LoadingMode.PRELOAD,
                 latency_ms=latency_ms,
-                from_cache=from_cache
+                from_cache=from_cache,
             )
 
         except Exception as e:
@@ -615,7 +620,7 @@ class RemoteFileManager:
                 loading_mode=LoadingMode.PRELOAD,
                 latency_ms=latency_ms,
                 from_cache=False,
-                error=e
+                error=e,
             )
 
     def _update_stats(self, result: LoadingResult):
@@ -629,9 +634,11 @@ class RemoteFileManager:
             else:
                 self.stats["cache_misses"] += 1
 
+
 # 全局实例
 _remote_file_manager_instance: RemoteFileManager | None = None
 _remote_file_manager_lock = threading.Lock()
+
 
 def get_remote_file_manager() -> RemoteFileManager:
     """获取全局RemoteFileManager实例"""

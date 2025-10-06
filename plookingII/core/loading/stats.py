@@ -89,4 +89,3 @@ class LoadingStats:
             f"failed={stats['failed_loads']}, "
             f"avg_time={stats['avg_time']:.3f}s)"
         )
-

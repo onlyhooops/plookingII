@@ -156,4 +156,3 @@ class TestBackwardCompatibility:
             # 可以安全迭代
             for _ in messages:
                 pass
-

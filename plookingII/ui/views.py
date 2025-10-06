@@ -56,6 +56,7 @@ from ..imports import _objc, logging, objc, time
 # 新增：模块级日志记录器
 logger = logging.getLogger(APP_NAME)
 
+
 def apply_safe_performance_tweaks(win):
     """应用安全的性能优化调整
 
@@ -130,7 +131,11 @@ def apply_safe_performance_tweaks(win):
             try:
                 # 创建并安排一个重复触发的定时器
                 timer = _NSTimer.scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(
-                    trim_interval, win, _objc.selector(lambda _self, _cmd, _arg=None: _trim_cache(), signature=b"v@:@"), None, True
+                    trim_interval,
+                    win,
+                    _objc.selector(lambda _self, _cmd, _arg=None: _trim_cache(), signature=b"v@:@"),
+                    None,
+                    True,
                 )
                 _NSRunLoop.currentRunLoop().addTimer_forMode_(timer, _NSDefaultRunLoopMode)
                 # 触发一次立即清理
@@ -140,6 +145,7 @@ def apply_safe_performance_tweaks(win):
                 _trim_cache()
     except Exception:
         logger.exception("apply_safe_performance_tweaks failed")
+
 
 class OverlayView(NSView):
     def initWithFrame_andImageView_(self, frame, image_view):
@@ -154,6 +160,7 @@ class OverlayView(NSView):
     def drawRect_(self, rect):
         # 覆盖层绘制接口 - 当前无特殊绘制需求
         pass
+
 
 class AdaptiveImageView(NSImageView):
     def initWithFrame_(self, frame):
@@ -481,12 +488,8 @@ class AdaptiveImageView(NSImageView):
         # 以点击点为中心缩放到指定比例
         mouse_loc = self.convertPoint_fromView_(event.locationInWindow(), None)
         img_rect = self._get_image_display_rect(self.bounds())
-        rel_x = (
-            (mouse_loc.x - img_rect.origin.x) / (img_rect.size.width if img_rect.size.width else 1)
-        )
-        rel_y = (
-            (mouse_loc.y - img_rect.origin.y) / (img_rect.size.height if img_rect.size.height else 1)
-        )
+        rel_x = (mouse_loc.x - img_rect.origin.x) / (img_rect.size.width if img_rect.size.width else 1)
+        rel_y = (mouse_loc.y - img_rect.origin.y) / (img_rect.size.height if img_rect.size.height else 1)
         cx = img_rect.origin.x + rel_x * img_rect.size.width
         cy = img_rect.origin.y + rel_y * img_rect.size.height
         new_w = img_rect.size.width * target_scale
@@ -581,9 +584,7 @@ class AdaptiveImageView(NSImageView):
                 return
 
             # 使用ContextMenuManager显示菜单
-            success = self._context_menu_manager.show_open_with_menu(
-                event, self._current_image_path
-            )
+            success = self._context_menu_manager.show_open_with_menu(event, self._current_image_path)
 
             if not success:
                 logger.warning("显示右键菜单失败")
@@ -608,7 +609,7 @@ class AdaptiveImageView(NSImageView):
                 app_url,
                 0,  # NSWorkspaceLaunchOptions
                 {},
-                None
+                None,
             )
 
             if error:
@@ -636,10 +637,11 @@ class AdaptiveImageView(NSImageView):
                 app_url,
                 0,  # NSWorkspaceLaunchOptions
                 {},
-                None
+                None,
             )
 
             import os
+
             app_name = os.path.basename(app_url.path()).replace(".app", "")
 
             if error:
@@ -759,9 +761,7 @@ class AdaptiveImageView(NSImageView):
         min_margin = 8  # 从12减少到8
         max_margin = 40  # 从60减少到40
         margin_ratio = 0.03  # 从5%减少到3%
-        margin = (
-            int(min(max(view_rect.size.width, view_rect.size.height) * margin_ratio, max_margin))
-        )
+        margin = int(min(max(view_rect.size.width, view_rect.size.height) * margin_ratio, max_margin))
         margin = max(margin, min_margin)
 
         # 获取图像尺寸（支持NSImage和CGImage）
@@ -812,10 +812,12 @@ class AdaptiveImageView(NSImageView):
         self._cancel_pending_redraw()
 
         # 延迟重绘以合并多个请求
-        self._redraw_timer = (
-            NSTimer.scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(
-                0.016, self, "performOptimizedRedraw:", None, False  # ~60fps
-            )
+        self._redraw_timer = NSTimer.scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(
+            0.016,
+            self,
+            "performOptimizedRedraw:",
+            None,
+            False,  # ~60fps
         )
 
     def performOptimizedRedraw_(self, timer):
@@ -857,12 +859,7 @@ class AdaptiveImageView(NSImageView):
             NSRectFill(rect)
 
             # 绘制边框（使用内边距，避免边框被裁切）
-            inset_rect = NSMakeRect(
-                rect.origin.x + 2,
-                rect.origin.y + 2,
-                rect.size.width - 4,
-                rect.size.height - 4
-            )
+            inset_rect = NSMakeRect(rect.origin.x + 2, rect.origin.y + 2, rect.size.width - 4, rect.size.height - 4)
 
             border_path = NSBezierPath.bezierPathWithRect_(inset_rect)
             border_path.setLineWidth_(3.0)  # 稍微减少线宽

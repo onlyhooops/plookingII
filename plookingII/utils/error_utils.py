@@ -23,8 +23,10 @@ logger = logging.getLogger(APP_NAME)
 
 T = TypeVar("T")
 
-def safe_execute(func: Callable[..., T], *args, default: T = None,
-                 log_error: bool = True, context: str = "", **kwargs) -> T:
+
+def safe_execute(
+    func: Callable[..., T], *args, default: T = None, log_error: bool = True, context: str = "", **kwargs
+) -> T:
     """安全执行函数，捕获异常并返回默认值
 
     Args:
@@ -49,8 +51,8 @@ def safe_execute(func: Callable[..., T], *args, default: T = None,
             logger.debug(error_msg, exc_info=True)
         return default
 
-def handle_exceptions(default_return: Any = None, log_level: str = "debug",
-                     context: str = "", reraise: bool = False):
+
+def handle_exceptions(default_return: Any = None, log_level: str = "debug", context: str = "", reraise: bool = False):
     """异常处理装饰器
 
     Args:
@@ -62,6 +64,7 @@ def handle_exceptions(default_return: Any = None, log_level: str = "debug",
     Returns:
         装饰器函数
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -80,11 +83,13 @@ def handle_exceptions(default_return: Any = None, log_level: str = "debug",
                 if reraise:
                     raise
                 return default_return
+
         return wrapper
+
     return decorator
 
-def suppress_exceptions(*exception_types, log_error: bool = True,
-                       context: str = "", default_return: Any = None):
+
+def suppress_exceptions(*exception_types, log_error: bool = True, context: str = "", default_return: Any = None):
     """抑制指定异常类型的装饰器
 
     Args:
@@ -96,6 +101,7 @@ def suppress_exceptions(*exception_types, log_error: bool = True,
     Returns:
         装饰器函数
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -112,12 +118,15 @@ def suppress_exceptions(*exception_types, log_error: bool = True,
             except Exception:
                 # 其他异常继续抛出
                 raise
+
         return wrapper
+
     return decorator
 
-def retry_on_failure(max_retries: int = 3, delay: float = 1.0,
-                    backoff_factor: float = 2.0,
-                    exceptions: tuple = (Exception,)):
+
+def retry_on_failure(
+    max_retries: int = 3, delay: float = 1.0, backoff_factor: float = 2.0, exceptions: tuple = (Exception,)
+):
     """失败重试装饰器
 
     Args:
@@ -129,6 +138,7 @@ def retry_on_failure(max_retries: int = 3, delay: float = 1.0,
     Returns:
         装饰器函数
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -145,11 +155,14 @@ def retry_on_failure(max_retries: int = 3, delay: float = 1.0,
                     logger.debug(f"函数 {func.__name__} 第 {attempt + 1} 次尝试失败，{current_delay}秒后重试: {e}")
 
                     import time
+
                     time.sleep(current_delay)
                     current_delay *= backoff_factor
 
         return wrapper
+
     return decorator
+
 
 class ErrorCollector:
     """错误收集器，用于批量收集和处理错误"""
@@ -165,18 +178,13 @@ class ErrorCollector:
             error: 异常对象
             context: 错误上下文
         """
-        error_info = {
-            "error": error,
-            "context": context,
-            "type": type(error).__name__,
-            "message": str(error)
-        }
+        error_info = {"error": error, "context": context, "type": type(error).__name__, "message": str(error)}
 
         self.errors.append(error_info)
 
         # 限制错误数量
         if len(self.errors) > self.max_errors:
-            self.errors = self.errors[-self.max_errors//2:]
+            self.errors = self.errors[-self.max_errors // 2 :]
 
     def has_errors(self) -> bool:
         """是否有错误"""
@@ -196,18 +204,16 @@ class ErrorCollector:
             error_type = error_info["type"]
             error_types[error_type] = error_types.get(error_type, 0) + 1
 
-        return {
-            "total": len(self.errors),
-            "types": error_types,
-            "latest": self.errors[-1] if self.errors else None
-        }
+        return {"total": len(self.errors), "types": error_types, "latest": self.errors[-1] if self.errors else None}
 
     def clear(self):
         """清空错误记录"""
         self.errors.clear()
 
-def validate_parameter(param: Any, param_name: str, expected_type: type = None,
-                      allow_none: bool = False, custom_validator: Callable = None) -> bool:
+
+def validate_parameter(
+    param: Any, param_name: str, expected_type: type = None, allow_none: bool = False, custom_validator: Callable = None
+) -> bool:
     """参数验证辅助函数
 
     Args:

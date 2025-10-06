@@ -24,6 +24,7 @@ from ..utils.user_feedback import show_error
 
 logger = logging.getLogger(APP_NAME)
 
+
 class DragDropController:
     """
     拖拽控制器
@@ -132,11 +133,7 @@ class DragDropController:
         try:
             # 如果有上次的拖拽路径，直接使用缓存结果
             if self._last_drag_path and self._last_drag_path in self._drag_validation_cache:
-                return (
-                    NSDragOperationCopy
-                    if self._drag_validation_cache[self._last_drag_path]
-                    else NSDragOperationNone
-                )
+                return NSDragOperationCopy if self._drag_validation_cache[self._last_drag_path] else NSDragOperationNone
 
             # 否则进行轻量级检查
             pasteboard = sender.draggingPasteboard()
@@ -372,4 +369,3 @@ class DragDropController:
         self._cancel_async_validation()
         self._drag_validation_cache.clear()
         logger.debug("拖拽控制器已关闭")
-

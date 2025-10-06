@@ -43,6 +43,7 @@ from ..imports import logging
 
 logger = logging.getLogger(APP_NAME)
 
+
 class MilestoneTracker:
     """里程碑跟踪器，管理各种工作进度里程碑"""
 
@@ -53,7 +54,7 @@ class MilestoneTracker:
             # 进度里程碑（百分比）
             "progress": PROGRESS_MILESTONES,
             # 图片数量里程碑
-            "images": IMAGE_COUNT_MILESTONES
+            "images": IMAGE_COUNT_MILESTONES,
         }
         self.achieved_milestones = set()
 
@@ -77,7 +78,9 @@ class MilestoneTracker:
                 return (milestone_value, message)
         return None
 
+
 # FunMessageGenerator类已移除 - 趣味功能已禁用
+
 
 class SessionManager:
     """会话管理器，跟踪用户工作状态和提供趣味提示"""
@@ -120,7 +123,7 @@ class SessionManager:
         if self.session_start_time:
             session_duration = time.time() - self.session_start_time
             self.total_work_time += session_duration
-            logger.info(f"结束工作会话，本次时长: {session_duration/60:.1f}分钟")
+            logger.info(f"结束工作会话，本次时长: {session_duration / 60:.1f}分钟")
 
         self.session_start_time = None
         self.current_session_time = 0
@@ -175,12 +178,8 @@ class SessionManager:
         total_minutes = self.total_work_time / 60
 
         # 计算进度百分比
-        image_progress = (
-            (self.images_viewed / self.total_images * 100) if self.total_images > 0 else 0
-        )
-        folder_progress = (
-            (self.folders_processed / self.total_folders * 100) if self.total_folders > 0 else 0
-        )
+        image_progress = (self.images_viewed / self.total_images * 100) if self.total_images > 0 else 0
+        folder_progress = (self.folders_processed / self.total_folders * 100) if self.total_folders > 0 else 0
 
         return {
             "session_minutes": session_minutes,
@@ -191,7 +190,7 @@ class SessionManager:
             "folders_processed": self.folders_processed,
             "total_folders": self.total_folders,
             "folder_progress": folder_progress,
-            "current_time": current_time
+            "current_time": current_time,
         }
 
     def check_milestones(self):
@@ -213,9 +212,7 @@ class SessionManager:
 
         # 基础状态信息（移除emoji）
         if stats["total_images"] > 0:
-            progress_text = (
-                f"进度: {stats['image_progress']:.1f}% ({stats['images_viewed']}/{stats['total_images']})"
-            )
+            progress_text = f"进度: {stats['image_progress']:.1f}% ({stats['images_viewed']}/{stats['total_images']})"
         else:
             progress_text = "准备中..."
 
@@ -263,10 +260,8 @@ class SessionManager:
         if interval is None:
             interval = MESSAGE_DISPLAY_CONFIG["update_interval"]
 
-        self._update_timer = (
-            NSTimer.scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(
-                interval, callback, "updateSessionStatus:", None, True
-            )
+        self._update_timer = NSTimer.scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(
+            interval, callback, "updateSessionStatus:", None, True
         )
 
     def stop_update_timer(self):
@@ -289,7 +284,9 @@ class SessionManager:
             "images_processed": f"{stats['images_viewed']}/{stats['total_images']}",
             "folders_processed": f"{stats['folders_processed']}/{stats['total_folders']}",
             "progress": f"{stats['image_progress']:.1f}%",
-            "efficiency": f"{stats['images_viewed']/max(stats['session_minutes'], 1):.1f}张/分钟" if stats["session_minutes"] > 0 else "0张/分钟"
+            "efficiency": f"{stats['images_viewed'] / max(stats['session_minutes'], 1):.1f}张/分钟"
+            if stats["session_minutes"] > 0
+            else "0张/分钟",
         }
 
     def get_session_summary(self):
@@ -306,8 +303,4 @@ class SessionManager:
         else:
             display_message = f"工作时长: {stats['session_minutes']:.0f}分钟"
 
-        return {
-            "display_message": display_message,
-            "session_stats": stats,
-            "work_summary": self.get_work_summary()
-        }
+        return {"display_message": display_message, "session_stats": stats, "work_summary": self.get_work_summary()}

@@ -22,14 +22,17 @@ from .remote_file_detector import get_remote_detector
 
 class CacheStrategy(Enum):
     """缓存策略枚举"""
-    LRU = "lru"           # 最近最少使用
-    LFU = "lfu"           # 最少使用频率
-    SIZE_BASED = "size"   # 基于大小
-    TIME_BASED = "time"   # 基于时间
+
+    LRU = "lru"  # 最近最少使用
+    LFU = "lfu"  # 最少使用频率
+    SIZE_BASED = "size"  # 基于大小
+    TIME_BASED = "time"  # 基于时间
+
 
 @dataclass
 class CacheEntry:
     """缓存条目数据类"""
+
     remote_path: str
     local_path: str
     file_size: int
@@ -38,6 +41,7 @@ class CacheEntry:
     access_count: int
     checksum: str
     is_valid: bool = True
+
 
 class NetworkCache:
     """
@@ -82,7 +86,7 @@ class NetworkCache:
             "cache_hits": 0,
             "cache_misses": 0,
             "cache_evictions": 0,
-            "last_cleanup": 0.0
+            "last_cleanup": 0.0,
         }
 
         # 初始化
@@ -90,9 +94,10 @@ class NetworkCache:
         self._load_metadata()
         self.cleanup_expired_cache()
 
-        self.logger.log(LogLevel.DEBUG,
+        self.logger.log(
+            LogLevel.DEBUG,
             LogCategory.SYSTEM,
-            f"NetworkCache initialized: {self.cache_size_mb}MB, strategy={self.cache_strategy.value}"
+            f"NetworkCache initialized: {self.cache_size_mb}MB, strategy={self.cache_strategy.value}",
         )
 
     def cache_remote_file(self, remote_path: str) -> str | None:
@@ -143,7 +148,7 @@ class NetworkCache:
                     created_time=time.time(),
                     last_access_time=time.time(),
                     access_count=1,
-                    checksum=checksum
+                    checksum=checksum,
                 )
 
                 # 添加到索引
@@ -163,9 +168,8 @@ class NetworkCache:
                 # 保存元数据
                 self._save_metadata()
 
-                self.logger.log(LogLevel.DEBUG,
-                    LogCategory.CACHE,
-                    f"File cached: {remote_path} -> {local_path} ({file_size} bytes)"
+                self.logger.log(
+                    LogLevel.DEBUG, LogCategory.CACHE, f"File cached: {remote_path} -> {local_path} ({file_size} bytes)"
                 )
 
                 return local_path
@@ -329,7 +333,8 @@ class NetworkCache:
             stats = self.stats.copy()
             stats["cache_hit_rate"] = (
                 stats["cache_hits"] / (stats["cache_hits"] + stats["cache_misses"])
-                if (stats["cache_hits"] + stats["cache_misses"]) > 0 else 0.0
+                if (stats["cache_hits"] + stats["cache_misses"]) > 0
+                else 0.0
             )
             stats["cache_usage_mb"] = stats["total_cache_size"] / (1024 * 1024)
             stats["cache_usage_percent"] = (stats["total_cache_size"] / self.max_cache_size) * 100
@@ -350,7 +355,7 @@ class NetworkCache:
 
     def _generate_cache_key(self, remote_path: str) -> str:
         """生成缓存键
-        
+
         Note: MD5仅用于生成缓存键，不用于安全目的
         """
         # 使用路径的哈希值作为缓存键（非安全用途）
@@ -371,7 +376,7 @@ class NetworkCache:
 
     def _calculate_checksum(self, file_path: str) -> str:
         """计算文件校验和
-        
+
         Note: MD5仅用于文件完整性检查，不用于安全目的
         """
         try:
@@ -430,10 +435,7 @@ class NetworkCache:
 
         elif self.cache_strategy == CacheStrategy.LFU:
             # LFU策略：移除访问次数最少的条目
-            sorted_keys = sorted(
-                self.access_counts.keys(),
-                key=lambda k: self.access_counts[k]
-            )
+            sorted_keys = sorted(self.access_counts.keys(), key=lambda k: self.access_counts[k])
 
             for cache_key in sorted_keys:
                 if evicted_size >= required_size:
@@ -459,9 +461,8 @@ class NetworkCache:
             self.stats["cache_evictions"] += evicted_count
 
         if evicted_count > 0:
-            self.logger.log(LogLevel.INFO,
-                LogCategory.CACHE,
-                f"Evicted {evicted_count} cache entries ({evicted_size} bytes)"
+            self.logger.log(
+                LogLevel.INFO, LogCategory.CACHE, f"Evicted {evicted_count} cache entries ({evicted_size} bytes)"
             )
 
     def _load_metadata(self):
@@ -483,9 +484,8 @@ class NetworkCache:
                 # 恢复统计信息
                 self.stats.update(data.get("stats", {}))
 
-                self.logger.log(LogLevel.DEBUG,
-                    LogCategory.CACHE,
-                    f"Loaded metadata: {len(self.cache_index)} cached files"
+                self.logger.log(
+                    LogLevel.DEBUG, LogCategory.CACHE, f"Loaded metadata: {len(self.cache_index)} cached files"
                 )
 
         except Exception as e:
@@ -505,13 +505,13 @@ class NetworkCache:
                             "last_access_time": entry.last_access_time,
                             "access_count": entry.access_count,
                             "checksum": entry.checksum,
-                            "is_valid": entry.is_valid
+                            "is_valid": entry.is_valid,
                         }
                         for key, entry in self.cache_index.items()
                     },
                     "access_order": dict(self.access_order),
                     "access_counts": self.access_counts,
-                    "stats": self.stats
+                    "stats": self.stats,
                 }
 
             with open(self.metadata_file, "w") as f:
@@ -520,9 +520,11 @@ class NetworkCache:
         except Exception as e:
             self.logging.getLogger(__name__).log_error(e, "metadata_save")
 
+
 # 全局实例
 _network_cache_instance: NetworkCache | None = None
 _network_cache_lock = threading.Lock()
+
 
 def get_network_cache() -> NetworkCache:
     """获取全局NetworkCache实例"""

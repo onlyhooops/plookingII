@@ -37,11 +37,7 @@ class TestComponentConfig:
     def test_custom_values(self):
         """测试自定义值"""
         config = ComponentConfig(
-            name="custom",
-            enabled=False,
-            timeout=60.0,
-            max_retries=5,
-            custom_params={"key": "value"}
+            name="custom", enabled=False, timeout=60.0, max_retries=5, custom_params={"key": "value"}
         )
         assert config.name == "custom"
         assert config.enabled is False
@@ -69,7 +65,7 @@ class TestStatisticsMixin:
         """测试记录成功操作"""
         component = self.MockComponent()
         component._record_operation(True, 1.0)
-        
+
         stats = component.get_stats()
         assert stats["operations"] == 1
         assert stats["successes"] == 1
@@ -80,7 +76,7 @@ class TestStatisticsMixin:
         """测试记录失败操作"""
         component = self.MockComponent()
         component._record_operation(False, 2.0)
-        
+
         stats = component.get_stats()
         assert stats["operations"] == 1
         assert stats["successes"] == 0
@@ -91,7 +87,7 @@ class TestStatisticsMixin:
         component = self.MockComponent()
         component._record_operation(True, 1.0)
         component._record_operation(True, 3.0)
-        
+
         stats = component.get_stats()
         assert stats["avg_time"] == 2.0
 
@@ -99,7 +95,7 @@ class TestStatisticsMixin:
         """测试update_stats别名方法"""
         component = self.MockComponent()
         component.update_stats(True, 1.5)
-        
+
         stats = component.get_stats()
         assert stats["operations"] == 1
         assert stats["last_operation_time"] == 1.5
@@ -109,7 +105,7 @@ class TestStatisticsMixin:
         component = self.MockComponent()
         component._record_operation(True, 1.0)
         component.reset_stats()
-        
+
         stats = component.get_stats()
         assert stats["operations"] == 0
         assert stats["successes"] == 0
@@ -121,7 +117,7 @@ class TestStatisticsMixin:
         component._record_operation(True, 1.0)
         component._record_operation(True, 1.0)
         component._record_operation(False, 1.0)
-        
+
         stats = component.get_stats()
         assert stats["success_rate"] == pytest.approx(66.67, rel=0.01)
 
@@ -144,7 +140,7 @@ class TestConfigurationMixin:
         """测试更新内置配置字段"""
         component = self.MockComponent()
         component.update_config(enabled=False, timeout=60.0)
-        
+
         config = component.get_config()
         assert config.enabled is False
         assert config.timeout == 60.0
@@ -153,7 +149,7 @@ class TestConfigurationMixin:
         """测试更新自定义字段"""
         component = self.MockComponent()
         component.update_config(custom_field="value")
-        
+
         config = component.get_config()
         assert config.custom_params["custom_field"] == "value"
 
@@ -161,7 +157,7 @@ class TestConfigurationMixin:
         """测试is_enabled方法"""
         component = self.MockComponent()
         assert component.is_enabled() is True
-        
+
         component.update_config(enabled=False)
         assert component.is_enabled() is False
 
@@ -177,41 +173,42 @@ class TestErrorHandlingMixin:
     def test_initialization(self):
         """测试初始化"""
         component = self.MockComponent()
-        assert hasattr(component, '_error_handlers')
-        assert hasattr(component, 'error_handler')
+        assert hasattr(component, "_error_handlers")
+        assert hasattr(component, "error_handler")
 
     def test_register_error_handler(self):
         """测试注册错误处理器"""
         component = self.MockComponent()
-        
+
         def custom_handler(error, context):
             return "handled"
-        
+
         component.register_error_handler(ValueError, custom_handler)
         assert ValueError in component._error_handlers
 
     def test_handle_error_with_registered_handler(self):
         """测试使用已注册的错误处理器"""
         component = self.MockComponent()
-        
+
         handled_errors = []
+
         def custom_handler(error, context):
             handled_errors.append((error, context))
             return "handled"
-        
+
         component.register_error_handler(ValueError, custom_handler)
         result = component.handle_error(ValueError("test"), "test_context")
-        
+
         assert result == "handled"
         assert len(handled_errors) == 1
 
     def test_retry_operation_success(self):
         """测试重试操作成功"""
         component = self.MockComponent()
-        
+
         def operation():
             return "success"
-        
+
         result = component.retry_operation(operation)
         assert result == "success"
 
@@ -219,14 +216,15 @@ class TestErrorHandlingMixin:
         """测试重试操作最终成功"""
         component = self.MockComponent()
         component._retry_config["delay"] = 0.01  # 减少测试时间
-        
+
         attempts = [0]
+
         def operation():
             attempts[0] += 1
             if attempts[0] < 3:
                 raise ValueError("not yet")
             return "success"
-        
+
         result = component.retry_operation(operation)
         assert result == "success"
         assert attempts[0] == 3
@@ -242,7 +240,7 @@ class TestLoggingMixin:
     def test_logger_initialization(self):
         """测试日志器初始化"""
         component = self.MockComponent()
-        assert hasattr(component, 'logger')
+        assert hasattr(component, "logger")
         assert isinstance(component.logger, logging.Logger)
 
     def test_log_operation(self):
@@ -258,9 +256,10 @@ class TestBaseComponent:
 
     class TestComponent(BaseComponent):
         """测试用组件"""
+
         def initialize(self) -> bool:
             return True
-        
+
         def cleanup(self):
             pass
 
@@ -268,8 +267,8 @@ class TestBaseComponent:
         """测试初始化"""
         component = self.TestComponent(name="test")
         assert component.get_config().name == "test"
-        assert hasattr(component, 'logger')
-        assert hasattr(component, '_stats')
+        assert hasattr(component, "logger")
+        assert hasattr(component, "_stats")
 
     def test_initialization_with_config(self):
         """测试使用配置初始化"""
@@ -308,10 +307,10 @@ class TestBaseComponent:
     def test_operation_context_success(self):
         """测试操作上下文成功"""
         component = self.TestComponent()
-        
+
         with component.operation_context("test_op"):
             time.sleep(0.01)
-        
+
         stats = component.get_stats()
         assert stats["operations"] == 1
         assert stats["successes"] == 1
@@ -319,11 +318,10 @@ class TestBaseComponent:
     def test_operation_context_failure(self):
         """测试操作上下文失败"""
         component = self.TestComponent()
-        
-        with pytest.raises(ValueError):
-            with component.operation_context("test_op"):
-                raise ValueError("test error")
-        
+
+        with pytest.raises(ValueError), component.operation_context("test_op"):
+            raise ValueError("test error")
+
         stats = component.get_stats()
         assert stats["operations"] == 1
         assert stats["failures"] == 1
@@ -335,6 +333,7 @@ class TestComponentRegistry:
     class TestComponent(BaseComponent):
         def initialize(self) -> bool:
             return True
+
         def cleanup(self):
             self.cleaned = True
 
@@ -342,7 +341,7 @@ class TestComponentRegistry:
         """测试注册组件"""
         registry = ComponentRegistry()
         component = self.TestComponent(name="test1")
-        
+
         registry.register(component, "test1")
         assert registry.get("test1") == component
 
@@ -350,7 +349,7 @@ class TestComponentRegistry:
         """测试使用默认名称注册组件"""
         registry = ComponentRegistry()
         component = self.TestComponent(name="test2")
-        
+
         registry.register(component)
         assert registry.get("TestComponent") is not None
 
@@ -364,10 +363,10 @@ class TestComponentRegistry:
         registry = ComponentRegistry()
         component = self.TestComponent(name="test3")
         component.cleaned = False
-        
+
         registry.register(component, "test3")
         registry.unregister("test3")
-        
+
         assert registry.get("test3") is None
         assert component.cleaned is True
 
@@ -376,10 +375,10 @@ class TestComponentRegistry:
         registry = ComponentRegistry()
         comp1 = self.TestComponent(name="comp1")
         comp2 = self.TestComponent(name="comp2")
-        
+
         registry.register(comp1, "comp1")
         registry.register(comp2, "comp2")
-        
+
         all_components = registry.get_all()
         assert len(all_components) == 2
         assert "comp1" in all_components
@@ -392,12 +391,12 @@ class TestComponentRegistry:
         comp2 = self.TestComponent(name="comp2")
         comp1.cleaned = False
         comp2.cleaned = False
-        
+
         registry.register(comp1, "comp1")
         registry.register(comp2, "comp2")
-        
+
         registry.cleanup_all()
-        
+
         assert len(registry.get_all()) == 0
         assert comp1.cleaned is True
         assert comp2.cleaned is True
@@ -410,4 +409,3 @@ class TestGlobalComponentRegistry:
         """测试全局注册表存在"""
         assert component_registry is not None
         assert isinstance(component_registry, ComponentRegistry)
-

@@ -15,6 +15,7 @@ from ...config.constants import APP_NAME
 
 logger = logging.getLogger(APP_NAME)
 
+
 class RotationController:
     """
     图片旋转控制器

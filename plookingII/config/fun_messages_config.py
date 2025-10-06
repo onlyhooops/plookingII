@@ -13,14 +13,7 @@ IMAGE_COUNT_MILESTONES = []
 ENCOURAGEMENT_MESSAGES = []
 REST_REMINDER_MESSAGES = []
 PROGRESS_MESSAGES = []
-TIME_BASED_MESSAGES = {
-    "early": [],
-    "warming": [],
-    "stable": [],
-    "intense": [],
-    "extended": [],
-    "marathon": []
-}
+TIME_BASED_MESSAGES = {"early": [], "warming": [], "stable": [], "intense": [], "extended": [], "marathon": []}
 
 # 休息提醒配置
 REST_REMINDER_CONFIG = {

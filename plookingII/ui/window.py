@@ -1,4 +1,3 @@
-
 import objc
 from AppKit import (
     NSApplication,
@@ -47,6 +46,7 @@ try:
     MainWindowRestorer = objc.lookUpClass("MainWindowRestorer")  # type: ignore
 except Exception:
     logger.debug("Using fallback MainWindowRestorer implementation", exc_info=True)
+
     class MainWindowRestorer(NSObject):
         """
         窗口恢复类，实现 NSWindowRestoration 协议
@@ -72,6 +72,7 @@ except Exception:
             except Exception:
                 # 恢复失败时返回None
                 completionHandler(None)
+
 
 class MainWindow(NSWindow):
     """
@@ -207,6 +208,7 @@ class MainWindow(NSWindow):
 
         # 初始化服务
         from ..services import BackgroundTaskManager, HistoryManager, ImageLoaderService
+
         self.image_loader_service = ImageLoaderService(self)
         self.history_manager = HistoryManager(self)
         self.background_task_manager = BackgroundTaskManager(self)
@@ -637,6 +639,7 @@ class MainWindow(NSWindow):
         """
         try:
             from ..core.unified_interfaces import set_global_status
+
             set_global_status(msg)
         except Exception:
             # 回退到原始实现
@@ -762,11 +765,7 @@ class MainWindow(NSWindow):
         """
         try:
             self.status_bar_controller.update_status_display(
-                self.current_folder,
-                self.images,
-                self.current_index,
-                self.subfolders,
-                self.current_subfolder_index
+                self.current_folder, self.images, self.current_index, self.subfolders, self.current_subfolder_index
             )
         except Exception as e:
             logger.warning(f"更新状态栏显示失败: {e}")

@@ -20,6 +20,7 @@ from plookingII.core.error_handling import FolderValidationError
 
 logger = logging.getLogger(APP_NAME)
 
+
 class FileUtils:
     """文件操作工具类"""
 

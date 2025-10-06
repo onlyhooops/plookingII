@@ -18,16 +18,19 @@ import json
 import logging
 import os
 import threading
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Optional, Callable
+from typing import Any
 
 from .constants import APP_NAME, VERSION
 
 logger = logging.getLogger(APP_NAME)
 
+
 class ConfigType(Enum):
     """配置类型枚举"""
+
     STRING = "string"
     INTEGER = "integer"
     FLOAT = "float"
@@ -35,16 +38,19 @@ class ConfigType(Enum):
     LIST = "list"
     DICT = "dict"
 
+
 @dataclass
 class ConfigSchema:
     """配置项模式定义"""
+
     key: str
     default_value: Any
     config_type: ConfigType
     description: str = ""
-    validator: Optional[Callable] = None
-    env_var: Optional[str] = None  # 对应的环境变量名
+    validator: Callable | None = None
+    env_var: str | None = None  # 对应的环境变量名
     user_configurable: bool = True  # 是否允许用户配置
+
 
 class ConfigManager:
     """统一配置管理器
@@ -70,68 +76,73 @@ class ConfigManager:
     def _init_config_schemas(self):
         """初始化配置模式定义"""
         # 应用基础配置
-        self._register_schema("app.name", APP_NAME, ConfigType.STRING,
-                             "应用程序名称", user_configurable=False)
-        self._register_schema("app.version", VERSION, ConfigType.STRING,
-                             "应用程序版本", user_configurable=False)
+        self._register_schema("app.name", APP_NAME, ConfigType.STRING, "应用程序名称", user_configurable=False)
+        self._register_schema("app.version", VERSION, ConfigType.STRING, "应用程序版本", user_configurable=False)
 
         # UI配置
-        self._register_schema("ui.window.width", 1200, ConfigType.INTEGER,
-                             "窗口默认宽度", env_var="PLOOKINGII_WINDOW_WIDTH")
-        self._register_schema("ui.window.height", 800, ConfigType.INTEGER,
-                             "窗口默认高度", env_var="PLOOKINGII_WINDOW_HEIGHT")
-        self._register_schema("ui.status_bar.height", 30, ConfigType.INTEGER,
-                             "状态栏高度")
+        self._register_schema(
+            "ui.window.width", 1200, ConfigType.INTEGER, "窗口默认宽度", env_var="PLOOKINGII_WINDOW_WIDTH"
+        )
+        self._register_schema(
+            "ui.window.height", 800, ConfigType.INTEGER, "窗口默认高度", env_var="PLOOKINGII_WINDOW_HEIGHT"
+        )
+        self._register_schema("ui.status_bar.height", 30, ConfigType.INTEGER, "状态栏高度")
 
         # 图像处理配置
-        self._register_schema("image.max_dimension", 4096, ConfigType.INTEGER,
-                             "最大图像尺寸", env_var="PLOOKINGII_MAX_DIMENSION")
-        self._register_schema("image.jpeg_quality", 0.92, ConfigType.FLOAT,
-                             "JPEG质量", self._validate_quality)
-        self._register_schema("image.supported_formats", [".jpg", ".jpeg", ".png"], ConfigType.LIST,
-                             "支持的图像格式")
+        self._register_schema(
+            "image.max_dimension", 4096, ConfigType.INTEGER, "最大图像尺寸", env_var="PLOOKINGII_MAX_DIMENSION"
+        )
+        self._register_schema("image.jpeg_quality", 0.92, ConfigType.FLOAT, "JPEG质量", self._validate_quality)
+        self._register_schema("image.supported_formats", [".jpg", ".jpeg", ".png"], ConfigType.LIST, "支持的图像格式")
 
         # 缓存配置
-        self._register_schema("cache.max_memory_mb", 512, ConfigType.INTEGER,
-                             "最大缓存内存(MB)", env_var="PLOOKINGII_CACHE_MAX_MB")
-        self._register_schema("cache.max_images", 100, ConfigType.INTEGER,
-                             "最大缓存图片数", env_var="PLOOKINGII_CACHE_MAX_IMAGES")
-        self._register_schema("cache.preview_max_mb", 128, ConfigType.INTEGER,
-                             "预览缓存最大内存(MB)")
+        self._register_schema(
+            "cache.max_memory_mb", 512, ConfigType.INTEGER, "最大缓存内存(MB)", env_var="PLOOKINGII_CACHE_MAX_MB"
+        )
+        self._register_schema(
+            "cache.max_images", 100, ConfigType.INTEGER, "最大缓存图片数", env_var="PLOOKINGII_CACHE_MAX_IMAGES"
+        )
+        self._register_schema("cache.preview_max_mb", 128, ConfigType.INTEGER, "预览缓存最大内存(MB)")
 
         # 性能配置
-        self._register_schema("performance.preload_enabled", True, ConfigType.BOOLEAN,
-                             "启用预加载", env_var="PLOOKINGII_PRELOAD_ENABLED")
-        self._register_schema("performance.concurrent_loads", 2, ConfigType.INTEGER,
-                             "并发加载数", env_var="PLOOKINGII_CONCURRENT_LOADS")
-        self._register_schema("performance.debounce_ms", 20, ConfigType.INTEGER,
-                             "按键防抖时间(毫秒)", env_var="PLOOKINGII_DEBOUNCE_MS")
+        self._register_schema(
+            "performance.preload_enabled", True, ConfigType.BOOLEAN, "启用预加载", env_var="PLOOKINGII_PRELOAD_ENABLED"
+        )
+        self._register_schema(
+            "performance.concurrent_loads", 2, ConfigType.INTEGER, "并发加载数", env_var="PLOOKINGII_CONCURRENT_LOADS"
+        )
+        self._register_schema(
+            "performance.debounce_ms", 20, ConfigType.INTEGER, "按键防抖时间(毫秒)", env_var="PLOOKINGII_DEBOUNCE_MS"
+        )
 
         # 监控配置
-        self._register_schema("monitor.enabled", True, ConfigType.BOOLEAN,
-                             "启用性能监控")
-        self._register_schema("monitor.interval_seconds", 5.0, ConfigType.FLOAT,
-                             "监控间隔(秒)")
-        self._register_schema("monitor.history_size", 1000, ConfigType.INTEGER,
-                             "监控历史记录数")
+        self._register_schema("monitor.enabled", True, ConfigType.BOOLEAN, "启用性能监控")
+        self._register_schema("monitor.interval_seconds", 5.0, ConfigType.FLOAT, "监控间隔(秒)")
+        self._register_schema("monitor.history_size", 1000, ConfigType.INTEGER, "监控历史记录数")
 
         # 文件监听配置
-        self._register_schema("file_watcher.enabled", True, ConfigType.BOOLEAN,
-                             "启用文件监听")
-        self._register_schema("file_watcher.strategy", "auto", ConfigType.STRING,
-                             "文件监听策略", self._validate_watcher_strategy)
-        self._register_schema("file_watcher.debounce_seconds", 1.0, ConfigType.FLOAT,
-                             "文件监听防抖时间")
+        self._register_schema("file_watcher.enabled", True, ConfigType.BOOLEAN, "启用文件监听")
+        self._register_schema(
+            "file_watcher.strategy", "auto", ConfigType.STRING, "文件监听策略", self._validate_watcher_strategy
+        )
+        self._register_schema("file_watcher.debounce_seconds", 1.0, ConfigType.FLOAT, "文件监听防抖时间")
 
         # 日志配置
-        self._register_schema("logging.level", "INFO", ConfigType.STRING,
-                             "日志级别", self._validate_log_level, "PLOOKINGII_LOG_LEVEL")
-        self._register_schema("logging.file_enabled", False, ConfigType.BOOLEAN,
-                             "启用日志文件")
+        self._register_schema(
+            "logging.level", "INFO", ConfigType.STRING, "日志级别", self._validate_log_level, "PLOOKINGII_LOG_LEVEL"
+        )
+        self._register_schema("logging.file_enabled", False, ConfigType.BOOLEAN, "启用日志文件")
 
-    def _register_schema(self, key: str, default_value: Any, config_type: ConfigType,
-                        description: str = "", validator: Optional[Callable] = None,
-                        env_var: Optional[str] = None, user_configurable: bool = True):
+    def _register_schema(
+        self,
+        key: str,
+        default_value: Any,
+        config_type: ConfigType,
+        description: str = "",
+        validator: Callable | None = None,
+        env_var: str | None = None,
+        user_configurable: bool = True,
+    ):
         """注册配置模式
 
         Args:
@@ -150,7 +161,7 @@ class ConfigManager:
             description=description,
             validator=validator,
             env_var=env_var,
-            user_configurable=user_configurable
+            user_configurable=user_configurable,
         )
         self._schemas[key] = schema
 
@@ -394,9 +405,11 @@ class ConfigManager:
         """验证文件监听策略"""
         return value in ["auto", "watchdog", "polling"]
 
+
 # 全局配置管理器实例
-_config_manager: Optional[ConfigManager] = None
+_config_manager: ConfigManager | None = None
 _config_lock = threading.Lock()
+
 
 def get_config_manager() -> ConfigManager:
     """获取全局配置管理器实例"""
@@ -405,6 +418,7 @@ def get_config_manager() -> ConfigManager:
         if _config_manager is None:
             _config_manager = ConfigManager()
         return _config_manager
+
 
 def get_config(key: str, default: Any = None) -> Any:
     """便捷的配置获取函数
@@ -418,6 +432,7 @@ def get_config(key: str, default: Any = None) -> Any:
     """
     return get_config_manager().get(key, default)
 
+
 def set_config(key: str, value: Any, persist: bool = False) -> bool:
     """便捷的配置设置函数
 
@@ -430,6 +445,7 @@ def set_config(key: str, value: Any, persist: bool = False) -> bool:
         bool: 设置是否成功
     """
     return get_config_manager().set(key, value, persist)
+
 
 # 便捷的配置访问接口
 class Config:
@@ -448,7 +464,7 @@ class Config:
         return {
             "max_memory_mb": get_config("cache.max_memory_mb", 512),
             "max_images": get_config("cache.max_images", 100),
-            "preview_max_mb": get_config("cache.preview_max_mb", 128)
+            "preview_max_mb": get_config("cache.preview_max_mb", 128),
         }
 
     @staticmethod
@@ -457,7 +473,7 @@ class Config:
         return {
             "preload_enabled": get_config("performance.preload_enabled", True),
             "concurrent_loads": get_config("performance.concurrent_loads", 2),
-            "debounce_ms": get_config("performance.debounce_ms", 80)
+            "debounce_ms": get_config("performance.debounce_ms", 80),
         }
 
     @staticmethod
@@ -466,5 +482,5 @@ class Config:
         return {
             "enabled": get_config("monitor.enabled", True),
             "interval": get_config("monitor.interval_seconds", 5.0),
-            "history_size": get_config("monitor.history_size", 1000)
+            "history_size": get_config("monitor.history_size", 1000),
         }

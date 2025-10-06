@@ -1,6 +1,6 @@
 [project]
 name = "plookingII"
-version = "1.6.0"
+dynamic = ["version"]
 description = "macOS native image viewer with high performance"
 authors = [{name = "PlookingII Team"}]
 readme = "README.md"
@@ -46,9 +46,11 @@ max-complexity = 15       # 圈复杂度阈值（15是合理的中等严格度�
 quote-style = "preserve"
 indent-style = "space"
 
+[tool.setuptools.dynamic]
+version = {attr = "plookingII.__version__.__version__"}
+
 [tool.semantic_release]
-version_toml = ["pyproject.toml:project.version"]
-version_variables = ["plookingII/config/constants.py:VERSION"]
+version_variables = ["plookingII/__version__.py:__version__"]
 branch = "main"
 upload_to_pypi = false
 upload_to_release = true
@@ -170,5 +172,3 @@ extend-exclude = '''
   | __pycache__
 )/
 '''
-
-

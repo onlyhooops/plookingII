@@ -199,4 +199,3 @@ info:
 	@echo "依赖包:"
 	@pip list | grep -E "(pytest|ruff|flake8|mypy|radon)"
 	@echo "======================================"
-

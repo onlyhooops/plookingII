@@ -4,12 +4,12 @@ PlookingII 采用自动化的语义化版本管理策略，确保版本号在整
 
 ## 📋 目录
 
-- [版本管理策略](#版本管理策略)
-- [版本号格式](#版本号格式)
-- [如何更新版本](#如何更新版本)
-- [开发者指南](#开发者指南)
-- [CI/CD 集成](#cicd-集成)
-- [故障排除](#故障排除)
+- [版本管理策略](#%E7%89%88%E6%9C%AC%E7%AE%A1%E7%90%86%E7%AD%96%E7%95%A5)
+- [版本号格式](#%E7%89%88%E6%9C%AC%E5%8F%B7%E6%A0%BC%E5%BC%8F)
+- [如何更新版本](#%E5%A6%82%E4%BD%95%E6%9B%B4%E6%96%B0%E7%89%88%E6%9C%AC)
+- [开发者指南](#%E5%BC%80%E5%8F%91%E8%80%85%E6%8C%87%E5%8D%97)
+- [CI/CD 集成](#cicd-%E9%9B%86%E6%88%90)
+- [故障排除](#%E6%95%85%E9%9A%9C%E6%8E%92%E9%99%A4)
 
 ## 版本管理策略
 
@@ -18,12 +18,14 @@ PlookingII 采用自动化的语义化版本管理策略，确保版本号在整
 版本号只在以下位置定义：
 
 1. **`plookingII/config/constants.py`** - 主版本号定义
+
    ```python
    VERSION = "1.6.0"
    APP_VERSION = VERSION  # 别名
    ```
 
-2. **`pyproject.toml`** - 项目元数据
+1. **`pyproject.toml`** - 项目元数据
+
    ```toml
    [project]
    version = "1.6.0"
@@ -73,12 +75,12 @@ MAJOR.MINOR.PATCH
 
 ### 版本号递增规则
 
-| Commit 类型 | 触发的版本更新 | 示例 |
-|------------|--------------|------|
-| `feat:` | MINOR +1 | 1.6.0 → 1.7.0 |
-| `fix:` | PATCH +1 | 1.6.0 → 1.6.1 |
-| `perf:` | PATCH +1 | 1.6.0 → 1.6.1 |
-| `BREAKING CHANGE:` | MAJOR +1 | 1.6.0 → 2.0.0 |
+| Commit 类型        | 触发的版本更新 | 示例          |
+| ------------------ | -------------- | ------------- |
+| `feat:`            | MINOR +1       | 1.6.0 → 1.7.0 |
+| `fix:`             | PATCH +1       | 1.6.0 → 1.6.1 |
+| `perf:`            | PATCH +1       | 1.6.0 → 1.6.1 |
+| `BREAKING CHANGE:` | MAJOR +1       | 1.6.0 → 2.0.0 |
 
 ## 如何更新版本
 
@@ -107,8 +109,8 @@ BREAKING CHANGE: 缓存接口发生重大变化"
 如果必须手动更新：
 
 1. 更新 `pyproject.toml` 中的版本号
-2. 更新 `plookingII/config/constants.py` 中的 VERSION
-3. 运行验证：
+1. 更新 `plookingII/config/constants.py` 中的 VERSION
+1. 运行验证：
    ```bash
    make verify-version
    ```
@@ -165,6 +167,7 @@ python3 scripts/verify_version_consistency.py
 ```
 
 输出示例：
+
 ```
 🔍 PlookingII 版本号一致性验证
 ============================================================
@@ -199,6 +202,7 @@ python3 scripts/unify_version.py
 ```
 
 此工具会：
+
 - 移除文档字符串中的硬编码版本号
 - 删除独立的 `__version__` 变量
 - 清理过时的版本号引用
@@ -261,6 +265,7 @@ echo "✅ 版本号验证通过"
 ### 问题 1: 版本号不一致
 
 **症状**：
+
 ```
 ❌ 版本号不一致:
    constants.py: 1.6.0
@@ -268,13 +273,15 @@ echo "✅ 版本号验证通过"
 ```
 
 **解决方案**：
+
 1. 确定哪个是正确的版本号
-2. 手动更新另一个文件使其一致
-3. 运行 `make verify-version` 确认
+1. 手动更新另一个文件使其一致
+1. 运行 `make verify-version` 确认
 
 ### 问题 2: 发现硬编码版本号
 
 **症状**：
+
 ```
 ❌ 发现 3 处硬编码版本号:
    - plookingII/core/cache.py: __version__ 变量
@@ -282,6 +289,7 @@ echo "✅ 版本号验证通过"
 ```
 
 **解决方案**：
+
 ```bash
 # 自动清理所有硬编码
 make unify-version
@@ -290,12 +298,14 @@ make unify-version
 ### 问题 3: semantic-release 配置错误
 
 **症状**：
+
 ```
 ❌ semantic_release 未配置更新 constants.py
 ```
 
 **解决方案**：
 检查 `pyproject.toml` 中的配置，确保包含：
+
 ```toml
 [tool.semantic_release]
 version_variables = ["plookingII/config/constants.py:VERSION"]
@@ -304,9 +314,10 @@ version_variables = ["plookingII/config/constants.py:VERSION"]
 ### 问题 4: CI 中版本验证失败
 
 **解决方案**：
+
 1. 在本地运行 `make verify-version`
-2. 修复所有报告的问题
-3. 提交修复并重新触发 CI
+1. 修复所有报告的问题
+1. 提交修复并重新触发 CI
 
 ## 最佳实践
 
@@ -331,7 +342,7 @@ version_variables = ["plookingII/config/constants.py:VERSION"]
 ### 自动发布（推荐）
 
 1. 合并 PR 到 main 分支
-2. semantic-release 自动：
+1. semantic-release 自动：
    - 分析 commits
    - 计算新版本号
    - 更新版本文件
@@ -370,6 +381,7 @@ python3 tools/package_release.py --build --release
 ### Q: 为什么使用自动化版本管理？
 
 A: 自动化版本管理有以下优势：
+
 - 减少人为错误
 - 确保版本号一致性
 - 自动生成 CHANGELOG
@@ -379,6 +391,7 @@ A: 自动化版本管理有以下优势：
 ### Q: 如何触发 MAJOR 版本更新？
 
 A: 在 commit 信息中添加 `BREAKING CHANGE:`：
+
 ```bash
 git commit -m "feat!: 重构 API
 
@@ -388,6 +401,7 @@ BREAKING CHANGE: 修改了缓存接口的参数"
 ### Q: 可以手动编辑 CHANGELOG 吗？
 
 A: 可以，但建议：
+
 - 让 semantic-release 自动生成基础内容
 - 手动添加详细说明和补充信息
 - 不要删除自动生成的版本标记
@@ -395,13 +409,13 @@ A: 可以，但建议：
 ### Q: 版本号验证会影响开发效率吗？
 
 A: 不会。验证过程很快（通常 < 2秒），且可以：
+
 - 及早发现版本号问题
 - 避免发布时的意外
 - 确保代码质量
 
----
+______________________________________________________________________
 
-**维护者**: PlookingII Team  
-**最后更新**: 2025-10-06  
+**维护者**: PlookingII Team
+**最后更新**: 2025-10-06
 **文档版本**: 1.0.0
-

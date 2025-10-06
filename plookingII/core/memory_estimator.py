@@ -21,6 +21,7 @@ from ..imports import NSImage
 
 logger = logging.getLogger(APP_NAME)
 
+
 class ImageMemoryEstimator:
     """精确的图像内存估算器"""
 
@@ -153,15 +154,15 @@ class ImageMemoryEstimator:
     def _get_pil_bytes_per_pixel(self, mode: str) -> int:
         """获取PIL图像模式的每像素字节数"""
         bytes_per_pixel_map = {
-            "L": 1,      # 灰度
-            "P": 1,      # 调色板
-            "RGB": 3,    # RGB
-            "RGBA": 4,   # RGBA
-            "CMYK": 4,   # CMYK
-            "LAB": 3,    # LAB
-            "HSV": 3,    # HSV
-            "I": 4,      # 32位整数
-            "F": 4,      # 32位浮点
+            "L": 1,  # 灰度
+            "P": 1,  # 调色板
+            "RGB": 3,  # RGB
+            "RGBA": 4,  # RGBA
+            "CMYK": 4,  # CMYK
+            "LAB": 3,  # LAB
+            "HSV": 3,  # HSV
+            "I": 4,  # 32位整数
+            "F": 4,  # 32位浮点
         }
         return bytes_per_pixel_map.get(mode, 4)  # 默认4字节
 
@@ -183,5 +184,5 @@ class ImageMemoryEstimator:
         return {
             "cache_size": len(self.cache),
             "max_cache_size": self.cache_max_size,
-            "cache_usage_ratio": len(self.cache) / self.cache_max_size
+            "cache_usage_ratio": len(self.cache) / self.cache_max_size,
         }

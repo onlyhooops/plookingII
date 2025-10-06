@@ -24,6 +24,7 @@ from ..imports import logging
 
 logger = logging.getLogger(APP_NAME)
 
+
 class SmartMemoryManager:
     """智能内存管理器"""
 
@@ -50,7 +51,7 @@ class SmartMemoryManager:
         self.cleanup_strategies = {
             "gentle": self._gentle_cleanup,
             "moderate": self._moderate_cleanup,
-            "aggressive": self._aggressive_cleanup
+            "aggressive": self._aggressive_cleanup,
         }
 
         # 统计信息
@@ -59,7 +60,7 @@ class SmartMemoryManager:
             "cache_misses": 0,
             "cleanups_performed": 0,
             "memory_freed_mb": 0.0,
-            "last_cleanup_time": 0
+            "last_cleanup_time": 0,
         }
 
         logger.info(f"Smart memory manager initialized: limit={memory_limit_mb}MB, threshold={cleanup_threshold}")
@@ -124,6 +125,7 @@ class SmartMemoryManager:
 
     def get_file_size_mb(self, file_path: str) -> float:
         """获取文件大小（MB），带缓存"""
+
         def _compute_file_size():
             import os
 
@@ -136,9 +138,11 @@ class SmartMemoryManager:
 
     def get_image_dimensions(self, file_path: str) -> tuple | None:
         """获取图像尺寸，带缓存"""
+
         def _compute_dimensions():
             try:
                 from .functions import get_image_dimensions_safe
+
                 return get_image_dimensions_safe(file_path)
             except Exception:
                 return None
@@ -193,7 +197,7 @@ class SmartMemoryManager:
 
         # 清理内存历史
         if len(self.memory_history) > self.max_history_size // 2:
-            self.memory_history = self.memory_history[-self.max_history_size // 2:]
+            self.memory_history = self.memory_history[-self.max_history_size // 2 :]
 
         # 执行垃圾回收
         gc.collect()
@@ -231,15 +235,11 @@ class SmartMemoryManager:
         pressure = self.get_memory_pressure()
 
         # 记录内存历史
-        self.memory_history.append({
-            "timestamp": time.time(),
-            "usage_mb": current_usage,
-            "pressure": pressure
-        })
+        self.memory_history.append({"timestamp": time.time(), "usage_mb": current_usage, "pressure": pressure})
 
         # 限制历史记录大小
         if len(self.memory_history) > self.max_history_size:
-            self.memory_history = self.memory_history[-self.max_history_size:]
+            self.memory_history = self.memory_history[-self.max_history_size :]
 
         # 检查是否需要清理
         if self.is_memory_pressure_high():
@@ -270,7 +270,7 @@ class SmartMemoryManager:
                 "cache_misses": self.stats["cache_misses"],
                 "cleanups_performed": self.stats["cleanups_performed"],
                 "memory_freed_mb": self.stats["memory_freed_mb"],
-                "last_cleanup_time": self.stats["last_cleanup_time"]
+                "last_cleanup_time": self.stats["last_cleanup_time"],
             }
 
     def _estimate_image_size(self, image: Any) -> float:
@@ -297,6 +297,7 @@ class SmartMemoryManager:
 
             # 如果是其他类型的图像，使用系统大小估算
             import sys
+
             return sys.getsizeof(image) / (1024 * 1024)
 
         except Exception as e:
@@ -334,6 +335,7 @@ class SmartMemoryManager:
         with self.lock:
             self.cleanup_threshold = max(0.0, min(1.0, threshold))
             logger.info(f"Cleanup threshold updated to {self.cleanup_threshold}")
+
 
 class MemoryMonitor:
     """智能内存监控器（专用于SmartMemoryManager）"""

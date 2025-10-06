@@ -18,6 +18,7 @@ from ..imports import _sqlite3, logging
 # 日志记录器：用于数据库操作的调试和错误追踪
 logger = logging.getLogger(APP_NAME)
 
+
 def _configure_sqlite_pragmas(conn):
     """配置SQLite数据库的PRAGMA设置
 
@@ -62,6 +63,7 @@ def _configure_sqlite_pragmas(conn):
             except Exception as close_err:
                 # 游标关闭失败通常不影响连接使用，记录警告即可
                 logger.warning(f"sqlite cursor close failed: {close_err}")
+
 
 def connect_db(database, timeout=30.0, detect_types=0, isolation_level=None, check_same_thread=False, **kwargs):
     """创建优化的SQLite数据库连接

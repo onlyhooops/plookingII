@@ -19,6 +19,7 @@ from ..imports import logging
 
 logger = logging.getLogger(APP_NAME)
 
+
 class AppInfo:
     """应用程序信息封装"""
 
@@ -29,13 +30,23 @@ class AppInfo:
         self.is_default = is_default
         self.icon = None
 
+
 class BrowserFilter:
     """浏览器应用程序过滤器"""
 
     # 浏览器关键词列表
     BROWSER_KEYWORDS = [
-        "浏览器", "Browser", "Safari", "Chrome", "Firefox", "Edge",
-        "Opera", "Brave", "Vivaldi", "Arc", "115浏览器"
+        "浏览器",
+        "Browser",
+        "Safari",
+        "Chrome",
+        "Firefox",
+        "Edge",
+        "Opera",
+        "Brave",
+        "Vivaldi",
+        "Arc",
+        "115浏览器",
     ]
 
     @classmethod
@@ -59,6 +70,7 @@ class BrowserFilter:
                 return True
 
         return False
+
 
 class AppDiscovery:
     """应用程序发现器"""
@@ -109,6 +121,7 @@ class AppDiscovery:
         except Exception as e:
             logger.warning(f"获取应用程序列表失败: {e}")
             return []
+
 
 class MenuItemBuilder:
     """菜单项构建器"""
@@ -211,6 +224,7 @@ class MenuItemBuilder:
         notice_item.setEnabled_(False)
         return notice_item
 
+
 class ContextMenuManager:
     """上下文菜单管理器 - 负责整个右键菜单的创建和管理"""
 
@@ -245,9 +259,7 @@ class ContextMenuManager:
 
             # 显示菜单
             location = event.locationInWindow()
-            menu.popUpMenuPositioningItem_atLocation_inView_(
-                None, location, self.target_view
-            )
+            menu.popUpMenuPositioningItem_atLocation_inView_(None, location, self.target_view)
 
             return True
 

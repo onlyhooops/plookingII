@@ -27,6 +27,7 @@ from ..imports import logging as _logging
 
 logger = _logging.getLogger(APP_NAME)
 
+
 class ImageRotationProcessor:
     """图像旋转处理器
 
@@ -377,9 +378,7 @@ class ImageRotationProcessor:
                 exif_data = img.info.get("exif")
 
                 # 使用LANCZOS重采样算法保证质量
-                rotated_img = (
-                    img.rotate(angle, expand=True, fillcolor="white", resample=Image.Resampling.LANCZOS)
-                )
+                rotated_img = img.rotate(angle, expand=True, fillcolor="white", resample=Image.Resampling.LANCZOS)
 
                 # 处理EXIF方向信息（将 Orientation 重置为 1），并写回到 rotated_img.info['exif']
                 rotated_img = self._update_exif_orientation(rotated_img, direction, exif_data)
@@ -471,7 +470,9 @@ class ImageRotationProcessor:
                 fmt = "JPEG" if ext in [".jpg", ".jpeg"] else ("PNG" if ext == ".png" else img.format or "JPEG")
 
                 dir_name = os.path.dirname(image_path) or "."
-                with tempfile.NamedTemporaryFile(prefix=".exif_", suffix=ext or ".jpg", dir=dir_name, delete=False) as tmpf:
+                with tempfile.NamedTemporaryFile(
+                    prefix=".exif_", suffix=ext or ".jpg", dir=dir_name, delete=False
+                ) as tmpf:
                     tmp_path = tmpf.name
 
                 save_kwargs = {"format": fmt}

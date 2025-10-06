@@ -29,6 +29,7 @@ from ...core.session_manager import SessionManager
 
 logger = logging.getLogger(APP_NAME)
 
+
 class StatusBarController:
     """状态栏控制器，负责状态栏显示和更新"""
 
@@ -86,9 +87,7 @@ class StatusBarController:
         # 创建缩放滑块 - 在最右侧
         from AppKit import NSSlider, NSSliderTypeLinear
 
-        self.zoom_slider = (
-            NSSlider.alloc().initWithFrame_(((w - slider_width - slider_margin, 7), (slider_width, 16)))
-        )
+        self.zoom_slider = NSSlider.alloc().initWithFrame_(((w - slider_width - slider_margin, 7), (slider_width, 16)))
         self.zoom_slider.setControlSize_(NSSmallControlSize)  # 小尺寸控件
         self.zoom_slider.setSliderType_(NSSliderTypeLinear)  # 线性滑块
         self.zoom_slider.setMinValue_(1.0)  # 最小缩放：100%
@@ -96,16 +95,16 @@ class StatusBarController:
         self.zoom_slider.setDoubleValue_(1.0)  # 默认缩放：100%
         self.zoom_slider.setContinuous_(True)  # 连续更新
         self.zoom_slider.setTarget_(self.main_window)  # 设置目标对象
-        self.zoom_slider.setAction_(objc.selector(self.main_window.zoomSliderChanged_, signature=b"v@:@"))  # 设置回调方法
+        self.zoom_slider.setAction_(
+            objc.selector(self.main_window.zoomSliderChanged_, signature=b"v@:@")
+        )  # 设置回调方法
         self.status_bar_view.addSubview_(self.zoom_slider)
 
         # 创建状态指示器：放置于左下角（恢复靠左对齐）
         left_inset = 10
         center_label_width = w - (right_label_width + right_margin) - (left_inset + 10)
         center_label_width = max(center_label_width, 120)
-        self.center_status_label = (
-            NSTextField.alloc().initWithFrame_(((left_inset, 5), (center_label_width, 20)))
-        )
+        self.center_status_label = NSTextField.alloc().initWithFrame_(((left_inset, 5), (center_label_width, 20)))
         self.center_status_label.setEditable_(False)
         self.center_status_label.setBordered_(False)
         self.center_status_label.setDrawsBackground_(False)
@@ -131,8 +130,8 @@ class StatusBarController:
         self.status_bar_view.addSubview_(self.update_indicator)
 
         # 创建右侧标签：显示文件夹序号
-        self.folder_seq_label = (
-            NSTextField.alloc().initWithFrame_(((w - right_label_width - right_margin, 5), (right_label_width, 20)))
+        self.folder_seq_label = NSTextField.alloc().initWithFrame_(
+            ((w - right_label_width - right_margin, 5), (right_label_width, 20))
         )
         self.folder_seq_label.setEditable_(False)
         self.folder_seq_label.setBordered_(False)
@@ -151,10 +150,8 @@ class StatusBarController:
             self._session_update_timer.invalidate()
 
         # 每5秒更新一次会话状态
-        self._session_update_timer = (
-            NSTimer.scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(
-                5.0, self, "updateSessionStatus:", None, True
-            )
+        self._session_update_timer = NSTimer.scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(
+            5.0, self, "updateSessionStatus:", None, True
         )
 
     def updateSessionStatus_(self, timer):
@@ -252,9 +249,7 @@ class StatusBarController:
 
         # 获取当前图片文件名
         current_image_name = (
-            os.path.basename(images[current_index])
-            if images and 0 <= current_index < len(images)
-            else ""
+            os.path.basename(images[current_index]) if images and 0 <= current_index < len(images) else ""
         )
 
         # 计算分辨率与体积（MB）
@@ -266,6 +261,7 @@ class StatusBarController:
                 # 分辨率（安全路径）
                 try:
                     from ...core.functions import get_image_dimensions_safe
+
                     dims = get_image_dimensions_safe(img_path)
                     if dims:
                         resolution_text = f"{dims[0]}x{dims[1]}"
@@ -290,14 +286,14 @@ class StatusBarController:
             if size_mb_text:
                 parts.append(size_mb_text)
             left_text = "/".join([p for p in parts if p])
-            title_text = f"{left_text} | {current_index+1}/{len(images)}"
+            title_text = f"{left_text} | {current_index + 1}/{len(images)}"
             if hasattr(self.main_window, "setTitle_"):
                 self.main_window.setTitle_(title_text)
         except Exception:
             pass
 
         # 更新文件夹序列标签
-        self.folder_seq_label.setStringValue_(f"{current_subfolder_index+1}/{len(subfolders)}")
+        self.folder_seq_label.setStringValue_(f"{current_subfolder_index + 1}/{len(subfolders)}")
 
         # 更新会话管理器状态
         self.update_session_data(images, subfolders, current_index, current_subfolder_index)
@@ -360,10 +356,8 @@ class StatusBarController:
             self._status_timer = None
 
         # 启动新定时器
-        self._status_timer = (
-            NSTimer.scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(
-                2.0, self.main_window, "clearStatusMessage:", None, False
-            )
+        self._status_timer = NSTimer.scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(
+            2.0, self.main_window, "clearStatusMessage:", None, False
         )
 
     def clear_status_message(self):
@@ -426,9 +420,7 @@ class StatusBarController:
         """显示工作摘要 - 移除emoji"""
         try:
             summary = self.session_manager.get_work_summary()
-            summary_text = (
-                f"本次工作: {summary['session_duration']} | 总计: {summary['total_work_time']} | 效率: {summary['efficiency']}"
-            )
+            summary_text = f"本次工作: {summary['session_duration']} | 总计: {summary['total_work_time']} | 效率: {summary['efficiency']}"
 
             if self.center_status_label:
                 self.center_status_label.setStringValue_(summary_text)

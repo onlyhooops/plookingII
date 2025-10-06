@@ -5,7 +5,6 @@
 """
 
 import os
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -63,25 +62,25 @@ class TestResourcePaths:
     def test_base_dir_exists(self):
         """测试基础目录"""
         # _BASE_DIR应该是plookingII包的目录
-        assert hasattr(constants, '_BASE_DIR')
+        assert hasattr(constants, "_BASE_DIR")
         assert os.path.isabs(constants._BASE_DIR)
 
     def test_logo_dir_exists(self):
         """测试logo目录"""
-        assert hasattr(constants, '_LOGO_DIR')
-        assert 'logo' in constants._LOGO_DIR
+        assert hasattr(constants, "_LOGO_DIR")
+        assert "logo" in constants._LOGO_DIR
 
     def test_icon_svg_path(self):
         """测试SVG图标路径"""
-        assert constants.ICON_SVG.endswith('.svg')
-        assert 'PlookingII' in constants.ICON_SVG
-        assert 'logo' in constants.ICON_SVG
+        assert constants.ICON_SVG.endswith(".svg")
+        assert "PlookingII" in constants.ICON_SVG
+        assert "logo" in constants.ICON_SVG
 
     def test_icon_icns_path(self):
         """测试ICNS图标路径"""
-        assert constants.ICON_ICNS.endswith('.icns')
-        assert 'PlookingII' in constants.ICON_ICNS
-        assert 'logo' in constants.ICON_ICNS
+        assert constants.ICON_ICNS.endswith(".icns")
+        assert "PlookingII" in constants.ICON_ICNS
+        assert "logo" in constants.ICON_ICNS
 
 
 @pytest.mark.unit
@@ -92,21 +91,21 @@ class TestResourcePathFunction:
     def test_resource_path_existing_file(self):
         """测试存在的文件"""
         # 创建临时目录和文件
-        with patch('os.path.exists', return_value=True):
+        with patch("os.path.exists", return_value=True):
             result = constants._resource_path("/test/dir", "file.txt")
             assert result == os.path.join("/test/dir", "file.txt")
 
     def test_resource_path_nonexistent_file(self):
         """测试不存在的文件"""
         # 文件不存在时仍返回路径
-        with patch('os.path.exists', return_value=False):
+        with patch("os.path.exists", return_value=False):
             result = constants._resource_path("/test/dir", "missing.txt")
             assert result == os.path.join("/test/dir", "missing.txt")
 
     def test_resource_path_exception_handling(self):
         """测试异常处理"""
         # os.path.join抛出异常时的处理
-        with patch('os.path.join', side_effect=Exception("Path error")):
+        with patch("os.path.join", side_effect=Exception("Path error")):
             # 应该返回基础拼接结果
             # 由于第一次join会失败，会在except中再次join
             # 这里我们测试它不会崩溃
@@ -381,10 +380,9 @@ class TestConstantsIntegration:
         """测试没有明显的配置冲突"""
         # 内存压力阈值应该小于内存阈值
         assert constants.memory_pressure_threshold < constants.MEMORY_THRESHOLD_MB
-        
+
         # 预览缓存应该大于主缓存（因为预览图小）
-        assert (constants.IMAGE_PROCESSING_CONFIG["preview_cache_size"] > 
-                constants.IMAGE_PROCESSING_CONFIG["cache_size"])
+        assert constants.IMAGE_PROCESSING_CONFIG["preview_cache_size"] > constants.IMAGE_PROCESSING_CONFIG["cache_size"]
 
     def test_version_format_valid(self):
         """测试版本号格式有效"""
@@ -395,9 +393,8 @@ class TestConstantsIntegration:
         assert major.isdigit()
         assert minor.isdigit()
         assert patch.isdigit()
-        
+
         # 版本号应该合理
         assert int(major) >= 0
         assert int(minor) >= 0
         assert int(patch) >= 0
-

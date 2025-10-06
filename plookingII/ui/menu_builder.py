@@ -19,6 +19,7 @@ from ..imports import logging
 
 logger = logging.getLogger(APP_NAME)
 
+
 class AppMenuBuilder:
     """应用程序菜单构建器"""
 
@@ -69,6 +70,7 @@ class AppMenuBuilder:
         app_menu_item.setSubmenu_(app_menu)
         return app_menu_item
 
+
 class FileMenuBuilder:
     """文件菜单构建器"""
 
@@ -93,9 +95,7 @@ class FileMenuBuilder:
         file_menu.addItem_(open_item)
 
         # 最近打开文件菜单项
-        recent_menu_item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
-            "打开最近", "", ""
-        )
+        recent_menu_item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_("打开最近", "", "")
         recent_menu = NSMenu.alloc().initWithTitle_("打开最近")
         recent_menu_item.setSubmenu_(recent_menu)
         file_menu.addItem_(recent_menu_item)
@@ -105,6 +105,7 @@ class FileMenuBuilder:
 
         file_menu_item.setSubmenu_(file_menu)
         return file_menu_item
+
 
 class EditMenuBuilder:
     """编辑菜单构建器"""
@@ -171,6 +172,7 @@ class EditMenuBuilder:
         edit_menu_item.setSubmenu_(edit_menu)
         return edit_menu_item
 
+
 class GoMenuBuilder:
     """转到菜单构建器"""
 
@@ -187,9 +189,7 @@ class GoMenuBuilder:
         go_menu = NSMenu.alloc().initWithTitle_("前往")  # 原来的菜单标题
 
         # 跳转文件夹菜单项 (原来的标题)
-        jump_item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
-            "跳转文件夹", "jumpToFolder:", ""
-        )
+        jump_item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_("跳转文件夹", "jumpToFolder:", "")
         jump_item.setTarget_(self.window)
         go_menu.addItem_(jump_item)
 
@@ -201,9 +201,7 @@ class GoMenuBuilder:
         go_menu.addItem_(keep_folder_item)
 
         # 跳转到文件菜单项
-        goto_file_item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
-            "跳转到文件", "gotoFile:", "g"
-        )
+        goto_file_item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_("跳转到文件", "gotoFile:", "g")
         goto_file_item.setKeyEquivalentModifierMask_(NSEventModifierFlagCommand)
         goto_file_item.setTarget_(self.window)
         go_menu.addItem_(goto_file_item)
@@ -218,6 +216,7 @@ class GoMenuBuilder:
 
         go_menu_item.setSubmenu_(go_menu)
         return go_menu_item
+
 
 class ViewMenuBuilder:
     """视图菜单构建器"""
@@ -235,14 +234,13 @@ class ViewMenuBuilder:
         view_menu = NSMenu.alloc().initWithTitle_("显示")  # 原来的菜单标题
 
         # 切换深浅模式菜单项 (原来在视图菜单中)
-        theme_item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
-            "切换深浅模式", "toggleTheme:", ""
-        )
+        theme_item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_("切换深浅模式", "toggleTheme:", "")
         theme_item.setTarget_(self.window)
         view_menu.addItem_(theme_item)
 
         view_menu_item.setSubmenu_(view_menu)
         return view_menu_item
+
 
 class ToolsMenuBuilder:
     """工具菜单构建器"""
@@ -260,9 +258,7 @@ class ToolsMenuBuilder:
         tools_menu = NSMenu.alloc().initWithTitle_("工具")
 
         # 清除历史记录菜单项 (原来的名称)
-        clear_cache_item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
-            "清除历史记录", "clearCache:", ""
-        )
+        clear_cache_item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_("清除历史记录", "clearCache:", "")
         clear_cache_item.setTarget_(self.window)
         tools_menu.addItem_(clear_cache_item)
 
@@ -288,6 +284,7 @@ class ToolsMenuBuilder:
         tools_menu_item.setSubmenu_(tools_menu)
         return tools_menu_item
 
+
 class HelpMenuBuilder:
     """帮助菜单构建器"""
 
@@ -312,6 +309,7 @@ class HelpMenuBuilder:
 
         help_menu_item.setSubmenu_(help_menu)
         return help_menu_item
+
 
 class MenuBuilder:
     """主菜单构建器 - 负责整个菜单系统的协调和构建"""

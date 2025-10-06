@@ -24,6 +24,7 @@ from ..config.constants import APP_NAME
 
 logger = logging.getLogger(APP_NAME)
 
+
 class PathUtils:
     """路径处理工具类"""
 

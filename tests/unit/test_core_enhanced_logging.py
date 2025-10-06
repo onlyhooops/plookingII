@@ -7,8 +7,6 @@ Author: PlookingII Team
 
 import logging
 
-import pytest
-
 from plookingII.core.enhanced_logging import (
     LogCategory,
     LogEntry,
@@ -62,7 +60,7 @@ class TestLogEntry:
             function="test_function",
             line_number=42,
             thread_id=1,
-            process_id=100
+            process_id=100,
         )
 
         assert entry.timestamp == 1234567890.0
@@ -86,7 +84,7 @@ class TestLogEntry:
             function="test",
             line_number=1,
             thread_id=1,
-            process_id=1
+            process_id=1,
         )
 
         assert entry.metadata == {}
@@ -107,7 +105,7 @@ class TestLogEntry:
             process_id=1,
             metadata={"key": "value"},
             exception_info="Traceback...",
-            performance_data={"duration": 1.5}
+            performance_data={"duration": 1.5},
         )
 
         assert entry.metadata == {"key": "value"}
@@ -130,13 +128,7 @@ class TestStructuredFormatter:
         """测试格式化基本日志记录"""
         formatter = StructuredFormatter()
         record = logging.LogRecord(
-            name="test",
-            level=logging.INFO,
-            pathname="test.py",
-            lineno=42,
-            msg="Test message",
-            args=(),
-            exc_info=None
+            name="test", level=logging.INFO, pathname="test.py", lineno=42, msg="Test message", args=(), exc_info=None
         )
 
         formatted = formatter.format(record)
@@ -154,7 +146,7 @@ class TestStructuredFormatter:
             lineno=42,
             msg="Warning message",
             args=(),
-            exc_info=None
+            exc_info=None,
         )
         record.category = "test_category"
         record.metadata = {"key": "value"}
@@ -167,15 +159,8 @@ class TestStructuredFormatter:
         """测试不包含元数据的格式化"""
         formatter = StructuredFormatter(include_metadata=False)
         record = logging.LogRecord(
-            name="test",
-            level=logging.INFO,
-            pathname="test.py",
-            lineno=42,
-            msg="Test",
-            args=(),
-            exc_info=None
+            name="test", level=logging.INFO, pathname="test.py", lineno=42, msg="Test", args=(), exc_info=None
         )
 
         formatted = formatter.format(record)
         assert isinstance(formatted, str)
-

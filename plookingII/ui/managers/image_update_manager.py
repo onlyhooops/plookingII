@@ -23,6 +23,7 @@ from ..utils.user_feedback import show_info, show_warning
 
 logger = logging.getLogger(APP_NAME)
 
+
 class ImageUpdateManager:
     """图片更新状态管理器
 
@@ -141,10 +142,10 @@ class ImageUpdateManager:
         def show_update_notification():
             try:
                 import os
+
                 filename = os.path.basename(event.file_path)
                 should_reload = show_warning(
-                    "图片已更新",
-                    f'检测到图片 "{filename}" 已被外部程序修改。\n\n是否重新加载图片？'
+                    "图片已更新", f'检测到图片 "{filename}" 已被外部程序修改。\n\n是否重新加载图片？'
                 )
 
                 if should_reload:
@@ -171,6 +172,7 @@ class ImageUpdateManager:
         def show_delete_notification():
             try:
                 import os
+
                 filename = os.path.basename(event.file_path)
                 show_info("图片已删除", f'图片 "{filename}" 已被删除。')
 
@@ -198,6 +200,7 @@ class ImageUpdateManager:
         def show_move_notification():
             try:
                 import os
+
                 old_name = os.path.basename(event.old_path) if event.old_path else "未知"
                 new_name = os.path.basename(event.file_path)
                 show_info("图片已移动", f'图片已从 "{old_name}" 移动到 "{new_name}"。')
@@ -247,6 +250,7 @@ class ImageUpdateManager:
                 # 显示成功消息
                 def show_reload_success():
                     import os
+
                     filename = os.path.basename(self.current_image_path)
                     if hasattr(self.main_window, "status_bar_controller"):
                         self.main_window.status_bar_controller.set_status_message(f"已重新加载: {filename}")
@@ -283,17 +287,14 @@ class ImageUpdateManager:
         try:
             # 使用NSThread在主线程中执行
             from Foundation import NSThread
+
             if NSThread.isMainThread():
                 func()
             else:
                 NSThread.detachNewThreadSelector_toTarget_withObject_(
                     "performSelectorOnMainThread:withObject:waitUntilDone:",
                     self,
-                    {
-                        "selector": func,
-                        "object": None,
-                        "wait": False
-                    }
+                    {"selector": func, "object": None, "wait": False},
                 )
         except Exception:
             # 回退到直接执行
@@ -314,13 +315,13 @@ class ImageUpdateManager:
 
         try:
             import os
+
             if not os.path.exists(self.current_image_path):
                 # 文件不存在，触发删除事件
                 from ...core.file_watcher import FileChangeEvent, FileChangeType
+
                 event = FileChangeEvent(
-                    file_path=self.current_image_path,
-                    change_type=FileChangeType.DELETED,
-                    timestamp=time.time()
+                    file_path=self.current_image_path, change_type=FileChangeType.DELETED, timestamp=time.time()
                 )
                 self._handle_file_deleted(event)
 

@@ -15,8 +15,10 @@ from enum import Enum
 from .enhanced_logging import LogCategory, LogLevel, get_enhanced_logger
 from .error_handling import ErrorCategory, error_context
 
+
 class MountType(Enum):
     """挂载类型枚举"""
+
     LOCAL = "local"
     SMB = "smb"
     AFP = "afp"
@@ -24,9 +26,11 @@ class MountType(Enum):
     SSHFS = "sshfs"
     UNKNOWN = "unknown"
 
+
 @dataclass
 class MountInfo:
     """挂载信息数据类"""
+
     path: str
     mount_type: MountType
     server: str | None = None
@@ -34,6 +38,7 @@ class MountInfo:
     latency_ms: float | None = None
     is_accessible: bool = True
     last_checked: float = 0.0
+
 
 class RemoteFileDetector:
     """
@@ -88,19 +93,16 @@ class RemoteFileDetector:
                 mount_type = self._detect_mount_type(normalized_path)
 
                 # 缓存结果
-                mount_info = MountInfo(
-                    path=normalized_path,
-                    mount_type=mount_type,
-                    last_checked=time.time()
-                )
+                mount_info = MountInfo(path=normalized_path, mount_type=mount_type, last_checked=time.time())
 
                 with self._cache_lock:
                     self._mount_cache[normalized_path] = mount_info
 
                 is_remote = mount_type != MountType.LOCAL
                 self.logger.log(
-                    LogLevel.DEBUG, LogCategory.FILE_SYSTEM,
-                    f"Path '{normalized_path}' detected as {'remote' if is_remote else 'local'} ({mount_type.value})"
+                    LogLevel.DEBUG,
+                    LogCategory.FILE_SYSTEM,
+                    f"Path '{normalized_path}' detected as {'remote' if is_remote else 'local'} ({mount_type.value})",
                 )
 
                 return is_remote
@@ -141,9 +143,7 @@ class RemoteFileDetector:
                         self._mount_cache[normalized_path].last_checked = time.time()
                     else:
                         self._mount_cache[normalized_path] = MountInfo(
-                            path=normalized_path,
-                            mount_type=mount_type,
-                            last_checked=time.time()
+                            path=normalized_path, mount_type=mount_type, last_checked=time.time()
                         )
 
                 return mount_type
@@ -225,7 +225,7 @@ class RemoteFileDetector:
                     share=share,
                     latency_ms=latency,
                     is_accessible=self._check_accessibility(normalized_path),
-                    last_checked=time.time()
+                    last_checked=time.time(),
                 )
 
                 # 更新缓存
@@ -263,12 +263,7 @@ class RemoteFileDetector:
         """检测挂载类型"""
         try:
             # 获取文件系统的挂载信息
-            result = subprocess.run(
-                ["df", file_path],
-                check=False, capture_output=True,
-                text=True,
-                timeout=5
-            )
+            result = subprocess.run(["df", file_path], check=False, capture_output=True, text=True, timeout=5)
 
             if result.returncode != 0:
                 return MountType.UNKNOWN
@@ -335,12 +330,7 @@ class RemoteFileDetector:
         """解析SMB挂载的服务器和共享信息"""
         try:
             # 获取挂载信息
-            result = subprocess.run(
-                ["mount"],
-                check=False, capture_output=True,
-                text=True,
-                timeout=5
-            )
+            result = subprocess.run(["mount"], check=False, capture_output=True, text=True, timeout=5)
 
             if result.returncode != 0:
                 return None, None
@@ -374,9 +364,11 @@ class RemoteFileDetector:
         except Exception:
             return False
 
+
 # 全局实例
 _remote_detector_instance: RemoteFileDetector | None = None
 _remote_detector_lock = threading.Lock()
+
 
 def get_remote_detector() -> RemoteFileDetector:
     """获取全局RemoteFileDetector实例"""

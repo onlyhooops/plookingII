@@ -26,6 +26,7 @@ from ..config.manager import Config
 
 logger = logging.getLogger(APP_NAME)
 
+
 class CGImageOptimizer:
     """CGImage零拷贝渲染优化器
 
@@ -40,12 +41,7 @@ class CGImageOptimizer:
         self._access_order = deque(maxlen=10)
 
         # 性能统计
-        self.stats = {
-            "cgimage_hits": 0,
-            "cgimage_creates": 0,
-            "zero_copy_renders": 0,
-            "total_render_time": 0.0
-        }
+        self.stats = {"cgimage_hits": 0, "cgimage_creates": 0, "zero_copy_renders": 0, "total_render_time": 0.0}
 
     def get_cgimage(self, image_path: str, create_func: Callable = None) -> Any | None:
         """获取CGImage对象，优先从缓存获取
@@ -118,15 +114,17 @@ class CGImageOptimizer:
         hit_rate = (self.stats["cgimage_hits"] / total_ops * 100) if total_ops > 0 else 0.0
         avg_render_time = (
             self.stats["total_render_time"] / self.stats["zero_copy_renders"]
-            if self.stats["zero_copy_renders"] > 0 else 0.0
+            if self.stats["zero_copy_renders"] > 0
+            else 0.0
         )
 
         return {
             **self.stats,
             "cache_size": len(self._cgimage_cache),
             "hit_rate": hit_rate,
-            "avg_render_time_ms": avg_render_time * 1000
+            "avg_render_time_ms": avg_render_time * 1000,
         }
+
 
 class NavigationOptimizer:
     """导航操作优化器
@@ -141,16 +139,12 @@ class NavigationOptimizer:
         self._velocity_history = deque(maxlen=5)  # 速度历史记录
 
         # 自适应防抖参数
-        self._min_debounce_ms = 5   # 最小防抖时间：5ms
+        self._min_debounce_ms = 5  # 最小防抖时间：5ms
         self._max_debounce_ms = 20  # 最大防抖时间：20ms
         self._current_debounce_ms = 15  # 当前防抖时间
 
         # 性能统计
-        self.stats = {
-            "total_navigations": 0,
-            "avg_response_time_ms": 0.0,
-            "max_velocity": 0.0
-        }
+        self.stats = {"total_navigations": 0, "avg_response_time_ms": 0.0, "max_velocity": 0.0}
 
     def calculate_optimal_debounce(self, current_time: float) -> float:
         """计算最优防抖时间
@@ -211,8 +205,9 @@ class NavigationOptimizer:
         return {
             **self.stats,
             "current_velocity": self._navigation_velocity,
-            "current_debounce_ms": self._current_debounce_ms
+            "current_debounce_ms": self._current_debounce_ms,
         }
+
 
 class PreloadOptimizer:
     """预加载优化器
@@ -230,11 +225,7 @@ class PreloadOptimizer:
         self._backward_preload_count = 1  # 向后预加载1张
 
         # 性能统计
-        self.stats = {
-            "preload_hits": 0,
-            "preload_misses": 0,
-            "total_preloaded": 0
-        }
+        self.stats = {"preload_hits": 0, "preload_misses": 0, "total_preloaded": 0}
 
     def update_direction(self, from_index: int, to_index: int):
         """更新导航方向
@@ -317,11 +308,8 @@ class PreloadOptimizer:
         total = self.stats["preload_hits"] + self.stats["preload_misses"]
         hit_rate = (self.stats["preload_hits"] / total * 100) if total > 0 else 0.0
 
-        return {
-            **self.stats,
-            "direction": self._navigation_direction,
-            "hit_rate": hit_rate
-        }
+        return {**self.stats, "direction": self._navigation_direction, "hit_rate": hit_rate}
+
 
 class MemoryOptimizer:
     """内存优化器
@@ -341,14 +329,10 @@ class MemoryOptimizer:
 
         # 清理阈值
         self._cleanup_threshold = 0.85  # 85%时触发清理
-        self._target_threshold = 0.70   # 清理到70%
+        self._target_threshold = 0.70  # 清理到70%
 
         # 性能统计
-        self.stats = {
-            "cleanup_count": 0,
-            "total_freed_mb": 0.0,
-            "peak_memory_mb": 0.0
-        }
+        self.stats = {"cleanup_count": 0, "total_freed_mb": 0.0, "peak_memory_mb": 0.0}
 
     def allocate(self, size_bytes: float) -> bool:
         """分配内存
@@ -417,8 +401,9 @@ class MemoryOptimizer:
             **self.stats,
             "current_memory_mb": self._current_memory_bytes / 1024 / 1024,
             "max_memory_mb": self._max_memory_bytes / 1024 / 1024,
-            "usage_percent": (self._current_memory_bytes / self._max_memory_bytes * 100)
+            "usage_percent": (self._current_memory_bytes / self._max_memory_bytes * 100),
         }
+
 
 class PerformanceOptimizer:
     """性能优化器总控
@@ -482,7 +467,7 @@ class PerformanceOptimizer:
             "optimal_debounce_sec": optimal_debounce,
             "preload_indices": preload_indices,
             "skip_intermediate_frames": skip_frames,
-            "navigation_velocity": self.navigation_optimizer._navigation_velocity
+            "navigation_velocity": self.navigation_optimizer._navigation_velocity,
         }
 
     def check_memory_and_cleanup(self, cleanup_callback: Callable | None = None) -> bool:
@@ -521,12 +506,14 @@ class PerformanceOptimizer:
             "cgimage": self.cgimage_optimizer.get_stats(),
             "navigation": self.navigation_optimizer.get_stats(),
             "preload": self.preload_optimizer.get_stats(),
-            "memory": self.memory_optimizer.get_stats()
+            "memory": self.memory_optimizer.get_stats(),
         }
+
 
 # 全局性能优化器实例
 _global_optimizer = None
 _optimizer_lock = threading.Lock()
+
 
 def get_performance_optimizer() -> PerformanceOptimizer:
     """获取全局性能优化器实例
@@ -541,12 +528,14 @@ def get_performance_optimizer() -> PerformanceOptimizer:
             _global_optimizer = PerformanceOptimizer()
         return _global_optimizer
 
+
 def reset_performance_optimizer():
     """重置全局性能优化器（主要用于测试）"""
     global _global_optimizer
 
     with _optimizer_lock:
         _global_optimizer = None
+
 
 __all__ = [
     "CGImageOptimizer",
@@ -555,6 +544,5 @@ __all__ = [
     "PerformanceOptimizer",
     "PreloadOptimizer",
     "get_performance_optimizer",
-    "reset_performance_optimizer"
+    "reset_performance_optimizer",
 ]
-

@@ -291,6 +291,7 @@ class TestConfigIntegration:
 
     def test_all_boolean_configs_are_valid(self):
         """测试所有布尔配置值有效"""
+
         def check_booleans(config_dict):
             for key, value in config_dict.items():
                 if isinstance(value, dict):
@@ -304,4 +305,3 @@ class TestConfigIntegration:
         check_booleans(PIL_FALLBACK_CONFIG)
         check_booleans(PERFORMANCE_MONITORING)
         check_booleans(IMAGE_ROTATION_CONFIG)
-

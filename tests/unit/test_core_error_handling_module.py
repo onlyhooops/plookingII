@@ -5,8 +5,6 @@
 Author: PlookingII Team
 """
 
-import pytest
-
 from plookingII.core.error_handling import (
     ConfigurationError,
     ErrorCategory,
@@ -54,10 +52,7 @@ class TestErrorInfo:
         """测试错误信息创建"""
         error = ValueError("test error")
         error_info = ErrorInfo(
-            error=error,
-            category=ErrorCategory.SYSTEM,
-            severity=ErrorSeverity.MEDIUM,
-            context="test context"
+            error=error, category=ErrorCategory.SYSTEM, severity=ErrorSeverity.MEDIUM, context="test context"
         )
 
         assert error_info.error == error
@@ -75,7 +70,7 @@ class TestErrorInfo:
             severity=ErrorSeverity.HIGH,
             stack_trace="traceback...",
             recovery_action="retry",
-            metadata={"key": "value"}
+            metadata={"key": "value"},
         )
 
         assert error_info.stack_trace == "traceback..."
@@ -95,21 +90,13 @@ class TestPlookingIIError:
 
     def test_error_with_category_and_severity(self):
         """测试带类别和严重程度的错误"""
-        error = PlookingIIError(
-            "Test error",
-            category=ErrorCategory.NETWORK,
-            severity=ErrorSeverity.HIGH
-        )
+        error = PlookingIIError("Test error", category=ErrorCategory.NETWORK, severity=ErrorSeverity.HIGH)
         assert error.category == ErrorCategory.NETWORK
         assert error.severity == ErrorSeverity.HIGH
 
     def test_error_with_metadata(self):
         """测试带元数据的错误"""
-        error = PlookingIIError(
-            "Test error",
-            file_path="/test/path",
-            line_number=42
-        )
+        error = PlookingIIError("Test error", file_path="/test/path", line_number=42)
         assert error.metadata["file_path"] == "/test/path"
         assert error.metadata["line_number"] == 42
 
@@ -142,19 +129,12 @@ class TestImageProcessingError:
 
     def test_image_processing_error_with_custom_severity(self):
         """测试自定义严重程度的图像处理错误"""
-        error = ImageProcessingError(
-            "Critical image error",
-            severity=ErrorSeverity.CRITICAL
-        )
+        error = ImageProcessingError("Critical image error", severity=ErrorSeverity.CRITICAL)
         assert error.severity == ErrorSeverity.CRITICAL
 
     def test_image_processing_error_with_metadata(self):
         """测试带元数据的图像处理错误"""
-        error = ImageProcessingError(
-            "Failed to load image",
-            image_path="/path/to/image.jpg",
-            image_size="10MB"
-        )
+        error = ImageProcessingError("Failed to load image", image_path="/path/to/image.jpg", image_size="10MB")
         assert error.metadata["image_path"] == "/path/to/image.jpg"
         assert error.metadata["image_size"] == "10MB"
 
@@ -171,11 +151,7 @@ class TestMemoryError:
 
     def test_memory_error_with_metadata(self):
         """测试带元数据的内存错误"""
-        error = MemoryError(
-            "Memory limit exceeded",
-            current_usage="2GB",
-            limit="1GB"
-        )
+        error = MemoryError("Memory limit exceeded", current_usage="2GB", limit="1GB")
         assert error.metadata["current_usage"] == "2GB"
         assert error.metadata["limit"] == "1GB"
 
@@ -200,4 +176,3 @@ class TestExceptionInheritance:
         except PlookingIIError as e:
             assert isinstance(e, ConfigurationError)
             assert isinstance(e, PlookingIIError)
-

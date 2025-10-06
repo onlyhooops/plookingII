@@ -38,14 +38,8 @@ class AppDelegate(NSObject):
                 # 将窗口移动到主显示器的中心
                 screen_frame = screen.frame()
                 window_frame = self.main_window.frame()
-                new_x = (
-                    screen_frame.origin.x
-                    + (screen_frame.size.width - window_frame.size.width) / 2
-                )
-                new_y = (
-                    screen_frame.origin.y
-                    + (screen_frame.size.height - window_frame.size.height) / 2
-                )
+                new_x = screen_frame.origin.x + (screen_frame.size.width - window_frame.size.width) / 2
+                new_y = screen_frame.origin.y + (screen_frame.size.height - window_frame.size.height) / 2
                 self.main_window.setFrameOrigin_((new_x, new_y))
         except Exception:
             pass
@@ -87,9 +81,7 @@ class AppDelegate(NSObject):
 
             menu = NSMenu.alloc().initWithTitle_("DockMenu")
             # 打开文件夹
-            openItem = (
-                NSMenuItem.alloc().initWithTitle_action_keyEquivalent_("选择文件夹…", "openFolder:", "")
-            )
+            openItem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_("选择文件夹…", "openFolder:", "")
             if self.main_window:
                 openItem.setTarget_(self.main_window)
             menu.addItem_(openItem)
@@ -108,9 +100,7 @@ class AppDelegate(NSObject):
             logging.warning(f"构建dock菜单失败: {e}")
             # 返回基础菜单
             menu = NSMenu.alloc().initWithTitle_("DockMenu")
-            openItem = (
-                NSMenuItem.alloc().initWithTitle_action_keyEquivalent_("选择文件夹…", "openFolder:", "")
-            )
+            openItem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_("选择文件夹…", "openFolder:", "")
             if self.main_window:
                 openItem.setTarget_(self.main_window)
             menu.addItem_(openItem)
@@ -125,15 +115,17 @@ class AppDelegate(NSObject):
             except Exception:
                 pass
             self.main_window._save_task_progress_immediate()
-        
+
         # 开发环境下自动清理 macOS 最近文档记录
         try:
             from ..utils.macos_cleanup import MacOSCleanupManager
+
             MacOSCleanupManager.auto_cleanup_if_dev()
         except Exception:
             pass
-        
+
         return True
+
 
 def main():
     """主应用入口函数"""
@@ -151,6 +143,7 @@ def main():
         except Exception:
             logging.getLogger(APP_NAME).critical("App main loop failed", exc_info=True)
             raise
+
 
 if __name__ == "__main__":
     main()

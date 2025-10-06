@@ -20,6 +20,7 @@ from plookingII.utils.path_utils import PathUtils
 
 logger = logging.getLogger(APP_NAME)
 
+
 class ValidationUtils:
     """验证工具类"""
 
@@ -111,8 +112,9 @@ class ValidationUtils:
             # 检查类型
             if expected_type is not None:
                 if not isinstance(param, expected_type):
-                    logger.debug("参数 %s 类型错误，期望 %s，实际 %s",
-                               param_name, expected_type.__name__, type(param).__name__)
+                    logger.debug(
+                        "参数 %s 类型错误，期望 %s，实际 %s", param_name, expected_type.__name__, type(param).__name__
+                    )
                     return False
 
             # 字符串特殊检查

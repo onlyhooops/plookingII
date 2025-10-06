@@ -26,6 +26,7 @@ from plookingII.imports import logging
 Author: PlookingII Team
 """
 
+
 def _configure_logging():
     """配置应用程序日志系统
 
@@ -67,6 +68,7 @@ def _configure_logging():
     except Exception:
         # 忽略 PIL 日志配置失败，不影响应用程序启动
         pass
+
 
 def main():
     """应用程序主函数
@@ -115,6 +117,7 @@ def main():
     # 第六步：启动应用程序主事件循环
     # 这个调用会阻塞，直到应用程序退出
     app.run()
+
 
 if __name__ == "__main__":
     # 当模块作为主程序运行时，启动应用程序

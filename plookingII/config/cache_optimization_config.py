@@ -16,6 +16,7 @@ Author: PlookingII Team
 from dataclasses import dataclass
 from typing import Any
 
+
 @dataclass
 class CacheOptimizationConfig:
     """缓存优化配置
@@ -138,7 +139,7 @@ class CacheOptimizationConfig:
             nearby_cache_size=20,
             preload_forward=5,
             preload_backward=2,
-            cgimage_cache_size=15
+            cgimage_cache_size=15,
         )
 
     @classmethod
@@ -157,7 +158,7 @@ class CacheOptimizationConfig:
             preload_forward=2,
             preload_backward=0,
             cgimage_cache_size=5,
-            aggressive_cleanup=True
+            aggressive_cleanup=True,
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -189,7 +190,7 @@ class CacheOptimizationConfig:
             "cleanup_interval_sec": self.cleanup_interval_sec,
             "max_file_size_mb": self.max_file_size_mb,
             "debug_logging": self.debug_logging,
-            "performance_monitoring": self.performance_monitoring
+            "performance_monitoring": self.performance_monitoring,
         }
 
     @classmethod
@@ -204,10 +205,12 @@ class CacheOptimizationConfig:
         """
         return cls(**config_dict)
 
+
 # 预定义配置
 DEFAULT_CONFIG = CacheOptimizationConfig.default()
 PERFORMANCE_CONFIG = CacheOptimizationConfig.performance_mode()
 MEMORY_SAVER_CONFIG = CacheOptimizationConfig.memory_saver_mode()
+
 
 def get_cache_config(mode: str = "default") -> CacheOptimizationConfig:
     """获取缓存配置
@@ -224,11 +227,5 @@ def get_cache_config(mode: str = "default") -> CacheOptimizationConfig:
         return MEMORY_SAVER_CONFIG
     return DEFAULT_CONFIG
 
-__all__ = [
-    "DEFAULT_CONFIG",
-    "MEMORY_SAVER_CONFIG",
-    "PERFORMANCE_CONFIG",
-    "CacheOptimizationConfig",
-    "get_cache_config"
-]
 
+__all__ = ["DEFAULT_CONFIG", "MEMORY_SAVER_CONFIG", "PERFORMANCE_CONFIG", "CacheOptimizationConfig", "get_cache_config"]

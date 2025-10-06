@@ -29,16 +29,20 @@ from typing import Any
 
 from ..config.constants import APP_NAME
 
+
 class LogLevel(Enum):
     """日志级别枚举"""
+
     DEBUG = "DEBUG"
     INFO = "INFO"
     WARNING = "WARNING"
     ERROR = "ERROR"
     CRITICAL = "CRITICAL"
 
+
 class LogCategory(Enum):
     """日志类别枚举"""
+
     SYSTEM = "system"
     USER_ACTION = "user_action"
     PERFORMANCE = "performance"
@@ -52,9 +56,11 @@ class LogCategory(Enum):
     DEBUG = "debug"
     UNKNOWN = "unknown"
 
+
 @dataclass
 class LogEntry:
     """结构化日志条目"""
+
     timestamp: float
     level: LogLevel
     category: LogCategory
@@ -67,6 +73,7 @@ class LogEntry:
     metadata: dict[str, Any] = field(default_factory=dict)
     exception_info: str | None = None
     performance_data: dict[str, Any] | None = None
+
 
 class StructuredFormatter(logging.Formatter):
     """结构化日志格式化器"""
@@ -114,6 +121,7 @@ class StructuredFormatter(logging.Formatter):
 
         return formatted
 
+
 class JSONFormatter(logging.Formatter):
     """JSON日志格式化器"""
 
@@ -157,6 +165,7 @@ class JSONFormatter(logging.Formatter):
 
         return json.dumps(log_entry, ensure_ascii=False)
 
+
 class EnhancedLogger:
     """增强日志记录器"""
 
@@ -197,6 +206,7 @@ class EnhancedLogger:
 
         # 获取环境变量配置的日志级别
         import os
+
         verbose = os.getenv("PLOOKINGII_VERBOSE", "0") == "1"
         env_level = os.getenv("PLOOKINGII_LOG_LEVEL", "INFO" if verbose else "WARNING")
         console_level = getattr(logging, env_level.upper(), logging.WARNING)
@@ -213,7 +223,7 @@ class EnhancedLogger:
             os.path.join(self.log_dir, "plookingII.log"),
             maxBytes=10 * 1024 * 1024,  # 10MB
             backupCount=5,
-            encoding="utf-8"
+            encoding="utf-8",
         )
         file_handler.setLevel(logging.DEBUG)
         file_formatter = StructuredFormatter(include_metadata=True)
@@ -225,7 +235,7 @@ class EnhancedLogger:
             os.path.join(self.log_dir, "errors.log"),
             maxBytes=5 * 1024 * 1024,  # 5MB
             backupCount=3,
-            encoding="utf-8"
+            encoding="utf-8",
         )
         error_handler.setLevel(logging.ERROR)
         error_formatter = JSONFormatter()
@@ -237,17 +247,22 @@ class EnhancedLogger:
             os.path.join(self.log_dir, "performance.log"),
             maxBytes=20 * 1024 * 1024,  # 20MB
             backupCount=2,
-            encoding="utf-8"
+            encoding="utf-8",
         )
         perf_handler.setLevel(logging.INFO)
         perf_formatter = JSONFormatter()
         perf_handler.setFormatter(perf_formatter)
         self.logger.addHandler(perf_handler)
 
-    def log(self, level: LogLevel, category: LogCategory, message: str,
-            metadata: dict[str, Any] | None = None,
-            performance_data: dict[str, Any] | None = None,
-            exception: Exception | None = None):
+    def log(
+        self,
+        level: LogLevel,
+        category: LogCategory,
+        message: str,
+        metadata: dict[str, Any] | None = None,
+        performance_data: dict[str, Any] | None = None,
+        exception: Exception | None = None,
+    ):
         """记录结构化日志
 
         Args:
@@ -273,7 +288,7 @@ class EnhancedLogger:
                 lno=line_number,
                 msg=message,
                 args=(),
-                exc_info=exception and (type(exception), exception, exception.__traceback__)
+                exc_info=exception and (type(exception), exception, exception.__traceback__),
             )
 
             # 添加自定义字段
@@ -284,8 +299,7 @@ class EnhancedLogger:
             # 记录日志
             self.logger.handle(record)
 
-    def log_performance(self, operation: str, duration: float,
-                       metadata: dict[str, Any] | None = None):
+    def log_performance(self, operation: str, duration: float, metadata: dict[str, Any] | None = None):
         """记录性能日志
 
         Args:
@@ -293,11 +307,7 @@ class EnhancedLogger:
             duration: 持续时间（秒）
             metadata: 元数据
         """
-        perf_data = {
-            "operation": operation,
-            "duration": duration,
-            "timestamp": time.time()
-        }
+        perf_data = {"operation": operation, "duration": duration, "timestamp": time.time()}
 
         if metadata:
             perf_data.update(metadata)
@@ -312,9 +322,12 @@ class EnhancedLogger:
             if len(self._performance_data[operation]) > 100:
                 self._performance_data[operation] = self._performance_data[operation][-100:]
 
-        self.log(LogLevel.INFO, LogCategory.PERFORMANCE,
-                f"Performance: {operation} took {duration:.3f}s",
-                performance_data=perf_data)
+        self.log(
+            LogLevel.INFO,
+            LogCategory.PERFORMANCE,
+            f"Performance: {operation} took {duration:.3f}s",
+            performance_data=perf_data,
+        )
 
     def log_user_action(self, action: str, metadata: dict[str, Any] | None = None):
         """记录用户行为日志
@@ -323,11 +336,9 @@ class EnhancedLogger:
             action: 用户行为
             metadata: 元数据
         """
-        self.log(LogLevel.INFO, LogCategory.USER_ACTION,
-                f"User action: {action}", metadata=metadata)
+        self.log(LogLevel.INFO, LogCategory.USER_ACTION, f"User action: {action}", metadata=metadata)
 
-    def log_error(self, error: Exception, context: str = "",
-                 metadata: dict[str, Any] | None = None):
+    def log_error(self, error: Exception, context: str = "", metadata: dict[str, Any] | None = None):
         """记录错误日志
 
         Args:
@@ -336,8 +347,7 @@ class EnhancedLogger:
             metadata: 元数据
         """
         message = f"Error in {context}: {error!s}" if context else str(error)
-        self.log(LogLevel.ERROR, LogCategory.ERROR, message,
-                metadata=metadata, exception=error)
+        self.log(LogLevel.ERROR, LogCategory.ERROR, message, metadata=metadata, exception=error)
 
     def get_performance_stats(self, operation: str | None = None) -> dict[str, Any]:
         """获取性能统计
@@ -360,7 +370,7 @@ class EnhancedLogger:
                     "avg_duration": sum(durations) / len(durations),
                     "min_duration": min(durations),
                     "max_duration": max(durations),
-                    "recent_durations": durations[-10:]  # 最近10次
+                    "recent_durations": durations[-10:],  # 最近10次
                 }
             stats = {}
             for op, durations in self._performance_data.items():
@@ -368,7 +378,7 @@ class EnhancedLogger:
                     "count": len(durations),
                     "avg_duration": sum(durations) / len(durations),
                     "min_duration": min(durations),
-                    "max_duration": max(durations)
+                    "max_duration": max(durations),
                 }
             return stats
 
@@ -396,8 +406,10 @@ class EnhancedLogger:
             perf_data["duration"] = duration
             self.log_performance(operation, duration, perf_data)
 
+
 # 全局增强日志记录器实例
 enhanced_logger = EnhancedLogger()
+
 
 def get_enhanced_logger(name: str = APP_NAME) -> EnhancedLogger:
     """获取增强日志记录器实例
@@ -412,18 +424,22 @@ def get_enhanced_logger(name: str = APP_NAME) -> EnhancedLogger:
         return enhanced_logger
     return EnhancedLogger(name)
 
+
 # 便捷函数
 def log_performance(operation: str, duration: float, metadata: dict[str, Any] | None = None):
     """记录性能日志"""
     enhanced_logger.log_performance(operation, duration, metadata)
 
+
 def log_user_action(action: str, metadata: dict[str, Any] | None = None):
     """记录用户行为日志"""
     enhanced_logger.log_user_action(action, metadata)
 
+
 def log_error(error: Exception, context: str = "", metadata: dict[str, Any] | None = None):
     """记录错误日志"""
     enhanced_logger.log_error(error, context, metadata)
+
 
 @contextmanager
 def performance_timer(operation: str, metadata: dict[str, Any] | None = None):

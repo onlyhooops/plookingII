@@ -9,8 +9,7 @@
 - 预加载和预取
 """
 
-import os
-from unittest.mock import MagicMock, Mock, call, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -38,7 +37,7 @@ def mock_window():
 @pytest.fixture
 def image_manager(mock_window):
     """创建图片管理器实例"""
-    with patch('plookingII.ui.managers.image_manager.HybridImageProcessor'):
+    with patch("plookingII.ui.managers.image_manager.HybridImageProcessor"):
         return ImageManager(mock_window)
 
 
@@ -48,25 +47,25 @@ def image_manager(mock_window):
 class TestImageManagerInit:
     """测试ImageManager初始化"""
 
-    @patch('plookingII.ui.managers.image_manager.HybridImageProcessor')
+    @patch("plookingII.ui.managers.image_manager.HybridImageProcessor")
     def test_init_basic(self, mock_processor_class, mock_window):
         """测试基本初始化"""
         mock_processor = MagicMock()
         mock_processor_class.return_value = mock_processor
-        
+
         manager = ImageManager(mock_window)
-        
+
         assert manager.main_window == mock_window
         assert manager.hybrid_processor == mock_processor
 
-    @patch('plookingII.ui.managers.image_manager.HybridImageProcessor')
+    @patch("plookingII.ui.managers.image_manager.HybridImageProcessor")
     def test_init_default_attributes(self, mock_processor_class, mock_window):
         """测试默认属性"""
         manager = ImageManager(mock_window)
-        
-        assert hasattr(manager, '_load_generation')
-        assert hasattr(manager, '_decode_lock')
-        assert hasattr(manager, '_nav_history')
+
+        assert hasattr(manager, "_load_generation")
+        assert hasattr(manager, "_decode_lock")
+        assert hasattr(manager, "_nav_history")
 
 
 # ==================== 显示方法测试 ====================
@@ -77,12 +76,12 @@ class TestDisplayMethods:
 
     def test_show_current_image_method_exists(self, image_manager):
         """测试show_current_image方法存在"""
-        assert hasattr(image_manager, 'show_current_image')
+        assert hasattr(image_manager, "show_current_image")
         assert callable(image_manager.show_current_image)
 
     def test_display_image_immediate_method_exists(self, image_manager):
         """测试_display_image_immediate方法存在"""
-        assert hasattr(image_manager, '_display_image_immediate')
+        assert hasattr(image_manager, "_display_image_immediate")
         assert callable(image_manager._display_image_immediate)
 
 
@@ -94,17 +93,17 @@ class TestLoadingStrategies:
 
     def test_should_use_fast_loading_method_exists(self, image_manager):
         """测试_should_use_fast_loading方法存在"""
-        assert hasattr(image_manager, '_should_use_fast_loading')
+        assert hasattr(image_manager, "_should_use_fast_loading")
         assert callable(image_manager._should_use_fast_loading)
 
     def test_should_use_progressive_method_exists(self, image_manager):
         """测试_should_use_progressive方法存在"""
-        assert hasattr(image_manager, '_should_use_progressive')
+        assert hasattr(image_manager, "_should_use_progressive")
         assert callable(image_manager._should_use_progressive)
 
     def test_execute_loading_strategy_method_exists(self, image_manager):
         """测试_execute_loading_strategy方法存在"""
-        assert hasattr(image_manager, '_execute_loading_strategy')
+        assert hasattr(image_manager, "_execute_loading_strategy")
         assert callable(image_manager._execute_loading_strategy)
 
     def test_should_use_fast_loading_small_file(self, image_manager):
@@ -136,12 +135,12 @@ class TestCacheManagement:
 
     def test_try_display_cached_image_method_exists(self, image_manager):
         """测试_try_display_cached_image方法存在"""
-        assert hasattr(image_manager, '_try_display_cached_image')
+        assert hasattr(image_manager, "_try_display_cached_image")
         assert callable(image_manager._try_display_cached_image)
 
     def test_record_cache_hit_method_exists(self, image_manager):
         """测试_record_cache_hit方法存在"""
-        assert hasattr(image_manager, '_record_cache_hit')
+        assert hasattr(image_manager, "_record_cache_hit")
         assert callable(image_manager._record_cache_hit)
 
 
@@ -153,22 +152,22 @@ class TestTargetSizeCalculation:
 
     def test_calculate_target_size_method_exists(self, image_manager):
         """测试_calculate_target_size方法存在"""
-        assert hasattr(image_manager, '_calculate_target_size')
+        assert hasattr(image_manager, "_calculate_target_size")
         assert callable(image_manager._calculate_target_size)
 
     def test_get_target_size_for_view_method_exists(self, image_manager):
         """测试_get_target_size_for_view方法存在"""
-        assert hasattr(image_manager, '_get_target_size_for_view')
+        assert hasattr(image_manager, "_get_target_size_for_view")
         assert callable(image_manager._get_target_size_for_view)
 
     def test_get_dynamic_target_size_method_exists(self, image_manager):
         """测试_get_dynamic_target_size方法存在"""
-        assert hasattr(image_manager, '_get_dynamic_target_size')
+        assert hasattr(image_manager, "_get_dynamic_target_size")
         assert callable(image_manager._get_dynamic_target_size)
 
     def test_is_portrait_image_method_exists(self, image_manager):
         """测试_is_portrait_image方法存在"""
-        assert hasattr(image_manager, '_is_portrait_image')
+        assert hasattr(image_manager, "_is_portrait_image")
         assert callable(image_manager._is_portrait_image)
 
 
@@ -180,23 +179,23 @@ class TestFileSize:
 
     def test_get_file_size_safely_method_exists(self, image_manager):
         """测试_get_file_size_safely方法存在"""
-        assert hasattr(image_manager, '_get_file_size_safely')
+        assert hasattr(image_manager, "_get_file_size_safely")
         assert callable(image_manager._get_file_size_safely)
 
     def test_get_file_size_safely_success(self, image_manager):
         """测试成功获取文件大小"""
         image_manager.image_cache.get_file_size_mb = MagicMock(return_value=5.0)
-        
-        result = image_manager._get_file_size_safely('/test/image.jpg')
-        
+
+        result = image_manager._get_file_size_safely("/test/image.jpg")
+
         assert result == 5.0
 
     def test_get_file_size_safely_exception(self, image_manager):
         """测试获取文件大小异常"""
         image_manager.image_cache.get_file_size_mb = MagicMock(side_effect=Exception("Error"))
-        
-        result = image_manager._get_file_size_safely('/test/image.jpg')
-        
+
+        result = image_manager._get_file_size_safely("/test/image.jpg")
+
         assert result == 0.0
 
 
@@ -208,27 +207,27 @@ class TestPrefetch:
 
     def test_prepare_next_image_async_method_exists(self, image_manager):
         """测试_prepare_next_image_async方法存在"""
-        assert hasattr(image_manager, '_prepare_next_image_async')
+        assert hasattr(image_manager, "_prepare_next_image_async")
         assert callable(image_manager._prepare_next_image_async)
 
     def test_schedule_adaptive_prefetch_method_exists(self, image_manager):
         """测试_schedule_adaptive_prefetch方法存在"""
-        assert hasattr(image_manager, '_schedule_adaptive_prefetch')
+        assert hasattr(image_manager, "_schedule_adaptive_prefetch")
         assert callable(image_manager._schedule_adaptive_prefetch)
 
     def test_compute_prefetch_window_method_exists(self, image_manager):
         """测试_compute_prefetch_window方法存在"""
-        assert hasattr(image_manager, '_compute_prefetch_window')
+        assert hasattr(image_manager, "_compute_prefetch_window")
         assert callable(image_manager._compute_prefetch_window)
 
     def test_cancel_stale_prefetches_method_exists(self, image_manager):
         """测试_cancel_stale_prefetches方法存在"""
-        assert hasattr(image_manager, '_cancel_stale_prefetches')
+        assert hasattr(image_manager, "_cancel_stale_prefetches")
         assert callable(image_manager._cancel_stale_prefetches)
 
     def test_prefetch_generation_initialized(self, image_manager):
         """测试预取代数已初始化"""
-        assert hasattr(image_manager, '_load_generation')
+        assert hasattr(image_manager, "_load_generation")
 
 
 # ==================== 导航统计测试 ====================
@@ -239,12 +238,12 @@ class TestNavigationStats:
 
     def test_update_navigation_stats_method_exists(self, image_manager):
         """测试_update_navigation_stats方法存在"""
-        assert hasattr(image_manager, '_update_navigation_stats')
+        assert hasattr(image_manager, "_update_navigation_stats")
         assert callable(image_manager._update_navigation_stats)
 
     def test_navigation_stats_initialized(self, image_manager):
         """测试导航统计已初始化"""
-        assert hasattr(image_manager, '_nav_history')
+        assert hasattr(image_manager, "_nav_history")
 
 
 # ==================== 路径计算测试 ====================
@@ -255,25 +254,25 @@ class TestPathCalculation:
 
     def test_get_adjacent_path_method_exists(self, image_manager):
         """测试_get_adjacent_path方法存在"""
-        assert hasattr(image_manager, '_get_adjacent_path')
+        assert hasattr(image_manager, "_get_adjacent_path")
         assert callable(image_manager._get_adjacent_path)
 
     def test_get_path_by_offset_method_exists(self, image_manager):
         """测试_get_path_by_offset方法存在"""
-        assert hasattr(image_manager, '_get_path_by_offset')
+        assert hasattr(image_manager, "_get_path_by_offset")
         assert callable(image_manager._get_path_by_offset)
 
     def test_get_adjacent_path_next(self, image_manager):
         """测试获取下一张图片路径"""
-        result = image_manager._get_adjacent_path('/test/img1.jpg', direction=1)
-        
+        result = image_manager._get_adjacent_path("/test/img1.jpg", direction=1)
+
         # 应该返回下一个路径或None
         assert result is None or isinstance(result, str)
 
     def test_get_adjacent_path_previous(self, image_manager):
         """测试获取上一张图片路径"""
-        result = image_manager._get_adjacent_path('/test/img1.jpg', direction=-1)
-        
+        result = image_manager._get_adjacent_path("/test/img1.jpg", direction=-1)
+
         # 应该返回上一个路径或None
         assert result is None or isinstance(result, str)
 
@@ -286,17 +285,17 @@ class TestBackgroundLoading:
 
     def test_start_background_load_method_exists(self, image_manager):
         """测试_start_background_load方法存在"""
-        assert hasattr(image_manager, '_start_background_load')
+        assert hasattr(image_manager, "_start_background_load")
         assert callable(image_manager._start_background_load)
 
     def test_load_image_with_concurrency_method_exists(self, image_manager):
         """测试_load_image_with_concurrency方法存在"""
-        assert hasattr(image_manager, '_load_image_with_concurrency')
+        assert hasattr(image_manager, "_load_image_with_concurrency")
         assert callable(image_manager._load_image_with_concurrency)
 
     def test_try_display_next_ready_method_exists(self, image_manager):
         """测试_try_display_next_ready方法存在"""
-        assert hasattr(image_manager, '_try_display_next_ready')
+        assert hasattr(image_manager, "_try_display_next_ready")
         assert callable(image_manager._try_display_next_ready)
 
 
@@ -308,12 +307,12 @@ class TestStatusUpdates:
 
     def test_update_session_progress_method_exists(self, image_manager):
         """测试_update_session_progress方法存在"""
-        assert hasattr(image_manager, '_update_session_progress')
+        assert hasattr(image_manager, "_update_session_progress")
         assert callable(image_manager._update_session_progress)
 
     def test_update_status_and_notices_method_exists(self, image_manager):
         """测试_update_status_and_notices方法存在"""
-        assert hasattr(image_manager, '_update_status_and_notices')
+        assert hasattr(image_manager, "_update_status_and_notices")
         assert callable(image_manager._update_status_and_notices)
 
 
@@ -325,7 +324,7 @@ class TestCacheNotification:
 
     def test_bidi_pool_exists(self, image_manager):
         """测试双向缓存池存在"""
-        assert hasattr(image_manager, 'bidi_pool')
+        assert hasattr(image_manager, "bidi_pool")
         assert image_manager.bidi_pool is not None
 
 
@@ -335,19 +334,19 @@ class TestCacheNotification:
 class TestIntegration:
     """测试集成场景"""
 
-    @patch('plookingII.ui.managers.image_manager.HybridImageProcessor')
+    @patch("plookingII.ui.managers.image_manager.HybridImageProcessor")
     def test_complete_lifecycle(self, mock_processor_class, mock_window):
         """测试完整生命周期"""
         mock_processor = MagicMock()
         mock_processor_class.return_value = mock_processor
-        
+
         # 1. 创建管理器
         manager = ImageManager(mock_window)
         assert manager.main_window == mock_window
-        
+
         # 2. 测试文件大小计算
         manager.image_cache.get_file_size_mb = MagicMock(return_value=1.0)
-        size = manager._get_file_size_safely('/test/img.jpg')
+        size = manager._get_file_size_safely("/test/img.jpg")
         assert size == 1.0
 
     def test_loading_strategy_workflow(self, image_manager):
@@ -355,7 +354,7 @@ class TestIntegration:
         # 1. 检查小文件
         result1 = image_manager._should_use_fast_loading(0.5)
         assert isinstance(result1, bool)
-        
+
         # 2. 检查大文件
         result2 = image_manager._should_use_progressive(20.0)
         assert isinstance(result2, bool)
@@ -370,9 +369,9 @@ class TestEdgeCases:
     def test_get_file_size_zero(self, image_manager):
         """测试零大小文件"""
         image_manager.image_cache.get_file_size_mb = MagicMock(return_value=0.0)
-        
-        result = image_manager._get_file_size_safely('/test/empty.jpg')
-        
+
+        result = image_manager._get_file_size_safely("/test/empty.jpg")
+
         assert result == 0.0
 
     def test_should_use_fast_loading_boundary(self, image_manager):
@@ -396,11 +395,8 @@ class TestAttributes:
 
     def test_all_required_attributes_exist(self, image_manager):
         """测试所有必需属性存在"""
-        required_attrs = [
-            'main_window', 'hybrid_processor', '_load_generation',
-            '_decode_lock', '_nav_history'
-        ]
-        
+        required_attrs = ["main_window", "hybrid_processor", "_load_generation", "_decode_lock", "_nav_history"]
+
         for attr in required_attrs:
             assert hasattr(image_manager, attr), f"Missing attribute: {attr}"
 
@@ -413,16 +409,15 @@ class TestPerformance:
 
     def test_post_display_tasks_method_exists(self, image_manager):
         """测试_post_display_tasks方法存在"""
-        assert hasattr(image_manager, '_post_display_tasks')
+        assert hasattr(image_manager, "_post_display_tasks")
         assert callable(image_manager._post_display_tasks)
 
     def test_execute_fast_loading_method_exists(self, image_manager):
         """测试_execute_fast_loading方法存在"""
-        assert hasattr(image_manager, '_execute_fast_loading')
+        assert hasattr(image_manager, "_execute_fast_loading")
         assert callable(image_manager._execute_fast_loading)
 
     def test_load_and_display_progressive_method_exists(self, image_manager):
         """测试_load_and_display_progressive方法存在"""
-        assert hasattr(image_manager, '_load_and_display_progressive')
+        assert hasattr(image_manager, "_load_and_display_progressive")
         assert callable(image_manager._load_and_display_progressive)
-

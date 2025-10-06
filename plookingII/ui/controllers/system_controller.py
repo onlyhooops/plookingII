@@ -25,6 +25,7 @@ from ...config.constants import APP_NAME
 
 logger = logging.getLogger(APP_NAME)
 
+
 class SystemController:
     """
     系统级功能控制器
@@ -57,10 +58,7 @@ class SystemController:
             # 监听系统外观变化
             notification_center = NSDistributedNotificationCenter.defaultCenter()
             notification_center.addObserver_selector_name_object_(
-                self.window,
-                "systemThemeChanged:",
-                "AppleInterfaceThemeChangedNotification",
-                None
+                self.window, "systemThemeChanged:", "AppleInterfaceThemeChangedNotification", None
             )
         except Exception as e:
             logger.debug(f"设置系统通知失败: {e}")
@@ -129,7 +127,9 @@ class SystemController:
             self.update_reverse_folder_order_menu()
             if hasattr(self.window, "status_bar_controller") and self.window.status_bar_controller:
                 self.window.status_bar_controller.set_status_message(
-                    "已切换文件夹浏览顺序：{}".format("降序" if self.window.folder_manager.reverse_folder_order else "升序")
+                    "已切换文件夹浏览顺序：{}".format(
+                        "降序" if self.window.folder_manager.reverse_folder_order else "升序"
+                    )
                 )
         except Exception as e:
             logger.error(f"切换文件夹浏览顺序失败: {e}")
@@ -141,10 +141,10 @@ class SystemController:
         根据当前的文件夹浏览顺序更新菜单项的勾选状态。
         """
         try:
-            if hasattr(self.window, "reverse_folder_order_menu_item") and (
-                self.window.reverse_folder_order_menu_item
-            ):
-                self.window.reverse_folder_order_menu_item.setState_(1 if self.window.folder_manager.reverse_folder_order else 0)
+            if hasattr(self.window, "reverse_folder_order_menu_item") and (self.window.reverse_folder_order_menu_item):
+                self.window.reverse_folder_order_menu_item.setState_(
+                    1 if self.window.folder_manager.reverse_folder_order else 0
+                )
         except Exception as e:
             logger.warning(f"更新倒序菜单状态失败: {e}")
 

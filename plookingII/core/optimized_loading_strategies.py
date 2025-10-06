@@ -20,11 +20,11 @@
     旧代码:
         from plookingII.core.optimized_loading_strategies import OptimizedLoadingStrategy
         loader = OptimizedLoadingStrategy()
-        
+
     新代码 (推荐):
         from plookingII.core.loading import OptimizedStrategy
         loader = OptimizedStrategy()
-        
+
     或使用工厂函数:
         from plookingII.core.loading import get_loader
         loader = get_loader('optimized')
@@ -58,13 +58,13 @@ AutoLoadingStrategy = AutoStrategy
 class OptimizedLoadingStrategyFactory:
     """
     向后兼容的工厂类
-    
+
     ⚠️ 已废弃: 建议使用 get_loader() 函数
-    
+
     示例:
         # 旧代码
         loader = OptimizedLoadingStrategyFactory.create('optimized')
-        
+
         # 新代码 (推荐)
         from plookingII.core.loading import get_loader
         loader = get_loader('optimized')
@@ -80,10 +80,7 @@ class OptimizedLoadingStrategyFactory:
         Returns:
             加载器实例
         """
-        logger.warning(
-            "OptimizedLoadingStrategyFactory.create() 已废弃，"
-            "请使用 plookingII.core.loading.get_loader()"
-        )
+        logger.warning("OptimizedLoadingStrategyFactory.create() 已废弃，请使用 plookingII.core.loading.get_loader()")
         return get_loader(strategy)
 
     @staticmethod
@@ -125,7 +122,4 @@ __all__ = [
 ]
 
 # 模块初始化日志
-logger.info(
-    "optimized_loading_strategies 兼容层已加载 - "
-    "建议迁移到 plookingII.core.loading 新模块"
-)
+logger.info("optimized_loading_strategies 兼容层已加载 - 建议迁移到 plookingII.core.loading 新模块")

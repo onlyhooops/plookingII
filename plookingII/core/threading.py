@@ -1,5 +1,3 @@
-
-
 """线程池管理模块
 
 提供优化的线程池执行器，用于 PlookingII 应用程序的并发任务处理。
@@ -22,6 +20,7 @@ Author: PlookingII Team
 
 import os
 from concurrent.futures import ThreadPoolExecutor
+
 
 class _PatchedThreadPoolExecutor(ThreadPoolExecutor):
     """优化的线程池执行器

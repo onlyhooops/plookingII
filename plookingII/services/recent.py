@@ -4,12 +4,11 @@ from ..imports import os
 from ..utils.path_utils import PathUtils
 from ..utils.validation_utils import ValidationUtils
 
+
 class RecentFoldersManager:
     def __init__(self, db_path=None, max_count=10):
         if db_path is None:
-            app_support_dir = (
-                os.path.expanduser(os.path.join("~", "Library", "Application Support", APP_NAME))
-            )
+            app_support_dir = os.path.expanduser(os.path.join("~", "Library", "Application Support", APP_NAME))
             db_path = os.path.join(app_support_dir, "recent_folders.db")
         self.db_path = db_path
         self.max_count = max_count
@@ -122,6 +121,7 @@ class RecentFoldersManager:
                 import logging
 
                 from ..config.constants import APP_NAME
+
                 logger = logging.getLogger(APP_NAME)
                 logger.info(f"清理了 {len(invalid_paths)} 个无效的最近文件夹记录")
 
@@ -134,6 +134,7 @@ class RecentFoldersManager:
                 import logging
 
                 from ..config.constants import APP_NAME
+
                 logger = logging.getLogger(APP_NAME)
                 logger.warning(f"清理无效最近文件夹记录失败: {e}")
             except Exception:

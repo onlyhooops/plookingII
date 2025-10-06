@@ -8,6 +8,7 @@ from ..config.constants import SUPPORTED_IMAGE_EXTS
 from ..imports import NSURL, QUARTZ_AVAILABLE, os
 from ..ui.menu_builder import MenuBuilder
 
+
 def simple_thumbnail_cache(path_and_size):
     """创建并缓存图像缩略图
 
@@ -60,6 +61,7 @@ def simple_thumbnail_cache(path_and_size):
         # 图像处理失败时返回None
         return None
 
+
 def force_gc():
     """强制执行垃圾回收
 
@@ -78,6 +80,7 @@ def force_gc():
     """
     _gc.collect()  # 第一次垃圾回收
     _gc.collect()  # 第二次垃圾回收，确保循环引用被清理
+
 
 def build_menu(app, win):
     """构建应用程序的主菜单栏 - 使用MenuBuilder重构版本
@@ -105,12 +108,14 @@ def build_menu(app, win):
     except Exception as e:
         # 如果重构版本失败，记录错误但不中断程序
         import logging
+
         logger = logging.getLogger("PlookingII")
         logger.error(f"菜单构建失败: {e}")
 
         # 创建一个最基本的菜单作为回退
         fallback_menu = NSMenu.alloc().init()
         app.setMainMenu_(fallback_menu)
+
 
 def _env_int(name, default):
     """从环境变量中获取正整数值。
@@ -136,6 +141,7 @@ def _env_int(name, default):
     except Exception:
         return default
 
+
 def get_image_dimensions_safe(path: str):
     """安全获取图像尺寸（宽, 高），尽量避免解码与大图告警。
 
@@ -156,9 +162,9 @@ def get_image_dimensions_safe(path: str):
                     kCGImagePropertyPixelWidth,
                 )
             except Exception:
+                from Quartz import CGImageSourceCopyPropertiesAtIndex  # type: ignore
+                from Quartz import CGImageSourceCreateWithURL  # type: ignore
                 from Quartz import (  # type: ignore
-                    CGImageSourceCopyPropertiesAtIndex,  # type: ignore
-                    CGImageSourceCreateWithURL,  # type: ignore
                     kCGImagePropertyPixelHeight,
                     kCGImagePropertyPixelWidth,
                 )
@@ -183,6 +189,7 @@ def get_image_dimensions_safe(path: str):
         import warnings
 
         from PIL import Image
+
         try:
             from PIL.Image import DecompressionBombWarning  # type: ignore
         except Exception:

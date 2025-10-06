@@ -9,7 +9,7 @@
 - 易于维护：代码清晰，注释完整
 - 线程安全：使用简单的锁机制
 
-Author: PlookingII Team  
+Author: PlookingII Team
 """
 
 import logging
@@ -17,7 +17,7 @@ import threading
 import time
 from collections import OrderedDict
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class CacheEntry:
     """缓存条目"""
+
     key: str
     value: Any
     size_mb: float  # 内存大小(MB)
@@ -35,27 +36,22 @@ class CacheEntry:
 
 class SimpleImageCache:
     """简化的图片缓存实现
-    
+
     特性：
     - LRU 淘汰策略
     - 内存大小限制
     - 线程安全
     - 简单的统计
-    
+
     示例：
         cache = SimpleImageCache(max_items=50, max_memory_mb=500)
         cache.put('img1.jpg', image_data, size_mb=10.5)
         image = cache.get('img1.jpg')
     """
 
-    def __init__(
-        self,
-        max_items: int = 50,
-        max_memory_mb: float = 500.0,
-        name: str = "default"
-    ):
+    def __init__(self, max_items: int = 50, max_memory_mb: float = 500.0, name: str = "default"):
         """初始化缓存
-        
+
         Args:
             max_items: 最大缓存项数
             max_memory_mb: 最大内存占用(MB)
@@ -75,17 +71,14 @@ class SimpleImageCache:
         self._misses = 0
         self._evictions = 0
 
-        logger.info(
-            f"SimpleImageCache '{name}' initialized: "
-            f"max_items={max_items}, max_memory={max_memory_mb}MB"
-        )
+        logger.info(f"SimpleImageCache '{name}' initialized: max_items={max_items}, max_memory={max_memory_mb}MB")
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         """获取缓存项
-        
+
         Args:
             key: 缓存键
-            
+
         Returns:
             缓存的值，未找到返回 None
         """
@@ -101,14 +94,13 @@ class SimpleImageCache:
                 self._hits += 1
                 logger.debug(f"Cache HIT [{self.name}]: {key}")
                 return entry.value
-            else:
-                self._misses += 1
-                logger.debug(f"Cache MISS [{self.name}]: {key}")
-                return None
+            self._misses += 1
+            logger.debug(f"Cache MISS [{self.name}]: {key}")
+            return None
 
     def put(self, key: str, value: Any, size_mb: float = 1.0):
         """添加到缓存
-        
+
         Args:
             key: 缓存键
             value: 缓存值
@@ -122,8 +114,7 @@ class SimpleImageCache:
                 del self._cache[key]
 
             # 检查是否需要淘汰
-            while len(self._cache) >= self.max_items or \
-                  (self._current_memory_mb + size_mb) > self.max_memory_mb:
+            while len(self._cache) >= self.max_items or (self._current_memory_mb + size_mb) > self.max_memory_mb:
                 if not self._cache:
                     break
                 self._evict_lru()
@@ -134,16 +125,15 @@ class SimpleImageCache:
             self._current_memory_mb += size_mb
 
             logger.debug(
-                f"Cache PUT [{self.name}]: {key} "
-                f"(size={size_mb:.2f}MB, total={self._current_memory_mb:.2f}MB)"
+                f"Cache PUT [{self.name}]: {key} (size={size_mb:.2f}MB, total={self._current_memory_mb:.2f}MB)"
             )
 
     def remove(self, key: str) -> bool:
         """移除缓存项
-        
+
         Args:
             key: 缓存键
-            
+
         Returns:
             是否成功移除
         """
@@ -163,10 +153,7 @@ class SimpleImageCache:
             memory = self._current_memory_mb
             self._cache.clear()
             self._current_memory_mb = 0.0
-            logger.info(
-                f"Cache CLEAR [{self.name}]: "
-                f"removed {count} items, freed {memory:.2f}MB"
-            )
+            logger.info(f"Cache CLEAR [{self.name}]: removed {count} items, freed {memory:.2f}MB")
 
     def _evict_lru(self):
         """淘汰最久未使用的项（LRU）"""
@@ -178,14 +165,11 @@ class SimpleImageCache:
         self._current_memory_mb -= entry.size_mb
         self._evictions += 1
 
-        logger.debug(
-            f"Cache EVICT [{self.name}]: {key} "
-            f"(freed {entry.size_mb:.2f}MB)"
-        )
+        logger.debug(f"Cache EVICT [{self.name}]: {key} (freed {entry.size_mb:.2f}MB)")
 
     def get_stats(self) -> dict:
         """获取缓存统计信息
-        
+
         Returns:
             统计信息字典
         """
@@ -199,9 +183,7 @@ class SimpleImageCache:
                 "max_items": self.max_items,
                 "memory_mb": round(self._current_memory_mb, 2),
                 "max_memory_mb": self.max_memory_mb,
-                "memory_usage_pct": round(
-                    (self._current_memory_mb / self.max_memory_mb * 100), 2
-                ),
+                "memory_usage_pct": round((self._current_memory_mb / self.max_memory_mb * 100), 2),
                 "hits": self._hits,
                 "misses": self._misses,
                 "hit_rate_pct": round(hit_rate, 2),
@@ -227,13 +209,13 @@ class SimpleImageCache:
 
 
 # 全局缓存实例（单例模式）
-_global_cache: Optional[SimpleImageCache] = None
+_global_cache: SimpleImageCache | None = None
 _global_cache_lock = threading.Lock()
 
 
 def get_global_cache() -> SimpleImageCache:
     """获取全局缓存实例（单例）
-    
+
     Returns:
         全局缓存实例
     """
@@ -242,11 +224,7 @@ def get_global_cache() -> SimpleImageCache:
     if _global_cache is None:
         with _global_cache_lock:
             if _global_cache is None:
-                _global_cache = SimpleImageCache(
-                    max_items=50,
-                    max_memory_mb=500.0,
-                    name="global"
-                )
+                _global_cache = SimpleImageCache(max_items=50, max_memory_mb=500.0, name="global")
 
     return _global_cache
 
@@ -264,35 +242,31 @@ def reset_global_cache():
 # 向后兼容的别名
 class AdvancedImageCache(SimpleImageCache):
     """向后兼容：旧的 AdvancedImageCache 接口
-    
+
     提供旧的 AdvancedImageCache API，包括图片加载和文件大小查询。
     """
 
     def __init__(self, *args, **kwargs):
         # 兼容旧的参数名
-        if 'cache_size' in kwargs:
-            kwargs['max_items'] = kwargs.pop('cache_size')
-        if 'max_memory' in kwargs:
-            kwargs['max_memory_mb'] = kwargs.pop('max_memory')
+        if "cache_size" in kwargs:
+            kwargs["max_items"] = kwargs.pop("cache_size")
+        if "max_memory" in kwargs:
+            kwargs["max_memory_mb"] = kwargs.pop("max_memory")
 
         super().__init__(*args, **kwargs)
         logger.debug("Using AdvancedImageCache (compatibility mode)")
-    
+
     def load_image_with_strategy(
-        self, 
-        image_path: str, 
-        strategy: str = "auto", 
-        target_size: tuple = None,
-        force_reload: bool = False
+        self, image_path: str, strategy: str = "auto", target_size: tuple = None, force_reload: bool = False
     ) -> Any:
         """使用指定策略加载图片（兼容方法）
-        
+
         Args:
             image_path: 图片路径
             strategy: 加载策略 ('auto', 'optimized', 'preview', 'fast')
             target_size: 目标尺寸
             force_reload: 是否强制重新加载
-            
+
         Returns:
             加载的图片对象，失败返回None
         """
@@ -303,45 +277,48 @@ class AdvancedImageCache(SimpleImageCache):
                 if cached is not None:
                     logger.debug(f"Cache hit for {image_path}")
                     return cached
-            
+
             # 使用加载器加载图片
             from ..core.loading import get_loader
+
             loader = get_loader(strategy)
-            
+
             # 加载图片
             image = loader.load(image_path, target_size=target_size)
-            
+
             if image is not None:
                 # 估算图片大小（简化）
                 size_mb = 5.0  # 默认估算值
                 try:
                     import os
+
                     file_size = os.path.getsize(image_path)
                     size_mb = file_size / (1024 * 1024)
                 except Exception:
                     pass
-                
+
                 # 存入缓存
                 self.put(image_path, image, size_mb=size_mb)
                 logger.debug(f"Loaded and cached {image_path} using {strategy}")
-            
+
             return image
-            
+
         except Exception as e:
             logger.error(f"Failed to load image {image_path}: {e}")
             return None
-    
+
     def get_file_size_mb(self, file_path: str) -> float:
         """获取文件大小（MB）
-        
+
         Args:
             file_path: 文件路径
-            
+
         Returns:
             文件大小（MB），失败返回0.0
         """
         try:
             import os
+
             if os.path.exists(file_path):
                 size_bytes = os.path.getsize(file_path)
                 return size_bytes / (1024 * 1024)
@@ -360,20 +337,20 @@ class UnifiedCacheManager(SimpleImageCache):
 
 class BidirectionalCachePool(SimpleImageCache):
     """向后兼容：旧的 BidirectionalCachePool 接口
-    
+
     提供旧的 BidirectionalCachePool API，但内部使用 SimpleImageCache。
     某些高级功能（如预加载）被简化或禁用。
     """
 
     def __init__(self, *args, **kwargs):
         # 保存需要的参数
-        self._image_processor = kwargs.pop('image_processor', None)
-        self._advanced_cache = kwargs.pop('advanced_cache', None)
+        self._image_processor = kwargs.pop("image_processor", None)
+        self._advanced_cache = kwargs.pop("advanced_cache", None)
 
         # 移除旧的不兼容参数
-        kwargs.pop('preload_count', None)
-        kwargs.pop('keep_previous', None)
-        kwargs.pop('memory_monitor', None)
+        kwargs.pop("preload_count", None)
+        kwargs.pop("keep_previous", None)
+        kwargs.pop("memory_monitor", None)
 
         super().__init__(*args, **kwargs)
 
@@ -394,7 +371,6 @@ class BidirectionalCachePool(SimpleImageCache):
     def set_preload_window(self, preload_count: int = 5) -> None:
         """设置预加载窗口（兼容方法，简化实现）"""
         # 简化：不做实际预加载，只记录设置
-        pass
 
     def set_sequence(self, images: list) -> None:
         """设置图片序列（兼容方法）"""
@@ -410,13 +386,12 @@ class BidirectionalCachePool(SimpleImageCache):
 
 
 __all__ = [
-    'SimpleImageCache',
-    'CacheEntry',
-    'get_global_cache',
-    'reset_global_cache',
+    "SimpleImageCache",
+    "CacheEntry",
+    "get_global_cache",
+    "reset_global_cache",
     # 向后兼容
-    'AdvancedImageCache',
-    'UnifiedCacheManager',
-    'BidirectionalCachePool',
+    "AdvancedImageCache",
+    "UnifiedCacheManager",
+    "BidirectionalCachePool",
 ]
-

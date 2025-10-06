@@ -16,6 +16,7 @@ from ..config.manager import get_config
 
 logger = logging.getLogger(APP_NAME)
 
+
 class ImageLoaderService:
     """
     图片加载服务
@@ -131,9 +132,12 @@ class ImageLoaderService:
 
         用于缩放时提升显示质量，在后台线程异步加载。
         """
-        if not (hasattr(self.main_window, "images") and self.main_window.images and
-                hasattr(self.main_window, "current_index") and
-                self.main_window.current_index < len(self.main_window.images)):
+        if not (
+            hasattr(self.main_window, "images")
+            and self.main_window.images
+            and hasattr(self.main_window, "current_index")
+            and self.main_window.current_index < len(self.main_window.images)
+        ):
             return
 
         image_path = self.main_window.images[self.main_window.current_index]
@@ -164,6 +168,7 @@ class ImageLoaderService:
 
                     try:
                         from Foundation import NSOperationQueue
+
                         NSOperationQueue.mainQueue().addOperationWithBlock_(update_image)
                     except Exception:
                         update_image()
@@ -174,8 +179,9 @@ class ImageLoaderService:
         # 在后台线程加载高质量图像
         threading.Thread(target=load_high_quality, daemon=True).start()
 
-    def load_image_optimized(self, img_path: str, prefer_preview: bool = False,
-                           target_size: tuple[int, int] | None = None) -> Any | None:
+    def load_image_optimized(
+        self, img_path: str, prefer_preview: bool = False, target_size: tuple[int, int] | None = None
+    ) -> Any | None:
         """
         智能图片加载方法
 
@@ -194,9 +200,7 @@ class ImageLoaderService:
                 strategy = "preview" if prefer_preview else "auto"
 
                 if hasattr(self.image_manager, "load_image_optimized"):
-                    return self.image_manager.load_image_optimized(
-                        img_path, target_size=target_size, strategy=strategy
-                    )
+                    return self.image_manager.load_image_optimized(img_path, target_size=target_size, strategy=strategy)
                 if hasattr(self.image_manager, "_load_image_optimized"):
                     return self.image_manager._load_image_optimized(
                         img_path, prefer_preview=prefer_preview, target_size=target_size
@@ -414,7 +418,7 @@ class ImageLoaderService:
                 "size_mb": 0,
                 "recommended_strategy": "auto",
                 "has_image_manager": self.image_manager is not None,
-                "has_image_cache": self.image_cache is not None
+                "has_image_cache": self.image_cache is not None,
             }
 
             if info["exists"]:

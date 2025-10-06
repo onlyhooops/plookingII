@@ -21,12 +21,12 @@ class MacOSCleanupManager:
     @staticmethod
     def clear_recent_documents():
         """清除 macOS 系统的最近文档记录
-        
+
         这会清除：
         1. NSDocumentController 记录
         2. 系统的"最近项目"列表
         3. Dock 菜单中显示的最近打开项目
-        
+
         Returns:
             bool: 清理是否成功
         """
@@ -34,6 +34,7 @@ class MacOSCleanupManager:
             # 方法1: 清除 NSRecentDocumentRecords
             try:
                 from Foundation import NSUserDefaults
+
                 defaults = NSUserDefaults.standardUserDefaults()
                 defaults.removeObjectForKey_("NSRecentDocumentRecords")
                 defaults.synchronize()
@@ -50,7 +51,7 @@ class MacOSCleanupManager:
                     set recent servers limit to 0
                 end tell
             end tell
-            
+
             tell application "System Events"
                 tell appearance preferences
                     set recent documents limit to 10
@@ -61,11 +62,7 @@ class MacOSCleanupManager:
             """
 
             try:
-                subprocess.run(
-                    ["osascript", "-e", applescript],
-                    check=False, capture_output=True,
-                    timeout=5
-                )
+                subprocess.run(["osascript", "-e", applescript], check=False, capture_output=True, timeout=5)
                 logger.info("已通过 AppleScript 重置最近项目")
             except Exception as e:
                 logger.debug(f"AppleScript 清理失败: {e}")
@@ -83,8 +80,9 @@ class MacOSCleanupManager:
                             # 使用 defaults 命令清除
                             subprocess.run(
                                 ["defaults", "delete", "com.apple.recentitems"],
-                                check=False, capture_output=True,
-                                timeout=5
+                                check=False,
+                                capture_output=True,
+                                timeout=5,
                             )
                             logger.info(f"已清除 {recent_file.name}")
                         except Exception:
@@ -101,7 +99,7 @@ class MacOSCleanupManager:
     @staticmethod
     def clear_app_recent_documents():
         """仅清除当前应用的最近文档记录
-        
+
         Returns:
             bool: 清理是否成功
         """
@@ -122,12 +120,12 @@ class MacOSCleanupManager:
     @staticmethod
     def is_development_environment() -> bool:
         """检测是否在开发环境中运行
-        
+
         开发环境特征：
         1. 从源码目录运行（存在 .git 目录）
         2. 设置了开发环境变量
         3. 在虚拟环境中运行
-        
+
         Returns:
             bool: 是否为开发环境
         """
@@ -136,9 +134,7 @@ class MacOSCleanupManager:
             return True
 
         # 检查是否在虚拟环境中
-        if hasattr(os.sys, "real_prefix") or (
-            hasattr(os.sys, "base_prefix") and os.sys.base_prefix != os.sys.prefix
-        ):
+        if hasattr(os.sys, "real_prefix") or (hasattr(os.sys, "base_prefix") and os.sys.base_prefix != os.sys.prefix):
             return True
 
         # 检查是否存在 .git 目录（从源码运行）
@@ -155,7 +151,7 @@ class MacOSCleanupManager:
     @staticmethod
     def auto_cleanup_if_dev():
         """如果在开发环境中，自动清理最近记录
-        
+
         Returns:
             bool: 是否执行了清理
         """
@@ -172,4 +168,3 @@ def clear_macos_recent_items():
     manager = MacOSCleanupManager()
     manager.clear_recent_documents()
     manager.clear_app_recent_documents()
-

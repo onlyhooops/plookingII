@@ -18,6 +18,7 @@ from ..imports import logging
 
 logger = logging.getLogger(APP_NAME)
 
+
 class PreloadTask:
     """预加载任务封装"""
 
@@ -32,16 +33,13 @@ class PreloadTask:
         """支持优先级队列排序"""
         return self.priority > other.priority  # 高优先级排前面
 
+
 class PreloadWindowCalculator:
     """预加载窗口计算器"""
 
     @staticmethod
     def compute_window(
-        cur_index: int,
-        sequence_length: int,
-        available_memory_mb: float,
-        nav_speed_ips: float,
-        nav_direction: str
+        cur_index: int, sequence_length: int, available_memory_mb: float, nav_speed_ips: float, nav_direction: str
     ) -> tuple[list[int], list[int]]:
         """计算预加载窗口
 
@@ -90,15 +88,13 @@ class PreloadWindowCalculator:
 
         return forward_indices, backward_indices
 
+
 class PreloadPriorityCalculator:
     """预加载优先级计算器"""
 
     @staticmethod
     def calculate_priorities(
-        forward_indices: list[int],
-        backward_indices: list[int],
-        nav_direction: str,
-        sequence: list[str]
+        forward_indices: list[int], backward_indices: list[int], nav_direction: str, sequence: list[str]
     ) -> list[PreloadTask]:
         """计算预加载任务的优先级
 
@@ -135,6 +131,7 @@ class PreloadPriorityCalculator:
         tasks.sort()
         return tasks
 
+
 class PreloadExecutor:
     """预加载执行器"""
 
@@ -143,12 +140,7 @@ class PreloadExecutor:
         self.memory_monitor = memory_monitor
         self._executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="preload")
 
-    def execute_tasks(
-        self,
-        tasks: list[PreloadTask],
-        generation: int,
-        cancel_check_callback
-    ) -> dict[str, Any]:
+    def execute_tasks(self, tasks: list[PreloadTask], generation: int, cancel_check_callback) -> dict[str, Any]:
         """执行预加载任务
 
         Args:
@@ -165,7 +157,7 @@ class PreloadExecutor:
             "skipped": 0,
             "cancelled": 0,
             "errors": 0,
-            "start_time": time.time()
+            "start_time": time.time(),
         }
 
         for task in tasks:
@@ -240,6 +232,7 @@ class PreloadExecutor:
         """关闭执行器"""
         self._executor.shutdown(wait=False)
 
+
 class PreloadManager:
     """预加载管理器 - 负责整个预加载流程的协调"""
 
@@ -258,7 +251,7 @@ class PreloadManager:
         index_map: dict[str, int],
         nav_speed_ips: float,
         nav_direction: str,
-        cancel_check_callback
+        cancel_check_callback,
     ) -> dict[str, Any]:
         """执行图像预加载的主流程
 
@@ -291,32 +284,27 @@ class PreloadManager:
 
         # 计算预加载窗口
         forward_indices, backward_indices = self.window_calculator.compute_window(
-            current_index,
-            len(sequence),
-            available_memory,
-            nav_speed_ips,
-            nav_direction
+            current_index, len(sequence), available_memory, nav_speed_ips, nav_direction
         )
 
         # 计算任务优先级
         tasks = self.priority_calculator.calculate_priorities(
-            forward_indices,
-            backward_indices,
-            nav_direction,
-            sequence
+            forward_indices, backward_indices, nav_direction, sequence
         )
 
         # 执行预加载任务
         stats = self.executor.execute_tasks(tasks, generation, cancel_check_callback)
 
         # 添加窗口信息到统计
-        stats.update({
-            "current_index": current_index,
-            "forward_window": len(forward_indices),
-            "backward_window": len(backward_indices),
-            "available_memory_mb": available_memory,
-            "nav_direction": nav_direction
-        })
+        stats.update(
+            {
+                "current_index": current_index,
+                "forward_window": len(forward_indices),
+                "backward_window": len(backward_indices),
+                "available_memory_mb": available_memory,
+                "nav_direction": nav_direction,
+            }
+        )
 
         return stats
 

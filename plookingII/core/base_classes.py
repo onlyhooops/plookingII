@@ -23,15 +23,17 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import Any
 
-@dataclass
 
+@dataclass
 class ComponentConfig:
     """组件配置数据类"""
+
     name: str
     enabled: bool = True
     timeout: float = 30.0
     max_retries: int = 3
     custom_params: dict[str, Any] = field(default_factory=dict)
+
 
 class StatisticsMixin:
     """统计功能混入类
@@ -49,7 +51,7 @@ class StatisticsMixin:
             "total_time": 0.0,
             "avg_time": 0.0,
             "last_operation_time": 0.0,
-            "start_time": time.time()
+            "start_time": time.time(),
         }
         self._stats_lock = threading.RLock()
 
@@ -83,10 +85,7 @@ class StatisticsMixin:
         with self._stats_lock:
             stats = self._stats.copy()
             stats["uptime"] = time.time() - stats["start_time"]
-            stats["success_rate"] = (
-                stats["successes"] / stats["operations"] * 100
-                if stats["operations"] > 0 else 0
-            )
+            stats["success_rate"] = stats["successes"] / stats["operations"] * 100 if stats["operations"] > 0 else 0
             # 兼容测试中预期的键名
             stats_alias = stats.copy()
             stats_alias["total_operations"] = stats_alias["operations"]
@@ -106,8 +105,9 @@ class StatisticsMixin:
                 "total_time": 0.0,
                 "avg_time": 0.0,
                 "last_operation_time": 0.0,
-                "start_time": time.time()
+                "start_time": time.time(),
             }
+
 
 class ConfigurationMixin:
     """配置管理混入类
@@ -150,6 +150,7 @@ class ConfigurationMixin:
         """
         return self._config.enabled
 
+
 class ErrorHandlingMixin:
     """错误处理混入类
 
@@ -159,12 +160,15 @@ class ErrorHandlingMixin:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._error_handlers: dict[type, Callable] = {}
+
         # 为测试兼容性暴露 error_handler 属性（提供最小实现）
         class _DummyErrorHandler:
             def __init__(self):
                 self.history = []
+
             def handle(self, e: Exception):
                 self.history.append(str(e))
+
         self.error_handler = _DummyErrorHandler()
         self._retry_config = {"max_retries": 3, "delay": 1.0, "backoff": 2.0}
 
@@ -225,12 +229,13 @@ class ErrorHandlingMixin:
                 last_error = error
                 if attempt < max_retries:
                     self.logger.warning(f"Operation failed (attempt {attempt + 1}/{max_retries + 1}): {error}")
-                    time.sleep(delay * (backoff ** attempt))
+                    time.sleep(delay * (backoff**attempt))
                 else:
                     self.logger.error(f"Operation failed after {max_retries + 1} attempts: {error}")
 
         # 所有重试都失败，处理错误
         return self.handle_error(last_error, f"retry_operation({operation.__name__})")
+
 
 class LoggingMixin:
     """日志记录混入类
@@ -256,6 +261,7 @@ class LoggingMixin:
             message += f" - {extra_info}"
 
         self.logger.log(level, message)
+
 
 class BaseComponent(StatisticsMixin, ConfigurationMixin, ErrorHandlingMixin, LoggingMixin):
     """基础组件抽象类
@@ -339,6 +345,7 @@ class BaseComponent(StatisticsMixin, ConfigurationMixin, ErrorHandlingMixin, Log
             self.log_operation(f"Failed {operation_name}", level=logging.ERROR, error=str(error))
             raise
 
+
 class ComponentRegistry:
     """组件注册表
 
@@ -407,6 +414,7 @@ class ComponentRegistry:
                     component.logger.error(f"Failed to cleanup component {name}: {error}")
 
             self._components.clear()
+
 
 # 全局组件注册表实例
 component_registry = ComponentRegistry()

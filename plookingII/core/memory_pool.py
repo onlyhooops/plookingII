@@ -23,6 +23,7 @@ from ..config.constants import APP_NAME
 
 logger = logging.getLogger(APP_NAME)
 
+
 class ImageMemoryPool:
     """图像内存池管理器"""
 
@@ -44,9 +45,7 @@ class ImageMemoryPool:
         self.cache_misses = 0
 
         # 预定义的大小类别（2的幂次）
-        self.size_categories = (
-            [1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576]
-        )
+        self.size_categories = [1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576]
 
     def get_buffer(self, size_bytes: int) -> bytearray | None:
         """从池中获取指定大小的缓冲区
@@ -190,7 +189,7 @@ class ImageMemoryPool:
                 "pool_sizes": {size: len(pool) for size, pool in self.pools.items()},
                 "total_allocations": self.total_allocations,
                 "total_deallocations": self.total_deallocations,
-                "cache_hit_rate": self.cache_hits / max(1, self.cache_hits + self.cache_misses)
+                "cache_hit_rate": self.cache_hits / max(1, self.cache_hits + self.cache_misses),
             }
 
     def optimize_pools(self):
@@ -207,8 +206,7 @@ class ImageMemoryPool:
                 small_size = sorted_sizes[i]
                 large_size = sorted_sizes[i + 1]
 
-                if (len(self.pools[small_size]) > 10 and
-                    len(self.pools[large_size]) < 5):
+                if len(self.pools[small_size]) > 10 and len(self.pools[large_size]) < 5:
                     # 将小池的缓冲区合并到大池
                     small_pool = self.pools[small_size]
                     large_pool = self.pools[large_size]

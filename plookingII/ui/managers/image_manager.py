@@ -1,4 +1,3 @@
-
 """
 图像管理器
 
@@ -18,6 +17,7 @@ from ...core.simple_cache import AdvancedImageCache, BidirectionalCachePool
 from ...monitor import get_unified_monitor
 
 logger = logging.getLogger(APP_NAME)
+
 
 class ImageManager:
     """图像管理器，负责图像加载、缓存和处理策略"""
@@ -41,7 +41,7 @@ class ImageManager:
         self._portrait_cache_config = {
             "compression_level": 0.8,  # 竖向图片使用更高压缩
             "memory_multiplier": 0.7,  # 竖向图片分配更少内存
-            "priority_boost": 1.2,     # 竖向图片优先级略高（因为加载慢）
+            "priority_boost": 1.2,  # 竖向图片优先级略高（因为加载慢）
         }
 
         # 混合图像处理器
@@ -120,9 +120,7 @@ class ImageManager:
     def _update_session_progress(self):
         """更新会话进度"""
         try:
-            if hasattr(self.main_window, "status_bar_controller") and (
-                self.main_window.status_bar_controller
-            ):
+            if hasattr(self.main_window, "status_bar_controller") and (self.main_window.status_bar_controller):
                 # 更新图片总数 - 保留基础会话跟踪
                 if self.main_window.images:
                     self.main_window.status_bar_controller.session_manager.set_image_count(len(self.main_window.images))
@@ -185,10 +183,18 @@ class ImageManager:
             notice_fail = get_config("_notice.decode_failure", None)
             notice_fb = get_config("_notice.decode_fallback", None)
 
-            if notice_fail and hasattr(self.main_window, "status_bar_controller") and self.main_window.status_bar_controller:
+            if (
+                notice_fail
+                and hasattr(self.main_window, "status_bar_controller")
+                and self.main_window.status_bar_controller
+            ):
                 self.main_window.status_bar_controller.set_status_message(str(notice_fail))
                 set_config("_notice.decode_failure", None)
-            elif notice_fb and hasattr(self.main_window, "status_bar_controller") and self.main_window.status_bar_controller:
+            elif (
+                notice_fb
+                and hasattr(self.main_window, "status_bar_controller")
+                and self.main_window.status_bar_controller
+            ):
                 self.main_window.status_bar_controller.set_status_message(str(notice_fb))
                 set_config("_notice.decode_fallback", None)
         except Exception:
@@ -236,7 +242,7 @@ class ImageManager:
                 "load_image",
                 max(0.0, time.time() - t_start) * 1000,  # 转换为毫秒
                 method=method,
-                success=True
+                success=True,
             )
         except Exception:
             pass
@@ -342,8 +348,7 @@ class ImageManager:
             bool: 是否应该使用快速加载
         """
         fast_threshold = IMAGE_PROCESSING_CONFIG.get("fast_load_threshold", 50)
-        return (file_size_mb <= fast_threshold and
-                IMAGE_PROCESSING_CONFIG.get("fast_load_enabled", True))
+        return file_size_mb <= fast_threshold and IMAGE_PROCESSING_CONFIG.get("fast_load_enabled", True)
 
     def _execute_fast_loading(self, image_path: str):
         """执行快速加载
@@ -503,6 +508,7 @@ class ImageManager:
             image_path: 图像文件路径
             target_size: 目标尺寸
         """
+
         def background_load():
             try:
                 image = self._load_image_with_concurrency(image_path, target_size)
@@ -552,7 +558,7 @@ class ImageManager:
             # 推断最近一次非零方向（默认向右）
             direction = +1
             try:
-                for (_, d) in reversed(self._nav_history):
+                for _, d in reversed(self._nav_history):
                     if d != 0:
                         direction = 1 if d > 0 else -1
                         break
@@ -659,7 +665,7 @@ class ImageManager:
             window = self._compute_prefetch_window(current_path)
             # 推断方向（使用最近一次非零方向），默认向前
             direction = 1
-            for (_, d) in reversed(self._nav_history):
+            for _, d in reversed(self._nav_history):
                 if d != 0:
                     direction = 1 if d > 0 else -1
                     break
@@ -681,8 +687,10 @@ class ImageManager:
 
             gen = self._load_generation
 
-            for (path, priority) in candidates:
-                threading.Thread(target=self._prefetch_worker, args=(path, target_size, gen, priority), daemon=True).start()
+            for path, priority in candidates:
+                threading.Thread(
+                    target=self._prefetch_worker, args=(path, target_size, gen, priority), daemon=True
+                ).start()
         except Exception:
             logger.debug("_schedule_adaptive_prefetch failed", exc_info=True)
 
@@ -740,22 +748,16 @@ class ImageManager:
         def progressive_load_worker():
             try:
                 local_target_size = self._resolve_progressive_target_size(target_size)
-                preview_size = (
-                    (max(1, local_target_size[0] // 4), max(1, local_target_size[1] // 4))
-                )
+                preview_size = (max(1, local_target_size[0] // 4), max(1, local_target_size[1] // 4))
 
                 # 第一阶段：快速加载低质量预览
-                preview_image = (
-                    self._load_image_optimized(image_path, prefer_preview=True, target_size=preview_size)
-                )
+                preview_image = self._load_image_optimized(image_path, prefer_preview=True, target_size=preview_size)
                 if preview_image:
                     self._post_to_main(lambda: self._display_image_immediate(preview_image))
 
                     # 第二阶段：延迟加载完整质量图片
                     time.sleep(0.1)
-                    full_image = (
-                        self._load_image_optimized(image_path, target_size=local_target_size)
-                    )
+                    full_image = self._load_image_optimized(image_path, target_size=local_target_size)
                     if full_image:
                         self._post_to_main(lambda: self._display_image_immediate(full_image))
             except Exception:
@@ -818,16 +820,11 @@ class ImageManager:
             adjusted_target_size = target_size
             if is_portrait and target_size:
                 multiplier = self._portrait_cache_config["memory_multiplier"]
-                adjusted_target_size = (
-                    int(target_size[0] * multiplier),
-                    int(target_size[1] * multiplier)
-                )
+                adjusted_target_size = (int(target_size[0] * multiplier), int(target_size[1] * multiplier))
                 logger.debug(f"竖向图片目标尺寸优化: {target_size} -> {adjusted_target_size}")
 
             file_size_mb = self.image_cache.get_file_size_mb(img_path)
-            strategy, eff_target = (
-                self._select_load_strategy(file_size_mb, prefer_preview, adjusted_target_size)
-            )
+            strategy, eff_target = self._select_load_strategy(file_size_mb, prefer_preview, adjusted_target_size)
             if strategy == "fast" and self.image_processor:
                 return self.image_processor.load_image_optimized(img_path, strategy="fast")
             return self.image_cache.load_image_with_strategy(img_path, strategy, eff_target)
@@ -963,8 +960,9 @@ class ImageManager:
                     total_cache_memory += layer_stats["memory_mb"]
 
         # 记录内存使用情况
-        logger.debug(f"Memory usage - Available: {memory_info.get('available_mb', 0):.1f}MB, "
-                    f"Cache: {total_cache_memory:.1f}MB")
+        logger.debug(
+            f"Memory usage - Available: {memory_info.get('available_mb', 0):.1f}MB, Cache: {total_cache_memory:.1f}MB"
+        )
 
         # 获取可用内存
         available_mb = memory_info.get("available_mb", 0)
@@ -1004,9 +1002,7 @@ class ImageManager:
 
         current_path = (
             self.main_window.images[self.main_window.current_index]
-            if self.main_window.images and (
-                0 <= self.main_window.current_index < len(self.main_window.images)
-            )
+            if self.main_window.images and (0 <= self.main_window.current_index < len(self.main_window.images))
             else None
         )
         current_img = None
@@ -1024,6 +1020,7 @@ class ImageManager:
 
         # 强制垃圾回收
         import gc
+
         gc.collect()
 
     def _aggressive_memory_cleanup(self):
@@ -1031,17 +1028,21 @@ class ImageManager:
         self.image_cache.preview_cache.clear()
         self.image_cache.preview_memory_mb = 0
 
-        preload_size = len(self.image_cache.preload_cache) if getattr(self.image_cache, "preload_cache", None) is not None else 0
+        preload_size = (
+            len(self.image_cache.preload_cache) if getattr(self.image_cache, "preload_cache", None) is not None else 0
+        )
         if preload_size > 2:
             items_to_remove = preload_size - 2
             for _ in range(items_to_remove):
                 try:
-                    if getattr(self.image_cache, "preload_cache", None) is not None and len(self.image_cache.preload_cache) > 2:
+                    if (
+                        getattr(self.image_cache, "preload_cache", None) is not None
+                        and len(self.image_cache.preload_cache) > 2
+                    ):
                         self.image_cache._evict_oldest_preload()
                 except Exception:
                     break
         # 预加载内存使用更新已移除（统一监控自动管理）
-        pass
 
         cache_size = self.image_cache.get_size()
         if cache_size > 3:
@@ -1052,6 +1053,7 @@ class ImageManager:
 
         # 强制垃圾回收
         import gc
+
         gc.collect()
 
     def _moderate_memory_cleanup(self):
@@ -1063,17 +1065,21 @@ class ImageManager:
                 if self.image_cache.preview_cache:
                     self.image_cache._evict_oldest_preview()
 
-        preload_size = len(self.image_cache.preload_cache) if getattr(self.image_cache, "preload_cache", None) is not None else 0
+        preload_size = (
+            len(self.image_cache.preload_cache) if getattr(self.image_cache, "preload_cache", None) is not None else 0
+        )
         if preload_size > 4:
             items_to_remove = preload_size - 4
             for _ in range(items_to_remove):
                 try:
-                    if getattr(self.image_cache, "preload_cache", None) is not None and len(self.image_cache.preload_cache) > 4:
+                    if (
+                        getattr(self.image_cache, "preload_cache", None) is not None
+                        and len(self.image_cache.preload_cache) > 4
+                    ):
                         self.image_cache._evict_oldest_preload()
                 except Exception:
                     break
         # 预加载内存使用更新已移除（统一监控自动管理）
-        pass
 
         cache_size = self.image_cache.get_size()
         if cache_size > 5:
@@ -1091,17 +1097,21 @@ class ImageManager:
                 if self.image_cache.preview_cache:
                     self.image_cache._evict_oldest_preview()
 
-        preload_size = len(self.image_cache.preload_cache) if getattr(self.image_cache, "preload_cache", None) is not None else 0
+        preload_size = (
+            len(self.image_cache.preload_cache) if getattr(self.image_cache, "preload_cache", None) is not None else 0
+        )
         if preload_size > 6:
             items_to_remove = preload_size - 6
             for _ in range(items_to_remove):
                 try:
-                    if getattr(self.image_cache, "preload_cache", None) is not None and len(self.image_cache.preload_cache) > 6:
+                    if (
+                        getattr(self.image_cache, "preload_cache", None) is not None
+                        and len(self.image_cache.preload_cache) > 6
+                    ):
                         self.image_cache._evict_oldest_preload()
                 except Exception:
                     break
         # 预加载内存使用更新已移除（统一监控自动管理）
-        pass
 
         cache_size = self.image_cache.get_size()
         if cache_size > 8:
@@ -1114,12 +1124,19 @@ class ImageManager:
         """根据需要修剪预加载缓存"""
         memory_status = self.monitor.get_memory_status()
         if memory_status.pressure_level in ("high", "critical"):
-            preload_size = len(self.image_cache.preload_cache) if getattr(self.image_cache, "preload_cache", None) is not None else 0
+            preload_size = (
+                len(self.image_cache.preload_cache)
+                if getattr(self.image_cache, "preload_cache", None) is not None
+                else 0
+            )
             if preload_size > 3:
                 items_to_remove = preload_size - 3
                 for _ in range(items_to_remove):
                     try:
-                        if getattr(self.image_cache, "preload_cache", None) is not None and len(self.image_cache.preload_cache) > 3:
+                        if (
+                            getattr(self.image_cache, "preload_cache", None) is not None
+                            and len(self.image_cache.preload_cache) > 3
+                        ):
                             self.image_cache._evict_oldest_preload()
                     except Exception:
                         break
@@ -1183,7 +1200,11 @@ class ImageManager:
             if stats["total_operations"] > 0:
                 score = stats.get("success_rate", 1.0)
                 suggestions = []
-                tuning = suggestions[-1]["tuning"] if suggestions and isinstance(suggestions[-1], dict) and "tuning" in suggestions[-1] else {}
+                tuning = (
+                    suggestions[-1]["tuning"]
+                    if suggestions and isinstance(suggestions[-1], dict) and "tuning" in suggestions[-1]
+                    else {}
+                )
 
                 # 统一的tier与回拨逻辑
                 # 默认：并发2，预取5；差时降级，优时回拨
@@ -1198,7 +1219,10 @@ class ImageManager:
 
                 # 应用并发
                 if desired_conc in (1, 2):
-                    if not hasattr(self, "_decode_semaphore") or getattr(self._decode_semaphore, "_value", None) != desired_conc:
+                    if (
+                        not hasattr(self, "_decode_semaphore")
+                        or getattr(self._decode_semaphore, "_value", None) != desired_conc
+                    ):
                         self._decode_semaphore = threading.BoundedSemaphore(value=desired_conc)
 
                 # 应用预取窗口
@@ -1267,6 +1291,7 @@ class ImageManager:
             # 使用定时器延迟执行
             try:
                 from Foundation import NSTimer
+
                 NSTimer.scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(
                     0.05, self, "_execute_delayed_preload_rebuild:", None, False
                 )

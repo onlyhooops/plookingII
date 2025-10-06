@@ -21,6 +21,7 @@ from ...config.ui_strings import get_ui_string
 
 logger = logging.getLogger(APP_NAME)
 
+
 class OperationManager:
     """操作管理器，负责文件操作、撤销和保留功能"""
 
@@ -80,9 +81,7 @@ class OperationManager:
             str: 源文件夹名称
         """
         if self.main_window.current_folder == self.main_window.root_folder:
-            folder_name = (
-                os.path.basename(self.main_window.root_folder) if self.main_window.root_folder else "根目录"
-            )
+            folder_name = os.path.basename(self.main_window.root_folder) if self.main_window.root_folder else "根目录"
             return folder_name or "根目录"
         return os.path.basename(self.main_window.current_folder) if self.main_window.current_folder else "未知文件夹"
 
@@ -130,9 +129,7 @@ class OperationManager:
 
     def _remove_current_image_from_sequences(self):
         """从序列中移除当前图像"""
-        if self.main_window.images and (
-            0 <= self.main_window.current_index < len(self.main_window.images)
-        ):
+        if self.main_window.images and (0 <= self.main_window.current_index < len(self.main_window.images)):
             self.main_window.images.pop(self.main_window.current_index)
         if hasattr(self.main_window, "image_manager") and self.main_window.image_manager:
             try:
@@ -179,6 +176,7 @@ class OperationManager:
         # 延迟启动预加载，避免与当前图像显示冲突
         try:
             from Foundation import NSTimer
+
             NSTimer.scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(
                 0.1, self.main_window.image_manager, "start_preload", None, False
             )
@@ -222,6 +220,7 @@ class OperationManager:
                     # 立即重建预加载，确保后续导航流畅
                     try:
                         from Foundation import NSTimer
+
                         NSTimer.scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(
                             0.15, self.main_window.image_manager, "start_preload", None, False
                         )
@@ -232,9 +231,7 @@ class OperationManager:
                         except Exception:
                             pass
 
-            self.main_window.status_bar_controller.set_status_message(
-                self.main_window.ui_strings["selection_undone"]
-            )
+            self.main_window.status_bar_controller.set_status_message(self.main_window.ui_strings["selection_undone"])
         except Exception as e:
             self.main_window.status_bar_controller.set_status_message(
                 self.main_window.ui_strings["undo_failed"].format(e)
@@ -345,7 +342,9 @@ class OperationManager:
     def goto_keep_folder(self):
         """跳转到保留文件夹"""
         if not self.main_window.root_folder:
-            self._show_info_(get_ui_string("status_messages", "no_directory_for_selection", "未选择图片目录，无法打开精选文件夹。"))
+            self._show_info_(
+                get_ui_string("status_messages", "no_directory_for_selection", "未选择图片目录，无法打开精选文件夹。")
+            )
             return
 
         # 计算“精选”目录名：[根目录名] 精选
@@ -437,7 +436,7 @@ class OperationManager:
                             self.main_window.images,
                             self.main_window.current_index,
                             self.main_window.subfolders,
-                            self.main_window.current_subfolder_index
+                            self.main_window.current_subfolder_index,
                         )
 
                     logger.info(f"跳转到文件: {target_index + 1}/{len(self.main_window.images)}")
@@ -510,9 +509,7 @@ class OperationManager:
         except Exception:
             pass
 
-        if hasattr(self.main_window, "folder_manager") and (
-            self.main_window.folder_manager.task_history_manager
-        ):
+        if hasattr(self.main_window, "folder_manager") and (self.main_window.folder_manager.task_history_manager):
             self.main_window.folder_manager.task_history_manager.clear_history()
         else:
             self._show_info_("当前没有活动的历史记录。")
@@ -582,7 +579,9 @@ class OperationManager:
                     from Foundation import NSOperationQueue
 
                     NSOperationQueue.mainQueue().addOperationWithBlock_(
-                        lambda: self.main_window.onRotationCompleted_({"success": False, "direction": direction, "error": str(e)})
+                        lambda: self.main_window.onRotationCompleted_(
+                            {"success": False, "direction": direction, "error": str(e)}
+                        )
                     )
                 except Exception:
                     self.main_window.onRotationCompleted_({"success": False, "direction": direction, "error": str(e)})
@@ -681,9 +680,7 @@ class OperationManager:
         original_direction = action["direction"]
 
         # 计算相反方向
-        opposite_direction = (
-            "counterclockwise" if original_direction == "clockwise" else "clockwise"
-        )
+        opposite_direction = "counterclockwise" if original_direction == "clockwise" else "clockwise"
 
         if not os.path.exists(image_path):
             self.main_window.status_bar_controller.set_status_message("无法撤销，图像文件不存在")

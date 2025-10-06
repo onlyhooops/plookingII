@@ -10,7 +10,7 @@ Date: 2025-10-06
 import logging
 import os
 import time
-from typing import Any, Optional
+from typing import Any
 
 from .config import LoadingConfig, get_default_config
 from .helpers import (
@@ -59,15 +59,10 @@ class OptimizedStrategy:
 
         global _optimized_init_logged
         if not _optimized_init_logged:
-            logger.info(
-                f"OptimizedStrategy initialized - Quartz: {self.quartz_available}, "
-                f"Config: {self.config}"
-            )
+            logger.info(f"OptimizedStrategy initialized - Quartz: {self.quartz_available}, Config: {self.config}")
             _optimized_init_logged = True
 
-    def can_handle(
-        self, file_path: str, file_size_mb: float, target_size: tuple[int, int] | None = None
-    ) -> bool:
+    def can_handle(self, file_path: str, file_size_mb: float, target_size: tuple[int, int] | None = None) -> bool:
         """检查是否可以处理文件
 
         Args:
@@ -84,9 +79,7 @@ class OptimizedStrategy:
             return False
         return True
 
-    def load(
-        self, file_path: str, target_size: tuple[int, int] | None = None
-    ) -> Optional[Any]:
+    def load(self, file_path: str, target_size: tuple[int, int] | None = None) -> Any | None:
         """加载图片（智能选择方法）
 
         Args:
@@ -133,18 +126,14 @@ class OptimizedStrategy:
             self.stats.record_failure()
             return None
 
-    def _load_small(
-        self, file_path: str, target_size: tuple[int, int] | None
-    ) -> Optional[Any]:
+    def _load_small(self, file_path: str, target_size: tuple[int, int] | None) -> Any | None:
         """小文件：NSImage快速加载"""
         image = load_with_nsimage(file_path)
         if image is not None:
             self.stats.fast_loads += 1
         return image
 
-    def _load_medium(
-        self, file_path: str, target_size: tuple[int, int] | None
-    ) -> Optional[Any]:
+    def _load_medium(self, file_path: str, target_size: tuple[int, int] | None) -> Any | None:
         """中等文件：Quartz优化加载"""
         if not self.quartz_available:
             # Quartz不可用，回退到NSImage
@@ -162,12 +151,9 @@ class OptimizedStrategy:
         # 如果需要NSImage，转换CGImage
         if self.config.prefer_cgimage_pipeline:
             return cgimage
-        else:
-            return cgimage_to_nsimage(cgimage)
+        return cgimage_to_nsimage(cgimage)
 
-    def _load_large(
-        self, file_path: str, target_size: tuple[int, int] | None
-    ) -> Optional[Any]:
+    def _load_large(self, file_path: str, target_size: tuple[int, int] | None) -> Any | None:
         """大文件：内存映射加载"""
         if not self.memory_mapping_available:
             # 内存映射不可用，回退到Quartz
@@ -227,16 +213,12 @@ class PreviewStrategy:
 
         logger.debug(f"PreviewStrategy initialized - max_size: {self.max_size}")
 
-    def can_handle(
-        self, file_path: str, file_size_mb: float, target_size: tuple[int, int] | None = None
-    ) -> bool:
+    def can_handle(self, file_path: str, file_size_mb: float, target_size: tuple[int, int] | None = None) -> bool:
         """检查是否可以处理"""
         ext = os.path.splitext(file_path)[1].lower()
         return ext in (".jpg", ".jpeg", ".png")
 
-    def load(
-        self, file_path: str, target_size: tuple[int, int] | None = None
-    ) -> Optional[Any]:
+    def load(self, file_path: str, target_size: tuple[int, int] | None = None) -> Any | None:
         """加载预览图
 
         Args:
@@ -268,8 +250,7 @@ class PreviewStrategy:
                     # 转换为NSImage
                     if self.config.prefer_cgimage_pipeline:
                         return cgimage
-                    else:
-                        return cgimage_to_nsimage(cgimage)
+                    return cgimage_to_nsimage(cgimage)
 
             # Quartz不可用或失败，使用NSImage
             image = load_with_nsimage(file_path)
@@ -321,7 +302,10 @@ class PreviewStrategy:
             resized = NSImage.alloc().initWithSize_((new_width, new_height))
             resized.lockFocus()
             image.drawInRect_fromRect_operation_fraction_(
-                ((0, 0), (new_width, new_height)), ((0, 0), (width, height)), 2, 1.0  # NSCompositeCopy
+                ((0, 0), (new_width, new_height)),
+                ((0, 0), (width, height)),
+                2,
+                1.0,  # NSCompositeCopy
             )
             resized.unlockFocus()
 
@@ -359,15 +343,11 @@ class AutoStrategy:
 
         logger.debug("AutoStrategy initialized")
 
-    def can_handle(
-        self, file_path: str, file_size_mb: float, target_size: tuple[int, int] | None = None
-    ) -> bool:
+    def can_handle(self, file_path: str, file_size_mb: float, target_size: tuple[int, int] | None = None) -> bool:
         """检查是否可以处理"""
         return self.optimized.can_handle(file_path, file_size_mb, target_size)
 
-    def load(
-        self, file_path: str, target_size: tuple[int, int] | None = None, preview: bool = False
-    ) -> Optional[Any]:
+    def load(self, file_path: str, target_size: tuple[int, int] | None = None, preview: bool = False) -> Any | None:
         """自动选择并加载
 
         Args:
@@ -380,8 +360,7 @@ class AutoStrategy:
         """
         if preview:
             return self.preview.load(file_path, target_size)
-        else:
-            return self.optimized.load(file_path, target_size)
+        return self.optimized.load(file_path, target_size)
 
     def get_stats(self) -> dict[str, Any]:
         """获取统计信息（合并两个策略）"""
@@ -394,4 +373,3 @@ class AutoStrategy:
             "total_requests": opt_stats["total_requests"] + prev_stats["total_requests"],
             "total_time": opt_stats["total_time"] + prev_stats["total_time"],
         }
-

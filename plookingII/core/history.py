@@ -37,6 +37,7 @@ from ..utils.validation_utils import ValidationUtils
 
 logger = logging.getLogger(APP_NAME)
 
+
 # 为了向后兼容，保留原有函数名作为别名
 def _canon_path(p):
     """标准化文件路径（向后兼容函数）
@@ -49,6 +50,7 @@ def _canon_path(p):
     """
     return PathUtils.canonicalize_path(p, resolve_symlinks=True)
 
+
 class TaskHistoryManager:
     """任务历史记录管理器 - 使用SQLite数据库实现增量更新"""
 
@@ -58,16 +60,12 @@ class TaskHistoryManager:
         self.root_folder = _canon_path(root_folder)
 
         # 创建应用数据目录
-        app_data_dir = (
-            os.path.expanduser(os.path.join("~", "Library", "Application Support", APP_NAME))
-        )
+        app_data_dir = os.path.expanduser(os.path.join("~", "Library", "Application Support", APP_NAME))
         os.makedirs(app_data_dir, exist_ok=True)
 
         # 使用标准化后的根文件夹的哈希作为唯一标识符
         # MD5仅用于生成文件名，不用于加密安全
-        normalized_hash = hashlib.md5(
-            self.root_folder.encode("utf-8"), usedforsecurity=False
-        ).hexdigest()[:8]
+        normalized_hash = hashlib.md5(self.root_folder.encode("utf-8"), usedforsecurity=False).hexdigest()[:8]
         self.folder_hash = normalized_hash
 
         # 数据库文件路径（标准化）
@@ -76,14 +74,9 @@ class TaskHistoryManager:
 
         # 兼容旧版本：如果曾经根据未标准化路径生成过数据库，优先复用
         try:
-            legacy_hash = hashlib.md5(
-                original_root.encode("utf-8"), usedforsecurity=False
-            ).hexdigest()[:8]
+            legacy_hash = hashlib.md5(original_root.encode("utf-8"), usedforsecurity=False).hexdigest()[:8]
             legacy_db = os.path.join(app_data_dir, f"task_history_{legacy_hash}.db")
-            if legacy_hash != normalized_hash and (
-                os.path.exists(legacy_db) and
-                not os.path.exists(normalized_db)
-            ):
+            if legacy_hash != normalized_hash and (os.path.exists(legacy_db) and not os.path.exists(normalized_db)):
                 self.db_file = legacy_db
                 self.folder_hash = legacy_hash
         except Exception:
@@ -153,7 +146,7 @@ class TaskHistoryManager:
             cursor: 数据库游标对象
         """
         # 检查任务记录是否存在，不存在则创建
-        cursor.execute("SELECT id FROM task WHERE root_path_hash = ?", (self.folder_hash, ))
+        cursor.execute("SELECT id FROM task WHERE root_path_hash = ?", (self.folder_hash,))
         task = cursor.fetchone()
 
         if not task:
@@ -184,7 +177,7 @@ class TaskHistoryManager:
         # 删除不再存在的子文件夹
         for path, (id, _) in list(existing_paths.items()):
             if path not in subfolders:
-                cursor.execute("DELETE FROM subfolders WHERE id = ?", (id, ))
+                cursor.execute("DELETE FROM subfolders WHERE id = ?", (id,))
 
         # 更新或插入子文件夹
         for i, folder in enumerate(subfolders):
@@ -268,7 +261,7 @@ class TaskHistoryManager:
                 last_updated = CURRENT_TIMESTAMP
             WHERE root_path_hash = ?
             """,
-                (self.folder_hash, ),
+                (self.folder_hash,),
             )
 
             # 更新当前会话状态
@@ -311,7 +304,7 @@ class TaskHistoryManager:
             bool: 验证通过返回True，否则返回False
         """
         # 检查任务记录是否存在
-        cursor.execute("SELECT root_folder FROM task WHERE root_path_hash = ?", (self.folder_hash, ))
+        cursor.execute("SELECT root_folder FROM task WHERE root_path_hash = ?", (self.folder_hash,))
         task = cursor.fetchone()
 
         if not task:
@@ -337,10 +330,7 @@ class TaskHistoryManager:
             dict or None: 进度数据字典，失败时返回None
         """
         # 获取当前会话状态
-        cursor.execute(
-            "SELECT current_subfolder_index, current_index, keep_folder "
-            "FROM current_session WHERE id = 1"
-        )
+        cursor.execute("SELECT current_subfolder_index, current_index, keep_folder FROM current_session WHERE id = 1")
         session = cursor.fetchone()
 
         if not session:
@@ -365,11 +355,11 @@ class TaskHistoryManager:
 
         # 构建返回数据
         return {
-             "subfolders": subfolders,
-             "current_subfolder_index": int(current_subfolder_index or 0),
-             "current_index": int(current_index or 0),
-             "keep_folder": keep_folder or "",
-         }
+            "subfolders": subfolders,
+            "current_subfolder_index": int(current_subfolder_index or 0),
+            "current_index": int(current_index or 0),
+            "keep_folder": keep_folder or "",
+        }
 
     def _upsert_recent_folder(self, cursor, folder_path: str) -> None:
         """插入或更新最近文件夹记录。
@@ -384,7 +374,7 @@ class TaskHistoryManager:
             VALUES (?, CURRENT_TIMESTAMP)
             ON CONFLICT(folder_path) DO UPDATE SET opened_at=CURRENT_TIMESTAMP
         """,
-            (folder_path, ),
+            (folder_path,),
         )
 
     def _cleanup_old_folders(self, cursor, max_count: int) -> None:
@@ -400,7 +390,7 @@ class TaskHistoryManager:
                 SELECT id FROM recent_folders ORDER BY opened_at DESC LIMIT ?
             )
         """,
-            (max_count, ),
+            (max_count,),
         )
 
     def load_task_progress(self):
@@ -529,7 +519,7 @@ class TaskHistoryManager:
                 """
                 SELECT folder_path FROM recent_folders ORDER BY opened_at DESC LIMIT ?
             """,
-                (max_count, ),
+                (max_count,),
             )
             result = [row[0] for row in cursor.fetchall()]
             return result
@@ -571,4 +561,3 @@ class TaskHistoryManager:
             bool: 路径是否有效
         """
         return ValidationUtils.validate_recent_folder_path(folder_path)
-

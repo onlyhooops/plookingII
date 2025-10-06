@@ -24,6 +24,7 @@ from ...core.error_handling import (
 
 logger = logging.getLogger(APP_NAME)
 
+
 class UserFeedbackManager:
     """用户反馈管理器
 
@@ -302,8 +303,10 @@ class UserFeedbackManager:
             logger.error(f"显示警告对话框失败: {e}")
             return False
 
+
 # 全局用户反馈管理器实例
 user_feedback_manager = UserFeedbackManager()
+
 
 def show_error(error: Exception, context: str = ""):
     """显示错误提示的便捷函数
@@ -314,6 +317,7 @@ def show_error(error: Exception, context: str = ""):
     """
     user_feedback_manager.show_error_dialog(error, context)
 
+
 def show_info(title: str, message: str):
     """显示信息提示的便捷函数
 
@@ -322,6 +326,7 @@ def show_info(title: str, message: str):
         message: 消息
     """
     user_feedback_manager.show_info_message(title, message)
+
 
 def show_warning(title: str, message: str) -> bool:
     """显示警告提示的便捷函数

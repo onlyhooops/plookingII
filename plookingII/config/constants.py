@@ -27,11 +27,10 @@ from ..imports import QUARTZ_AVAILABLE, os
 # 应用名称：用于日志记录、窗口标题、配置文件等标识
 APP_NAME = "PlookingII"
 
-# 应用版本：遵循语义化版本规范 (major.minor.patch)
-# 单一真源（normalized，无前缀）
-VERSION = "1.6.0"
-# 对外暴露的统一版本别名，供打包与外部工具读取
-APP_VERSION = VERSION
+# 应用版本：从版本管理模块动态导入（自动同步）
+# 🎯 版本号单一真源：plookingII/__version__.py
+# 发布新版本时只需修改 __version__.py 文件
+from ..__version__ import APP_VERSION, VERSION
 
 # 开发团队：用于关于对话框和版权声明
 AUTHOR = "PlookingII Team"
@@ -79,6 +78,7 @@ def _resource_path(dir_path, filename):
         # 路径操作异常时返回基础拼接，确保程序继续运行
         return os.path.join(dir_path, filename)
 
+
 # SVG格式应用图标：用于高分辨率显示和界面元素
 # 矢量格式，支持任意缩放不失真
 ICON_SVG = _resource_path(_LOGO_DIR, "PlookingII.svg")
@@ -107,7 +107,9 @@ MAX_CACHE_SIZE = 20
 # 用于：文件过滤、格式验证、加载策略选择
 SUPPORTED_EXTENSIONS = {
     # 项目范围收敛：仅支持 JPG/JPEG/PNG
-    ".jpg", ".jpeg", ".png"
+    ".jpg",
+    ".jpeg",
+    ".png",
 }
 
 # 核心支持格式（用于快速过滤）
@@ -156,90 +158,70 @@ memory_pressure_threshold = 2048
 IMAGE_PROCESSING_CONFIG = {
     # Quartz渲染引擎启用状态：macOS平台的高质量图像渲染
     "quartz_enabled": QUARTZ_AVAILABLE,
-
     # 严格模式：仅允许Quartz解码。若Quartz不可用则在启动时失败
     "strict_quartz_only": True,
-
     # 最大预览分辨率：预览模式下图像的最大像素尺寸
     # 2560像素，适配2K显示器，平衡质量与性能
     "max_preview_resolution": 2560,
-
     # 渐进式加载阈值：配置项形式的阈值设置（MB单位）
     "progressive_load_threshold": 50,
-
     # 快速加载阈值：配置项形式的阈值设置（MB单位）
     # 简化为两级：50MB及以下原图加载，50MB以上智能加载
     "fast_load_threshold": 50,
-
     # 主缓存大小：主图像缓存池的容量限制
     # 50个缓存项，用于常用图像的快速访问
     "cache_size": 50,
-
     # 预览缓存大小：预览图像专用缓存的容量限制
     # 80个缓存项，预览图像占用内存较小可适当增加
     "preview_cache_size": 80,
-
     # 自适应质量：根据图像大小和系统性能动态调整质量
     "adaptive_quality": True,
-
     # 内存映射：大文件使用内存映射技术减少内存占用
     "memory_mapping": True,
-
     # 压缩缓存：缓存时使用压缩算法节省内存空间
     "compression_cache": True,
-
     # 预测性加载：基于用户行为预测并预加载可能访问的图像
     "predictive_loading": True,
-
     # 后台处理：在后台线程进行图像处理，避免阻塞UI
     "background_processing": True,
-
     # 智能缩放：根据显示需求智能选择缩放算法和参数
     "smart_scaling": True,
-
     # 快速加载启用：启用小图像的快速加载优化
     "fast_load_enabled": True,
-
     # 横向图像优化：针对宽屏图像的特殊优化处理
     "landscape_optimization": True,
-
     # 竖向图片优化：针对竖向图片的特殊优化处理
     "vertical_optimization": {
-        "enabled": True,                     # 启用竖向图片优化
-        "scale_factor": 0.8,                 # 竖向图片缩放因子
-        "preload_enabled": True,             # 启用竖向图片预加载
-        "memory_optimization": True,         # 启用内存优化
+        "enabled": True,  # 启用竖向图片优化
+        "scale_factor": 0.8,  # 竖向图片缩放因子
+        "preload_enabled": True,  # 启用竖向图片预加载
+        "memory_optimization": True,  # 启用内存优化
         "ultra_high_pixel_threshold": 2000,  # 超大像素阈值
-        "progressive_loading": True,         # 启用渐进式加载
+        "progressive_loading": True,  # 启用渐进式加载
     },
-
     # 双线程处理：使用多线程并行处理提升性能
     "dual_thread_processing": True,
-
     # 横向图像缩放因子：横向图像的特殊缩放系数
     # 1.5倍，适配宽屏显示的视觉效果
     "landscape_scale_factor": 1.5,
-
     # EXIF处理策略：禁用EXIF处理以提高性能
     "exif_processing": {
-        "process_orientation": True,      # 启用方向信息处理
-        "process_metadata": True,        # 启用元数据处理
-        "apply_exif_transform": True,    # 启用EXIF变换应用
+        "process_orientation": True,  # 启用方向信息处理
+        "process_metadata": True,  # 启用元数据处理
+        "apply_exif_transform": True,  # 启用EXIF变换应用
     },
-
     # 性能优化选项
     "performance_optimizations": {
-        "skip_exif_processing": True,     # 跳过EXIF处理
-        "use_native_sizing": True,        # 使用原生尺寸获取
-        "minimize_pil_usage": True,       # 最小化PIL使用
+        "skip_exif_processing": True,  # 跳过EXIF处理
+        "use_native_sizing": True,  # 使用原生尺寸获取
+        "minimize_pil_usage": True,  # 最小化PIL使用
     },
-
     # 图像旋转功能配置
     "image_rotation": {
-        "enabled": True,                  # 启用图像旋转功能
-        "pil_threshold_mb": 10.0,          # PIL处理阈值
-        "process_exif_orientation": True, # 处理EXIF方向信息
-        "background_processing": True,    # 后台处理
-        "enable_undo": True,              # 启用撤销功能
+        "enabled": True,  # 启用图像旋转功能
+        "pil_threshold_mb": 10.0,  # PIL处理阈值
+        "process_exif_orientation": True,  # 处理EXIF方向信息
+        "background_processing": True,  # 后台处理
+        "enable_undo": True,  # 启用撤销功能
     },
 }

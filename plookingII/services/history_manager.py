@@ -20,6 +20,7 @@ from ..core.history import TaskHistoryManager
 
 logger = logging.getLogger(APP_NAME)
 
+
 class HistoryManager:
     """
     历史记录和进度管理服务
@@ -61,9 +62,11 @@ class HistoryManager:
                 return False
 
             # 委托给folder_manager进行具体验证
-            if (hasattr(self.window, "folder_manager") and
-                self.window.folder_manager and
-                hasattr(self.window.folder_manager, "_validate_task_history")):
+            if (
+                hasattr(self.window, "folder_manager")
+                and self.window.folder_manager
+                and hasattr(self.window.folder_manager, "_validate_task_history")
+            ):
                 return self.window.folder_manager._validate_task_history(history_data)
 
             return False
@@ -99,9 +102,11 @@ class HistoryManager:
                 return
 
             # 委托给folder_manager处理具体的对话框显示
-            if (hasattr(self.window, "folder_manager") and
-                self.window.folder_manager and
-                hasattr(self.window.folder_manager, "_show_task_history_restore_dialog")):
+            if (
+                hasattr(self.window, "folder_manager")
+                and self.window.folder_manager
+                and hasattr(self.window.folder_manager, "_show_task_history_restore_dialog")
+            ):
                 self.window.folder_manager._show_task_history_restore_dialog(history_data)
         except Exception as e:
             logger.warning(f"显示历史恢复对话框失败: {e}")
@@ -132,7 +137,7 @@ class HistoryManager:
                     "subfolders": getattr(self.window, "subfolders", []),
                     "current_subfolder_index": getattr(self.window, "current_subfolder_index", 0),
                     "current_index": getattr(self.window, "current_index", 0),
-                    "timestamp": current_time
+                    "timestamp": current_time,
                 }
 
                 with self._save_lock:
@@ -153,9 +158,11 @@ class HistoryManager:
         用于重要操作，确保数据立即写入。
         """
         try:
-            if (hasattr(self.window, "folder_manager") and
-                self.window.folder_manager and
-                hasattr(self.window.folder_manager, "_save_task_progress_immediate")):
+            if (
+                hasattr(self.window, "folder_manager")
+                and self.window.folder_manager
+                and hasattr(self.window.folder_manager, "_save_task_progress_immediate")
+            ):
                 self.window.folder_manager._save_task_progress_immediate()
         except Exception as e:
             logger.warning(f"立即保存任务进度失败: {e}")
@@ -167,9 +174,11 @@ class HistoryManager:
         在后台线程中执行保存操作，避免阻塞UI。
         """
         try:
-            if (hasattr(self.window, "folder_manager") and
-                self.window.folder_manager and
-                hasattr(self.window.folder_manager, "_async_save_progress")):
+            if (
+                hasattr(self.window, "folder_manager")
+                and self.window.folder_manager
+                and hasattr(self.window.folder_manager, "_async_save_progress")
+            ):
                 self.window.folder_manager._async_save_progress()
         except Exception as e:
             logger.warning(f"异步保存进度失败: {e}")
@@ -192,9 +201,11 @@ class HistoryManager:
 
                     # 获取TaskHistoryManager实例
                     task_history_manager = None
-                    if (hasattr(self.window, "folder_manager") and
-                        self.window.folder_manager and
-                        hasattr(self.window.folder_manager, "task_history_manager")):
+                    if (
+                        hasattr(self.window, "folder_manager")
+                        and self.window.folder_manager
+                        and hasattr(self.window.folder_manager, "task_history_manager")
+                    ):
                         task_history_manager = self.window.folder_manager.task_history_manager
 
                     if task_history_manager:
@@ -220,9 +231,11 @@ class HistoryManager:
             TaskHistoryManager: 任务历史管理器实例，如果不存在则返回None
         """
         try:
-            if (hasattr(self.window, "folder_manager") and
-                self.window.folder_manager and
-                hasattr(self.window.folder_manager, "task_history_manager")):
+            if (
+                hasattr(self.window, "folder_manager")
+                and self.window.folder_manager
+                and hasattr(self.window.folder_manager, "task_history_manager")
+            ):
                 return self.window.folder_manager.task_history_manager
         except Exception as e:
             logger.debug(f"获取任务历史管理器失败: {e}")

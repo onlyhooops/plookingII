@@ -21,6 +21,7 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+
 class OptimizedAlgorithms:
     """优化算法集合
 
@@ -28,8 +29,7 @@ class OptimizedAlgorithms:
     """
 
     @staticmethod
-    def optimized_batch_process(items: list[Any], batch_size: int = 10,
-                              processor_func=None) -> list[Any]:
+    def optimized_batch_process(items: list[Any], batch_size: int = 10, processor_func=None) -> list[Any]:
         """优化的批量处理算法
 
         Args:
@@ -47,7 +47,7 @@ class OptimizedAlgorithms:
 
         # 使用生成器表达式减少内存占用
         for i in range(0, len(items), batch_size):
-            batch = items[i:i + batch_size]
+            batch = items[i : i + batch_size]
             batch_results = [processor_func(item) for item in batch]
             results.extend(batch_results)
 
@@ -62,8 +62,7 @@ class OptimizedAlgorithms:
         return groups
 
     @staticmethod
-    def optimized_find_best_match(target: Any, candidates: list[Any],
-                                similarity_func=None) -> Any | None:
+    def optimized_find_best_match(target: Any, candidates: list[Any], similarity_func=None) -> Any | None:
         """优化的最佳匹配查找算法
 
         Args:
@@ -113,8 +112,7 @@ class OptimizedAlgorithms:
         return dict(groups)
 
     @staticmethod
-    def optimized_priority_queue(items: list[Any], priority_func=None,
-                               max_size: int = None) -> list[Any]:
+    def optimized_priority_queue(items: list[Any], priority_func=None, max_size: int = None) -> list[Any]:
         """优化的优先级队列算法
 
         Args:
@@ -164,8 +162,7 @@ class OptimizedAlgorithms:
                 yield list(window)
 
     @staticmethod
-    def optimized_memory_efficient_iter(items: list[Any],
-                                      processor_func=None) -> Iterator[Any]:
+    def optimized_memory_efficient_iter(items: list[Any], processor_func=None) -> Iterator[Any]:
         """优化的内存高效迭代器
 
         Args:
@@ -185,8 +182,7 @@ class OptimizedAlgorithms:
         return (processor_func(item) for item in items)
 
     @staticmethod
-    def optimized_conditional_filter(items: list[Any],
-                                   condition_func=None) -> list[Any]:
+    def optimized_conditional_filter(items: list[Any], condition_func=None) -> list[Any]:
         """优化的条件过滤算法
 
         Args:
@@ -203,8 +199,7 @@ class OptimizedAlgorithms:
         return [item for item in items if condition_func(item)]
 
     @staticmethod
-    def optimized_duplicate_removal(items: list[Any],
-                                  key_func=None) -> list[Any]:
+    def optimized_duplicate_removal(items: list[Any], key_func=None) -> list[Any]:
         """优化的去重算法
 
         Args:
@@ -234,8 +229,7 @@ class OptimizedAlgorithms:
         return result
 
     @staticmethod
-    def optimized_merge_sorted_lists(lists: list[list[Any]],
-                                   key_func=None) -> list[Any]:
+    def optimized_merge_sorted_lists(lists: list[list[Any]], key_func=None) -> list[Any]:
         """优化的有序列表合并算法
 
         Args:
@@ -291,6 +285,7 @@ class OptimizedAlgorithms:
         """
         return CircularBuffer(max_size)
 
+
 class CircularBuffer:
     """优化的循环缓冲区实现"""
 
@@ -330,6 +325,7 @@ class CircularBuffer:
         """返回当前大小"""
         return self.size
 
+
 class PerformanceOptimizer:
     """性能优化器
 
@@ -354,8 +350,7 @@ class PerformanceOptimizer:
         return result, execution_time
 
     @staticmethod
-    def optimize_loop_structure(items: list[Any],
-                              processor_func=None) -> list[Any]:
+    def optimize_loop_structure(items: list[Any], processor_func=None) -> list[Any]:
         """优化循环结构
 
         Args:

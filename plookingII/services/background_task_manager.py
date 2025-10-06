@@ -21,6 +21,7 @@ from ..config.constants import APP_NAME
 
 logger = logging.getLogger(APP_NAME)
 
+
 class BackgroundTaskManager:
     """
     后台任务管理服务
@@ -58,8 +59,7 @@ class BackgroundTaskManager:
         """初始化线程池执行器"""
         try:
             self._executor = concurrent.futures.ThreadPoolExecutor(
-                max_workers=self._max_workers,
-                thread_name_prefix="BackgroundTask"
+                max_workers=self._max_workers, thread_name_prefix="BackgroundTask"
             )
             logger.debug(f"后台任务线程池初始化完成，最大工作线程数: {self._max_workers}")
         except Exception as e:
@@ -91,17 +91,14 @@ class BackgroundTaskManager:
         """调度维护性后台任务"""
         try:
             # 定期清理过期的任务记录 - 在测试环境中使用较短延迟
-            delay = 0.1 if hasattr(self.window, '_is_testing') else 30.0
-            self.submit_task(
-                "cleanup_expired_tasks",
-                self._cleanup_expired_tasks,
-                delay=delay
-            )
+            delay = 0.1 if hasattr(self.window, "_is_testing") else 30.0
+            self.submit_task("cleanup_expired_tasks", self._cleanup_expired_tasks, delay=delay)
         except Exception as e:
             logger.debug(f"调度维护任务失败: {e}")
 
-    def submit_task(self, task_id: str, task_func: Callable, *args,
-                   delay: float = 0.0, callback: Callable | None = None, **kwargs):
+    def submit_task(
+        self, task_id: str, task_func: Callable, *args, delay: float = 0.0, callback: Callable | None = None, **kwargs
+    ):
         """
         提交后台任务
 
@@ -195,12 +192,7 @@ class BackgroundTaskManager:
         Returns:
             Future: 验证任务Future对象
         """
-        return self.submit_task(
-            "async_validation",
-            validation_func,
-            *args,
-            **kwargs
-        )
+        return self.submit_task("async_validation", validation_func, *args, **kwargs)
 
     def async_validate(self, data: Any, validator: Callable) -> bool:
         """
@@ -278,10 +270,10 @@ class BackgroundTaskManager:
     def get_task_status(self, task_id: str) -> str:
         """
         获取任务状态
-        
+
         Args:
             task_id: 任务标识符
-            
+
         Returns:
             str: 任务状态 - "running"/"pending"/"completed"/"cancelled"/"not_found"
         """
@@ -304,10 +296,7 @@ class BackgroundTaskManager:
         """清理过期的任务记录"""
         try:
             with self._task_lock:
-                completed_tasks = [
-                    tid for tid, future in self._active_tasks.items()
-                    if future.done()
-                ]
+                completed_tasks = [tid for tid, future in self._active_tasks.items() if future.done()]
 
                 for task_id in completed_tasks:
                     self._active_tasks.pop(task_id, None)
@@ -391,7 +380,7 @@ class BackgroundTaskManager:
                     "active_tasks": active_count,
                     "total_tasks": total_count,
                     "max_workers": self._max_workers,
-                    "executor_alive": self._executor is not None and not self._executor._shutdown
+                    "executor_alive": self._executor is not None and not self._executor._shutdown,
                 }
         except Exception as e:
             logger.debug(f"获取状态信息失败: {e}")

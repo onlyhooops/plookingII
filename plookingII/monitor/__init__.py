@@ -11,10 +11,10 @@
 
 使用示例:
     from plookingII.monitor import get_unified_monitor
-    
+
     monitor = get_unified_monitor()
     monitor.record_operation('load_image', duration_ms=125.5)
-    
+
     # 或使用装饰器
     @monitor_performance('my_operation')
     def my_function():
@@ -59,9 +59,7 @@ __all__ = [
 # === 便捷函数（向后兼容）===
 
 
-def record_operation(
-    operation_name: str, duration_ms: float, success: bool = True, **kwargs
-) -> None:
+def record_operation(operation_name: str, duration_ms: float, success: bool = True, **kwargs) -> None:
     """记录操作（便捷函数）
 
     Args:
@@ -112,7 +110,6 @@ def record_load_time(duration_ms: float, cache_hit: bool = False) -> None:
 def record_memory(memory_mb: float) -> None:
     """记录内存使用（兼容接口）"""
     # 现代API中，内存通过 get_memory_status() 自动获取
-    pass
 
 
 def get_current_memory_mb() -> float:

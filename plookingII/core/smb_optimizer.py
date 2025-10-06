@@ -18,30 +18,37 @@ from .enhanced_logging import LogCategory, LogLevel, get_enhanced_logger
 from .error_handling import ErrorCategory, error_context
 from .remote_file_detector import MountType, get_remote_detector
 
+
 class ReadStrategy(Enum):
     """读取策略枚举"""
-    SEQUENTIAL = "sequential"      # 顺序读取
-    BATCH = "batch"               # 批量读取
-    PRELOAD = "preload"           # 预加载
-    ADAPTIVE = "adaptive"         # 自适应
+
+    SEQUENTIAL = "sequential"  # 顺序读取
+    BATCH = "batch"  # 批量读取
+    PRELOAD = "preload"  # 预加载
+    ADAPTIVE = "adaptive"  # 自适应
+
 
 @dataclass
 class ReadRequest:
     """读取请求数据类"""
+
     file_path: str
     offset: int = 0
     size: int = -1
     priority: int = 0  # 优先级，数字越大优先级越高
     timestamp: float = 0.0
 
+
 @dataclass
 class ReadResult:
     """读取结果数据类"""
+
     file_path: str
     data: bytes
     success: bool
     latency_ms: float
     error: Exception | None = None
+
 
 class SMBOptimizer:
     """
@@ -84,14 +91,13 @@ class SMBOptimizer:
             "cache_hits": 0,
             "cache_misses": 0,
             "avg_latency": 0.0,
-            "total_latency": 0.0
+            "total_latency": 0.0,
         }
         self.stats_lock = threading.RLock()
 
         # 线程池
         self.executor = concurrent.futures.ThreadPoolExecutor(
-            max_workers=self.max_workers,
-            thread_name_prefix="SMBOptimizer"
+            max_workers=self.max_workers, thread_name_prefix="SMBOptimizer"
         )
 
         self.logger.log(LogLevel.DEBUG, LogCategory.SYSTEM, "SMBOptimizer initialized")
@@ -150,18 +156,14 @@ class SMBOptimizer:
                 if not smb_paths:
                     return []
 
-                self.logging.getLogger(__name__).log(LogLevel.DEBUG,
-                    LogCategory.PERFORMANCE,
-                    f"Starting batch read for {len(smb_paths)} SMB files"
+                self.logging.getLogger(__name__).log(
+                    LogLevel.DEBUG, LogCategory.PERFORMANCE, f"Starting batch read for {len(smb_paths)} SMB files"
                 )
 
                 # 使用线程池并发读取
                 results = []
                 with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-                    future_to_path = {
-                        executor.submit(self._read_single_file, path): path
-                        for path in smb_paths
-                    }
+                    future_to_path = {executor.submit(self._read_single_file, path): path for path in smb_paths}
 
                     for future in concurrent.futures.as_completed(future_to_path):
                         path = future_to_path[future]
@@ -170,22 +172,15 @@ class SMBOptimizer:
                             results.append(result)
                         except Exception as e:
                             self.logging.getLogger(__name__).log_error(e, f"batch_read_file_{path}")
-                            results.append(ReadResult(
-                                file_path=path,
-                                data=b"",
-                                success=False,
-                                latency_ms=0.0,
-                                error=e
-                            ))
+                            results.append(ReadResult(file_path=path, data=b"", success=False, latency_ms=0.0, error=e))
 
                 # 更新统计信息
                 with self.stats_lock:
                     self.stats["batch_reads"] += 1
                     self.stats["total_reads"] += len(results)
 
-                self.logging.getLogger(__name__).log(LogLevel.INFO,
-                    LogCategory.PERFORMANCE,
-                    f"Batch read completed: {len(results)} files processed"
+                self.logging.getLogger(__name__).log(
+                    LogLevel.INFO, LogCategory.PERFORMANCE, f"Batch read completed: {len(results)} files processed"
                 )
 
                 return results
@@ -217,9 +212,8 @@ class SMBOptimizer:
                     if dir_path in self.directory_cache:
                         cached_list, cache_time = self.directory_cache[dir_path]
                         if current_time - cache_time < self.cache_ttl:
-                            self.logging.getLogger(__name__).log(LogLevel.DEBUG,
-                                LogCategory.CACHE,
-                                f"Directory cache hit for: {dir_path}"
+                            self.logging.getLogger(__name__).log(
+                                LogLevel.DEBUG, LogCategory.CACHE, f"Directory cache hit for: {dir_path}"
                             )
                             with self.stats_lock:
                                 self.stats["cache_hits"] += 1
@@ -244,14 +238,14 @@ class SMBOptimizer:
                 with self.stats_lock:
                     self.stats["cache_misses"] += 1
                     self.stats["total_latency"] += latency_ms
-                    self.stats["avg_latency"] = (
-                        self.stats["total_latency"] /
-                        (self.stats["cache_hits"] + self.stats["cache_misses"])
+                    self.stats["avg_latency"] = self.stats["total_latency"] / (
+                        self.stats["cache_hits"] + self.stats["cache_misses"]
                     )
 
-                self.logging.getLogger(__name__).log(LogLevel.DEBUG,
+                self.logging.getLogger(__name__).log(
+                    LogLevel.DEBUG,
                     LogCategory.CACHE,
-                    f"Directory cached: {dir_path} ({len(file_list)} files, {latency_ms:.2f}ms)"
+                    f"Directory cached: {dir_path} ({len(file_list)} files, {latency_ms:.2f}ms)",
                 )
 
                 return file_list
@@ -300,9 +294,10 @@ class SMBOptimizer:
                 with self.read_ahead_lock:
                     self.read_ahead_cache[file_path] = data
 
-                self.logging.getLogger(__name__).log(LogLevel.DEBUG,
+                self.logging.getLogger(__name__).log(
+                    LogLevel.DEBUG,
                     LogCategory.PERFORMANCE,
-                    f"File preloaded: {file_path} ({len(data)} bytes, {latency_ms:.2f}ms)"
+                    f"File preloaded: {file_path} ({len(data)} bytes, {latency_ms:.2f}ms)",
                 )
 
                 return True
@@ -356,28 +351,19 @@ class SMBOptimizer:
             end_time = time.perf_counter()
             latency_ms = (end_time - start_time) * 1000
 
-            return ReadResult(
-                file_path=file_path,
-                data=data,
-                success=True,
-                latency_ms=latency_ms
-            )
+            return ReadResult(file_path=file_path, data=data, success=True, latency_ms=latency_ms)
 
         except Exception as e:
             end_time = time.perf_counter()
             latency_ms = (end_time - start_time) * 1000
 
-            return ReadResult(
-                file_path=file_path,
-                data=b"",
-                success=False,
-                latency_ms=latency_ms,
-                error=e
-            )
+            return ReadResult(file_path=file_path, data=b"", success=False, latency_ms=latency_ms, error=e)
+
 
 # 全局实例
 _smb_optimizer_instance: SMBOptimizer | None = None
 _smb_optimizer_lock = threading.Lock()
+
 
 def get_smb_optimizer() -> SMBOptimizer:
     """获取全局SMBOptimizer实例"""

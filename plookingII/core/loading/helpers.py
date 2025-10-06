@@ -10,7 +10,7 @@ Date: 2025-10-06
 import logging
 import mmap
 import os
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +69,7 @@ def check_quartz_availability() -> bool:
         return False
 
 
-def load_with_nsimage(file_path: str) -> Optional[Any]:
+def load_with_nsimage(file_path: str) -> Any | None:
     """使用NSImage加载（快速，适合小文件）
 
     Args:
@@ -88,9 +88,7 @@ def load_with_nsimage(file_path: str) -> Optional[Any]:
         return None
 
 
-def load_with_quartz(
-    file_path: str, target_size: tuple[int, int] | None = None, thumbnail: bool = False
-) -> Optional[Any]:
+def load_with_quartz(file_path: str, target_size: tuple[int, int] | None = None, thumbnail: bool = False) -> Any | None:
     """使用Quartz加载（优化，适合中等文件）
 
     Args:
@@ -132,22 +130,19 @@ def load_with_quartz(
                 kCGImageSourceShouldAllowFloat: True,
             }
             return CGImageSourceCreateThumbnailAtIndex(source, 0, options)
-        else:
-            # 加载完整图片
-            options = {
-                kCGImageSourceShouldCache: True,
-                kCGImageSourceShouldAllowFloat: True,
-            }
-            return CGImageSourceCreateImageAtIndex(source, 0, options)
+        # 加载完整图片
+        options = {
+            kCGImageSourceShouldCache: True,
+            kCGImageSourceShouldAllowFloat: True,
+        }
+        return CGImageSourceCreateImageAtIndex(source, 0, options)
 
     except Exception as e:
         logger.error(f"Quartz加载失败 {file_path}: {e}")
         return None
 
 
-def load_with_memory_map(
-    file_path: str, target_size: tuple[int, int] | None = None
-) -> Optional[Any]:
+def load_with_memory_map(file_path: str, target_size: tuple[int, int] | None = None) -> Any | None:
     """使用内存映射加载（大文件优化）
 
     Args:
@@ -160,18 +155,17 @@ def load_with_memory_map(
     try:
         from AppKit import NSData, NSImage
 
-        with open(file_path, "rb") as f:
-            with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
-                # 从内存映射创建NSData
-                data = NSData.dataWithBytes_length_(mm, len(mm))
-                image = NSImage.alloc().initWithData_(data)
-                return image
+        with open(file_path, "rb") as f, mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
+            # 从内存映射创建NSData
+            data = NSData.dataWithBytes_length_(mm, len(mm))
+            image = NSImage.alloc().initWithData_(data)
+            return image
     except Exception as e:
         logger.error(f"内存映射加载失败 {file_path}: {e}")
         return None
 
 
-def cgimage_to_nsimage(cgimage: Any) -> Optional[Any]:
+def cgimage_to_nsimage(cgimage: Any) -> Any | None:
     """将CGImage转换为NSImage
 
     Args:
@@ -253,13 +247,12 @@ def get_loader(strategy: str = "auto"):
 
     if strategy == "auto":
         return AutoStrategy()
-    elif strategy == "optimized":
+    if strategy == "optimized":
         return OptimizedStrategy()
-    elif strategy == "preview":
+    if strategy == "preview":
         return PreviewStrategy()
-    else:
-        logger.warning(f"未知策略 {strategy}，使用 auto")
-        return AutoStrategy()
+    logger.warning(f"未知策略 {strategy}，使用 auto")
+    return AutoStrategy()
 
 
 def create_loader(config=None, **kwargs):
@@ -279,4 +272,3 @@ def create_loader(config=None, **kwargs):
         config = LoadingConfig.from_global_config()
 
     return OptimizedStrategy(config=config, **kwargs)
-

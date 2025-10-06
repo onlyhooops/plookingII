@@ -15,17 +15,20 @@ macOS 原生图片浏览器 - 高性能、智能化的图片浏览体验
 ## 🚀 快速开始
 
 ### 安装使用
+
 1. 下载最新版本：[Releases](https://github.com/onlyhooops/plookingII/releases)
-2. 解压并运行 `PlookingII.app`
-3. 拖拽文件夹到窗口开始浏览
+1. 解压并运行 `PlookingII.app`
+1. 拖拽文件夹到窗口开始浏览
 
 ### 系统要求
+
 - **macOS**: 10.15 (Catalina) 或更高版本
 - **内存**: 建议 4GB 以上
 - **存储**: 至少 100MB 可用空间
 - **网络**: 支持 SMB 远程存储访问
 
 ### 基本操作
+
 - **左右箭头键** - 切换图片
 - **空格键** - 拖拽移动图片
 - **Cmd+R** - 在Finder中显示当前图片
@@ -35,6 +38,7 @@ macOS 原生图片浏览器 - 高性能、智能化的图片浏览体验
 ## 📚 文档导航
 
 ### 👥 用户文档
+
 - **[用户指南](docs/user/guides/README.md)** - 详细使用说明
 - **[项目概览](docs/user/guides/PROJECT_OVERVIEW.md)** - 功能特性介绍
 - **[拖拽功能](docs/user/guides/DRAG_DROP_FEATURE.md)** - 拖拽文件夹使用指南
@@ -42,6 +46,7 @@ macOS 原生图片浏览器 - 高性能、智能化的图片浏览体验
 - **[未来规划](docs/user/guides/FUTURE_ROADMAP.md)** - 功能路线图
 
 ### 👨‍💻 开发者文档
+
 - **[技术指南](docs/developer/TECHNICAL_GUIDE.md)** - 完整技术实现
 - **[开发者指南](docs/developer/DEVELOPER_GUIDE.md)** - 开发环境搭建
 - **[架构设计](docs/architecture/design/ARCHITECTURE.md)** - 系统架构文档
@@ -52,6 +57,7 @@ macOS 原生图片浏览器 - 高性能、智能化的图片浏览体验
 - **[贡献指南](docs/developer/contributing/CONTRIBUTING.md)** - 如何参与贡献
 
 ### 📊 项目报告
+
 - **[架构简化报告](SIMPLIFICATION_COMPLETED.md)** - 代码简化93.1% 🚀 **NEW**
 - **[架构简化计划](ARCHITECTURE_SIMPLIFICATION_PLAN.md)** - 详细优化方案 **NEW**
 - **[版本历史](docs/reports/releases/UNIFIED_VERSION_HISTORY.md)** - 完整版本记录
@@ -93,11 +99,13 @@ plookingII/
 ## 🔧 开发环境
 
 ### 系统要求
+
 - macOS 10.15+
 - Python 3.9+ (支持 3.9, 3.10, 3.11, 3.12)
 - Xcode Command Line Tools
 
 ### 快速开始
+
 ```bash
 # 克隆项目
 git clone https://github.com/onlyhooops/plookingII.git
@@ -117,6 +125,7 @@ make build
 ```
 
 ### 开发工具
+
 ```bash
 make help           # 查看所有可用命令
 make test           # 运行测试（覆盖率 ≥60%）
@@ -128,7 +137,9 @@ make ci             # 模拟完整 CI 流程
 ```
 
 ### 提交代码
+
 项目使用 [Conventional Commits](https://www.conventionalcommits.org/) 规范：
+
 ```bash
 git commit -m "feat: add new feature"     # 新功能
 git commit -m "fix: fix bug"              # Bug 修复
@@ -150,8 +161,8 @@ git commit -m "refactor: refactor code"   # 代码重构
 - 功能建议：[GitHub Discussions](https://github.com/onlyhooops/plookingII/discussions)
 - 安全报告：请通过 [GitHub Security Advisories](https://github.com/onlyhooops/plookingII/security/advisories) 报告安全问题
 
----
+______________________________________________________________________
 
-**PlookingII Team** © 2025  
-**当前版本**: v1.4.0  
+**PlookingII Team** © 2025
+**当前版本**: v1.4.0
 **最后更新**: 2025-09-30

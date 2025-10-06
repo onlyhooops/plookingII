@@ -9,7 +9,6 @@
 - 内存泄漏检测
 
 Author: PlookingII Team
-Version: 1.0.0
 """
 
 import gc
@@ -24,7 +23,6 @@ from ..config.constants import APP_NAME
 from ..imports import logging
 
 logger = logging.getLogger(APP_NAME)
-
 
 class SmartMemoryManager:
     """智能内存管理器"""
@@ -128,7 +126,6 @@ class SmartMemoryManager:
         """获取文件大小（MB），带缓存"""
         def _compute_file_size():
             import os
-
 
             try:
                 return os.path.getsize(file_path) / (1024 * 1024)
@@ -337,7 +334,6 @@ class SmartMemoryManager:
         with self.lock:
             self.cleanup_threshold = max(0.0, min(1.0, threshold))
             logger.info(f"Cleanup threshold updated to {self.cleanup_threshold}")
-
 
 class MemoryMonitor:
     """智能内存监控器（专用于SmartMemoryManager）"""

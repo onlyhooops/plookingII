@@ -25,9 +25,7 @@
 使用方式：
     from plookingII.core.session_manager import SessionManager
 
-
 Author: PlookingII Team
-Version: 1.0.0
 """
 
 import time
@@ -44,7 +42,6 @@ from ..imports import _NSTimer as NSTimer
 from ..imports import logging
 
 logger = logging.getLogger(APP_NAME)
-
 
 class MilestoneTracker:
     """里程碑跟踪器，管理各种工作进度里程碑"""
@@ -81,7 +78,6 @@ class MilestoneTracker:
         return None
 
 # FunMessageGenerator类已移除 - 趣味功能已禁用
-
 
 class SessionManager:
     """会话管理器，跟踪用户工作状态和提供趣味提示"""

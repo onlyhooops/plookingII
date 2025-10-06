@@ -12,7 +12,6 @@
 - 用户友好的错误提示
 
 Author: PlookingII Team
-Version: 1.0.0
 """
 
 import functools
@@ -26,7 +25,6 @@ from typing import Any, Optional
 from ..config.constants import APP_NAME
 
 logger = logging.getLogger(APP_NAME)
-
 
 class ErrorRecoveryStrategy:
     """错误恢复策略基类"""
@@ -101,7 +99,6 @@ class ErrorRecoveryStrategy:
             f"All retries failed for {context.get('function', 'unknown')}: {exception!s}",
             exc_info=True
         )
-
 
 class RobustErrorHandler:
     """鲁棒性错误处理器
@@ -260,7 +257,6 @@ class RobustErrorHandler:
         self.error_stats.clear()
         self.last_errors.clear()
 
-
 # 装饰器：自动重试
 def auto_retry(
     max_retries: int = 3,
@@ -302,7 +298,6 @@ def auto_retry(
         return wrapper
     return decorator
 
-
 # 装饰器：安全调用
 def safe_call(fallback: Any = None, log_error: bool = True):
     """安全调用装饰器
@@ -323,7 +318,6 @@ def safe_call(fallback: Any = None, log_error: bool = True):
 
         return wrapper
     return decorator
-
 
 # 装饰器：边界检查
 def boundary_check(
@@ -356,10 +350,8 @@ def boundary_check(
         return wrapper
     return decorator
 
-
 # 全局错误处理器实例
 _global_error_handler = None
-
 
 def get_error_handler() -> RobustErrorHandler:
     """获取全局错误处理器实例
@@ -373,7 +365,6 @@ def get_error_handler() -> RobustErrorHandler:
         _global_error_handler = RobustErrorHandler()
 
     return _global_error_handler
-
 
 __all__ = [
     "ErrorRecoveryStrategy",

@@ -10,7 +10,7 @@ import threading
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from ..config.manager import get_config
 from .enhanced_logging import LogCategory, LogLevel, get_enhanced_logger
@@ -19,14 +19,12 @@ from .network_cache import get_network_cache
 from .remote_file_detector import MountInfo, MountType, get_remote_detector
 from .smb_optimizer import ReadStrategy, get_smb_optimizer
 
-
 class LoadingMode(Enum):
     """加载模式枚举"""
     DIRECT = "direct"           # 直接加载
     CACHED = "cached"          # 使用缓存
     PRELOAD = "preload"        # 预加载
     BATCH = "batch"            # 批量加载
-
 
 @dataclass
 class RemoteFileInfo:
@@ -41,7 +39,6 @@ class RemoteFileInfo:
     cache_path: str | None = None
     loading_strategy: ReadStrategy = ReadStrategy.SEQUENTIAL
 
-
 @dataclass
 class LoadingResult:
     """加载结果数据类"""
@@ -52,7 +49,6 @@ class LoadingResult:
     latency_ms: float
     from_cache: bool
     error: Exception | None = None
-
 
 class RemoteFileManager:
     """
@@ -633,11 +629,9 @@ class RemoteFileManager:
             else:
                 self.stats["cache_misses"] += 1
 
-
 # 全局实例
 _remote_file_manager_instance: RemoteFileManager | None = None
 _remote_file_manager_lock = threading.Lock()
-
 
 def get_remote_file_manager() -> RemoteFileManager:
     """获取全局RemoteFileManager实例"""

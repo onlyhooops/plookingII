@@ -11,11 +11,9 @@ import threading
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 from .enhanced_logging import LogCategory, LogLevel, get_enhanced_logger
 from .error_handling import ErrorCategory, error_context
-
 
 class MountType(Enum):
     """挂载类型枚举"""
@@ -25,7 +23,6 @@ class MountType(Enum):
     NFS = "nfs"
     SSHFS = "sshfs"
     UNKNOWN = "unknown"
-
 
 @dataclass
 class MountInfo:
@@ -37,7 +34,6 @@ class MountInfo:
     latency_ms: float | None = None
     is_accessible: bool = True
     last_checked: float = 0.0
-
 
 class RemoteFileDetector:
     """
@@ -378,11 +374,9 @@ class RemoteFileDetector:
         except Exception:
             return False
 
-
 # 全局实例
 _remote_detector_instance: RemoteFileDetector | None = None
 _remote_detector_lock = threading.Lock()
-
 
 def get_remote_detector() -> RemoteFileDetector:
     """获取全局RemoteFileDetector实例"""

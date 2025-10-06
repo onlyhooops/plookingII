@@ -25,7 +25,6 @@
     from plookingII.config import constants, image_processing_config
 
 Author: PlookingII Team
-Version: 1.4.0
 """
 
 from .constants import (

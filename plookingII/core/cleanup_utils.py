@@ -18,7 +18,6 @@ from ..imports import logging
 
 logger = logging.getLogger(APP_NAME)
 
-
 def safe_call(func: Callable, *args, default_return=None, error_msg: str | None = None, **kwargs) -> Any:
     """安全调用函数 - 统一的异常处理模式
 
@@ -40,7 +39,6 @@ def safe_call(func: Callable, *args, default_return=None, error_msg: str | None 
         else:
             logger.warning(f"调用 {func.__name__} 失败: {e}")
         return default_return
-
 
 def safe_method_call(obj: Any, method_name: str, *args, default_return=None, **kwargs) -> Any:
     """安全调用对象方法 - 统一的方法调用模式
@@ -65,7 +63,6 @@ def safe_method_call(obj: Any, method_name: str, *args, default_return=None, **k
         logger.warning(f"调用 {obj.__class__.__name__}.{method_name} 失败: {e}")
         return default_return
 
-
 def logged_operation(operation_name: str):
     """操作日志装饰器 - 统一的操作日志记录
 
@@ -89,7 +86,6 @@ def logged_operation(operation_name: str):
         return wrapper
     return decorator
 
-
 @contextmanager
 def error_context(operation_name: str, reraise: bool = True):
     """错误上下文管理器 - 统一的错误处理上下文
@@ -109,7 +105,6 @@ def error_context(operation_name: str, reraise: bool = True):
         logger.error(f"{operation_name} 失败: {e}")
         if reraise:
             raise
-
 
 def validate_and_get(obj: Any, attr_name: str, validator: Callable | None = None, default: Any = None) -> Any:
     """验证并获取对象属性 - 统一的属性验证模式
@@ -137,7 +132,6 @@ def validate_and_get(obj: Any, attr_name: str, validator: Callable | None = None
     except Exception as e:
         logger.warning(f"获取属性 {attr_name} 失败: {e}")
         return default
-
 
 def batch_clear_cache(cache_objects: dict[str, Any]) -> dict[str, bool]:
     """批量清理缓存 - 统一的缓存清理模式
@@ -176,7 +170,6 @@ def batch_clear_cache(cache_objects: dict[str, Any]) -> dict[str, bool]:
 
     return results
 
-
 def unified_status_update(status_controllers: dict[str, Any], message: str, **kwargs) -> dict[str, bool]:
     """统一状态更新 - 统一的状态更新模式
 
@@ -212,7 +205,6 @@ def unified_status_update(status_controllers: dict[str, Any], message: str, **kw
 
     return results
 
-
 def create_fallback_chain(*functions):
     """创建回退调用链 - 统一的回退模式
 
@@ -235,12 +227,10 @@ def create_fallback_chain(*functions):
 
     return fallback_caller
 
-
 # 常用的验证器函数
 def is_not_none(value: Any) -> bool:
     """验证值不为None"""
     return value is not None
-
 
 def is_not_empty(value: Any) -> bool:
     """验证值不为空"""
@@ -250,11 +240,9 @@ def is_not_empty(value: Any) -> bool:
         return len(value) > 0
     return True
 
-
 def is_callable_attr(obj: Any, attr_name: str) -> bool:
     """验证对象属性是否可调用"""
     return hasattr(obj, attr_name) and callable(getattr(obj, attr_name))
-
 
 # 常用的清理函数
 def cleanup_resources(*resources):
@@ -263,7 +251,6 @@ def cleanup_resources(*resources):
         safe_call(getattr, resource, "close", error_msg=f"关闭资源 {resource}")
         safe_call(getattr, resource, "cleanup", error_msg=f"清理资源 {resource}")
         safe_call(getattr, resource, "shutdown", error_msg=f"关闭资源 {resource}")
-
 
 def log_performance(func):
     """性能日志装饰器"""

@@ -12,7 +12,6 @@
 - 配置持久化
 
 Author: PlookingII Team
-Version: 1.4.0
 """
 
 import json
@@ -27,7 +26,6 @@ from .constants import APP_NAME, VERSION
 
 logger = logging.getLogger(APP_NAME)
 
-
 class ConfigType(Enum):
     """配置类型枚举"""
     STRING = "string"
@@ -36,7 +34,6 @@ class ConfigType(Enum):
     BOOLEAN = "boolean"
     LIST = "list"
     DICT = "dict"
-
 
 @dataclass
 class ConfigSchema:
@@ -48,7 +45,6 @@ class ConfigSchema:
     validator: Optional[Callable] = None
     env_var: Optional[str] = None  # 对应的环境变量名
     user_configurable: bool = True  # 是否允许用户配置
-
 
 class ConfigManager:
     """统一配置管理器
@@ -398,11 +394,9 @@ class ConfigManager:
         """验证文件监听策略"""
         return value in ["auto", "watchdog", "polling"]
 
-
 # 全局配置管理器实例
 _config_manager: Optional[ConfigManager] = None
 _config_lock = threading.Lock()
-
 
 def get_config_manager() -> ConfigManager:
     """获取全局配置管理器实例"""
@@ -411,7 +405,6 @@ def get_config_manager() -> ConfigManager:
         if _config_manager is None:
             _config_manager = ConfigManager()
         return _config_manager
-
 
 def get_config(key: str, default: Any = None) -> Any:
     """便捷的配置获取函数
@@ -425,7 +418,6 @@ def get_config(key: str, default: Any = None) -> Any:
     """
     return get_config_manager().get(key, default)
 
-
 def set_config(key: str, value: Any, persist: bool = False) -> bool:
     """便捷的配置设置函数
 
@@ -438,7 +430,6 @@ def set_config(key: str, value: Any, persist: bool = False) -> bool:
         bool: 设置是否成功
     """
     return get_config_manager().set(key, value, persist)
-
 
 # 便捷的配置访问接口
 class Config:

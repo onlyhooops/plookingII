@@ -27,6 +27,10 @@ extend-exclude = ["build", "dist", "archive"]
 select = ["E", "F", "I", "B", "W", "PL", "TRY", "N", "C90"]
 ignore = []
 
+[tool.ruff.lint.per-file-ignores]
+"scripts/*" = ["T201", "RUF001", "RUF002", "RUF003"]
+"plookingII/utils/macos_cleanup.py" = ["TID252", "G004", "RUF001", "RUF002", "RUF003"]
+
 # Pylint rules
 [tool.ruff.lint.pylint]
 max-args = 8              # 函数最多8个参数

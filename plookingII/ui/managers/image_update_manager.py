@@ -11,7 +11,6 @@
 - 防抖机制避免频繁更新
 
 Author: PlookingII Team
-Version: 1.0.0
 """
 
 import logging
@@ -23,7 +22,6 @@ from ...core.file_watcher import FileChangeEvent, FileChangeType, FileWatcher
 from ..utils.user_feedback import show_info, show_warning
 
 logger = logging.getLogger(APP_NAME)
-
 
 class ImageUpdateManager:
     """图片更新状态管理器

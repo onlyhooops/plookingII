@@ -45,11 +45,17 @@ macOS 原生图片浏览器 - 高性能、智能化的图片浏览体验
 - **[技术指南](docs/developer/TECHNICAL_GUIDE.md)** - 完整技术实现
 - **[开发者指南](docs/developer/DEVELOPER_GUIDE.md)** - 开发环境搭建
 - **[架构设计](docs/architecture/design/ARCHITECTURE.md)** - 系统架构文档
+- **[版本管理指南](docs/VERSION_MANAGEMENT.md)** - 版本号管理规范 ⭐
+- **[macOS 清理指南](MACOS_CLEANUP_GUIDE.md)** - 开发环境隐私保护 🔐 **NEW**
+- **[架构简化](QUICK_START_SIMPLIFIED.md)** - 架构优化成果 🚀 **NEW**
 - **[维护指南](docs/developer/MAINTENANCE_GUIDELINES.md)** - 项目维护规范
 - **[贡献指南](docs/developer/contributing/CONTRIBUTING.md)** - 如何参与贡献
 
 ### 📊 项目报告
+- **[架构简化报告](SIMPLIFICATION_COMPLETED.md)** - 代码简化93.1% 🚀 **NEW**
+- **[架构简化计划](ARCHITECTURE_SIMPLIFICATION_PLAN.md)** - 详细优化方案 **NEW**
 - **[版本历史](docs/reports/releases/UNIFIED_VERSION_HISTORY.md)** - 完整版本记录
+- **[版本管理报告](VERSION_MANAGEMENT_REPORT.md)** - 版本统一管理报告 ⭐
 - **[测试覆盖率](docs/reports/coverage/)** - 测试覆盖率报告
 - **[性能报告](docs/reports/performance/)** - 性能优化报告
 - **[项目报告](docs/reports/)** - 其他项目报告

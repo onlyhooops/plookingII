@@ -19,7 +19,6 @@ from ..imports import logging
 
 logger = logging.getLogger(APP_NAME)
 
-
 class AppMenuBuilder:
     """应用程序菜单构建器"""
 
@@ -70,7 +69,6 @@ class AppMenuBuilder:
         app_menu_item.setSubmenu_(app_menu)
         return app_menu_item
 
-
 class FileMenuBuilder:
     """文件菜单构建器"""
 
@@ -108,7 +106,6 @@ class FileMenuBuilder:
         file_menu_item.setSubmenu_(file_menu)
         return file_menu_item
 
-
 class EditMenuBuilder:
     """编辑菜单构建器"""
 
@@ -123,7 +120,7 @@ class EditMenuBuilder:
         """
         edit_menu_item = NSMenuItem.alloc().init()
         edit_menu = NSMenu.alloc().initWithTitle_("编辑")
-        
+
         # 禁用菜单的自动验证，防止系统自动修改菜单项
         try:
             edit_menu.setAutoenablesItems_(False)
@@ -174,7 +171,6 @@ class EditMenuBuilder:
         edit_menu_item.setSubmenu_(edit_menu)
         return edit_menu_item
 
-
 class GoMenuBuilder:
     """转到菜单构建器"""
 
@@ -223,7 +219,6 @@ class GoMenuBuilder:
         go_menu_item.setSubmenu_(go_menu)
         return go_menu_item
 
-
 class ViewMenuBuilder:
     """视图菜单构建器"""
 
@@ -248,7 +243,6 @@ class ViewMenuBuilder:
 
         view_menu_item.setSubmenu_(view_menu)
         return view_menu_item
-
 
 class ToolsMenuBuilder:
     """工具菜单构建器"""
@@ -294,7 +288,6 @@ class ToolsMenuBuilder:
         tools_menu_item.setSubmenu_(tools_menu)
         return tools_menu_item
 
-
 class HelpMenuBuilder:
     """帮助菜单构建器"""
 
@@ -319,7 +312,6 @@ class HelpMenuBuilder:
 
         help_menu_item.setSubmenu_(help_menu)
         return help_menu_item
-
 
 class MenuBuilder:
     """主菜单构建器 - 负责整个菜单系统的协调和构建"""

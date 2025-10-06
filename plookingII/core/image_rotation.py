@@ -12,7 +12,6 @@
     - 内存优化处理
 
 Author: PlookingII Team
-Version: 1.0.0
 """
 
 import os
@@ -27,7 +26,6 @@ from ..config.constants import APP_NAME
 from ..imports import logging as _logging
 
 logger = _logging.getLogger(APP_NAME)
-
 
 class ImageRotationProcessor:
     """图像旋转处理器
@@ -414,7 +412,6 @@ class ImageRotationProcessor:
             # 解析EXIF数据（Pillow 未提供 ORIENTATION 常量，需从 TAGS 查找，回退274）
             try:
                 from PIL import ExifTags
-
 
                 ORIENTATION = next((k for k, v in ExifTags.TAGS.items() if v == "Orientation"), 274)
             except Exception:

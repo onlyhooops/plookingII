@@ -12,17 +12,12 @@
 使用方式：
     from plookingII.core.globals import *
 
-
     或
 
     from plookingII.core import globals
 
-
 Author: PlookingII Team
-Version: 1.0.0
 """
-
-
 
 # 重新导出所有配置常量，确保全局可访问
 # 这些常量包括：

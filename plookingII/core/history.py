@@ -24,9 +24,7 @@
 使用方式：
     from plookingII.core.history import TaskHistoryManager
 
-
 Author: PlookingII Team
-Version: 1.0.0
 """
 
 import os
@@ -51,7 +49,6 @@ def _canon_path(p):
     """
     return PathUtils.canonicalize_path(p, resolve_symlinks=True)
 
-
 class TaskHistoryManager:
     """任务历史记录管理器 - 使用SQLite数据库实现增量更新"""
 
@@ -67,7 +64,10 @@ class TaskHistoryManager:
         os.makedirs(app_data_dir, exist_ok=True)
 
         # 使用标准化后的根文件夹的哈希作为唯一标识符
-        normalized_hash = hashlib.md5(self.root_folder.encode("utf-8")).hexdigest()[:8]
+        # MD5仅用于生成文件名，不用于加密安全
+        normalized_hash = hashlib.md5(
+            self.root_folder.encode("utf-8"), usedforsecurity=False
+        ).hexdigest()[:8]
         self.folder_hash = normalized_hash
 
         # 数据库文件路径（标准化）
@@ -76,7 +76,9 @@ class TaskHistoryManager:
 
         # 兼容旧版本：如果曾经根据未标准化路径生成过数据库，优先复用
         try:
-            legacy_hash = hashlib.md5(original_root.encode("utf-8")).hexdigest()[:8]
+            legacy_hash = hashlib.md5(
+                original_root.encode("utf-8"), usedforsecurity=False
+            ).hexdigest()[:8]
             legacy_db = os.path.join(app_data_dir, f"task_history_{legacy_hash}.db")
             if legacy_hash != normalized_hash and (
                 os.path.exists(legacy_db) and
@@ -569,5 +571,4 @@ class TaskHistoryManager:
             bool: 路径是否有效
         """
         return ValidationUtils.validate_recent_folder_path(folder_path)
-
 

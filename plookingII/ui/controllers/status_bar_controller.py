@@ -18,7 +18,6 @@ from AppKit import (
 集成会话管理器和趣味提示系统，提供有趣且有用的状态信息。
 
 Author: PlookingII Team
-Version: 1.0.0
 """
 
 import logging
@@ -29,7 +28,6 @@ from ...core.session_manager import SessionManager
 # pyright: reportUndefinedVariable=false
 
 logger = logging.getLogger(APP_NAME)
-
 
 class StatusBarController:
     """状态栏控制器，负责状态栏显示和更新"""

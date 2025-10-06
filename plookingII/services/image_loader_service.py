@@ -16,7 +16,6 @@ from ..config.manager import get_config
 
 logger = logging.getLogger(APP_NAME)
 
-
 class ImageLoaderService:
     """
     图片加载服务

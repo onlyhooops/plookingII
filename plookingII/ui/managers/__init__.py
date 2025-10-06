@@ -16,7 +16,6 @@
     - 性能优化：智能缓存、异步处理、内存管理等优化策略
 
 Author: PlookingII Team
-Version: 1.1.0
 """
 
 import logging

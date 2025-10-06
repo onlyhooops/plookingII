@@ -11,12 +11,10 @@
 - 性能优先：简化复杂度，提升命中率
 
 Author: PlookingII Team
-Version: 1.0.0
 """
 
 from dataclasses import dataclass
 from typing import Any
-
 
 @dataclass
 class CacheOptimizationConfig:
@@ -206,12 +204,10 @@ class CacheOptimizationConfig:
         """
         return cls(**config_dict)
 
-
 # 预定义配置
 DEFAULT_CONFIG = CacheOptimizationConfig.default()
 PERFORMANCE_CONFIG = CacheOptimizationConfig.performance_mode()
 MEMORY_SAVER_CONFIG = CacheOptimizationConfig.memory_saver_mode()
-
 
 def get_cache_config(mode: str = "default") -> CacheOptimizationConfig:
     """获取缓存配置
@@ -227,7 +223,6 @@ def get_cache_config(mode: str = "default") -> CacheOptimizationConfig:
     if mode == "memory_saver":
         return MEMORY_SAVER_CONFIG
     return DEFAULT_CONFIG
-
 
 __all__ = [
     "DEFAULT_CONFIG",

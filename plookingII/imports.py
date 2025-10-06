@@ -16,7 +16,6 @@ PlookingII 共享导入模块
     - 模块化：按功能分组导入语句
 
 Author: PlookingII Team
-Version: 1.0.0
 """
 import hashlib as hashlib  # 公开 hashlib
 import logging as logging  # 公开 logging 以供 "from ..imports import logging"

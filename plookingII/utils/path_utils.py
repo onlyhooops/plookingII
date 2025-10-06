@@ -10,7 +10,6 @@
     - 路径验证和检查
 
 Author: PlookingII Team
-Version: 1.0.0
 """
 
 import logging
@@ -24,7 +23,6 @@ except Exception:
 from ..config.constants import APP_NAME
 
 logger = logging.getLogger(APP_NAME)
-
 
 class PathUtils:
     """路径处理工具类"""

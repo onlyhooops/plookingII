@@ -24,7 +24,6 @@ from ..utils.user_feedback import show_error
 
 logger = logging.getLogger(APP_NAME)
 
-
 class DragDropController:
     """
     拖拽控制器

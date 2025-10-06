@@ -10,7 +10,6 @@
     - 异常处理：完善的错误恢复机制
 
 Author: PlookingII Team
-Version: 1.0.0
 """
 
 from ..config.constants import APP_NAME

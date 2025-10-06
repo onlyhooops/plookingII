@@ -21,7 +21,6 @@ from ...config.ui_strings import get_ui_string
 
 logger = logging.getLogger(APP_NAME)
 
-
 class OperationManager:
     """操作管理器，负责文件操作、撤销和保留功能"""
 

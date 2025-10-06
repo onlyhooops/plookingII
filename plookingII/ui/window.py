@@ -73,7 +73,6 @@ except Exception:
                 # 恢复失败时返回None
                 completionHandler(None)
 
-
 class MainWindow(NSWindow):
     """
     重构后的主窗口类，继承自NSWindow
@@ -451,7 +450,6 @@ class MainWindow(NSWindow):
         """委托给 RotationController"""
         self.rotation_controller.rotate_counterclockwise()
 
-
     def _scan_subfolders(self, root_folder):
         """并行化扫描所有包含图片的子文件夹（兼容旧API）"""
         import concurrent.futures
@@ -625,7 +623,6 @@ class MainWindow(NSWindow):
         except Exception as e:
             logger.error(f"在Finder中显示当前图片失败: {e}")
 
-
     def clearCache_(self, sender):
         """清除任务历史记录与缓存"""
         try:
@@ -703,7 +700,7 @@ class MainWindow(NSWindow):
                 self.operation_manager.undo_keep_action()
         except Exception as e:
             logger.warning(f"撤销保留失败: {e}")
-    
+
     def undoSelection_(self, sender):
         """撤销精选（自定义 action，避免系统覆盖菜单标题）"""
         self.undo_(sender)
@@ -742,7 +739,6 @@ class MainWindow(NSWindow):
     def clearRecentFiles_(self, sender):
         """委托给 MenuController"""
         self.menu_controller.clear_recent_files(sender)
-
 
     def buildRecentMenu_(self, sender):
         """委托给 MenuController"""

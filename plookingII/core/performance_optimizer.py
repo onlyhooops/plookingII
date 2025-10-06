@@ -12,7 +12,6 @@
 - 性能监控与自适应调优
 
 Author: PlookingII Team
-Version: 1.0.0
 """
 
 import logging
@@ -26,7 +25,6 @@ from ..config.constants import APP_NAME
 from ..config.manager import Config
 
 logger = logging.getLogger(APP_NAME)
-
 
 class CGImageOptimizer:
     """CGImage零拷贝渲染优化器
@@ -130,7 +128,6 @@ class CGImageOptimizer:
             "avg_render_time_ms": avg_render_time * 1000
         }
 
-
 class NavigationOptimizer:
     """导航操作优化器
 
@@ -216,7 +213,6 @@ class NavigationOptimizer:
             "current_velocity": self._navigation_velocity,
             "current_debounce_ms": self._current_debounce_ms
         }
-
 
 class PreloadOptimizer:
     """预加载优化器
@@ -327,7 +323,6 @@ class PreloadOptimizer:
             "hit_rate": hit_rate
         }
 
-
 class MemoryOptimizer:
     """内存优化器
 
@@ -424,7 +419,6 @@ class MemoryOptimizer:
             "max_memory_mb": self._max_memory_bytes / 1024 / 1024,
             "usage_percent": (self._current_memory_bytes / self._max_memory_bytes * 100)
         }
-
 
 class PerformanceOptimizer:
     """性能优化器总控
@@ -530,11 +524,9 @@ class PerformanceOptimizer:
             "memory": self.memory_optimizer.get_stats()
         }
 
-
 # 全局性能优化器实例
 _global_optimizer = None
 _optimizer_lock = threading.Lock()
-
 
 def get_performance_optimizer() -> PerformanceOptimizer:
     """获取全局性能优化器实例
@@ -549,14 +541,12 @@ def get_performance_optimizer() -> PerformanceOptimizer:
             _global_optimizer = PerformanceOptimizer()
         return _global_optimizer
 
-
 def reset_performance_optimizer():
     """重置全局性能优化器（主要用于测试）"""
     global _global_optimizer
 
     with _optimizer_lock:
         _global_optimizer = None
-
 
 __all__ = [
     "CGImageOptimizer",

@@ -11,7 +11,6 @@
     - 线程安全的内存管理
 
 Author: PlookingII Team
-Version: 1.0.0
 """
 
 import logging
@@ -23,7 +22,6 @@ from ..config.constants import APP_NAME
 # 使用标准库 logging/threading，避免重复导入
 
 logger = logging.getLogger(APP_NAME)
-
 
 class ImageMemoryPool:
     """图像内存池管理器"""

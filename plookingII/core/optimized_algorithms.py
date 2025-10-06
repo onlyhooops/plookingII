@@ -11,17 +11,15 @@
 - 简化条件判断
 
 Author: PlookingII Team
-Version: 1.0.0
 """
 
 import logging
 import time
 from collections import defaultdict, deque
 from collections.abc import Iterator
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
-
 
 class OptimizedAlgorithms:
     """优化算法集合
@@ -261,7 +259,6 @@ class OptimizedAlgorithms:
         # 使用堆合并多个有序列表
         import heapq
 
-
         if key_func:
             # 带键函数的合并
             heap = []
@@ -293,7 +290,6 @@ class OptimizedAlgorithms:
             CircularBuffer: 循环缓冲区实例
         """
         return CircularBuffer(max_size)
-
 
 class CircularBuffer:
     """优化的循环缓冲区实现"""
@@ -333,7 +329,6 @@ class CircularBuffer:
     def __len__(self) -> int:
         """返回当前大小"""
         return self.size
-
 
 class PerformanceOptimizer:
     """性能优化器

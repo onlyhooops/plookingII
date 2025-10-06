@@ -18,7 +18,6 @@ from ..imports import logging
 
 logger = logging.getLogger(APP_NAME)
 
-
 class PreloadTask:
     """预加载任务封装"""
 
@@ -32,7 +31,6 @@ class PreloadTask:
     def __lt__(self, other):
         """支持优先级队列排序"""
         return self.priority > other.priority  # 高优先级排前面
-
 
 class PreloadWindowCalculator:
     """预加载窗口计算器"""
@@ -92,7 +90,6 @@ class PreloadWindowCalculator:
 
         return forward_indices, backward_indices
 
-
 class PreloadPriorityCalculator:
     """预加载优先级计算器"""
 
@@ -137,7 +134,6 @@ class PreloadPriorityCalculator:
         # 按优先级排序
         tasks.sort()
         return tasks
-
 
 class PreloadExecutor:
     """预加载执行器"""
@@ -243,7 +239,6 @@ class PreloadExecutor:
     def shutdown(self):
         """关闭执行器"""
         self._executor.shutdown(wait=False)
-
 
 class PreloadManager:
     """预加载管理器 - 负责整个预加载流程的协调"""

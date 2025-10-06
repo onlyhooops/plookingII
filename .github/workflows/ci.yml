@@ -15,6 +15,38 @@ env:
 
 jobs:
   # ============================================================================
+  # 版本号一致性验证
+  # ============================================================================
+  version-check:
+    name: 版本号一致性验证
+    runs-on: macos-latest
+    timeout-minutes: 5
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+      timeout-minutes: 2
+      
+    - name: 设置Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: 验证版本号一致性
+      timeout-minutes: 2
+      run: |
+        python3 scripts/verify_version_consistency.py
+        
+    - name: 版本信息摘要
+      if: always()
+      run: |
+        VERSION=$(python3 -c "import sys; sys.path.insert(0, 'plookingII'); from config.constants import VERSION; print(VERSION)")
+        echo "## 📌 版本信息" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- **当前版本**: $VERSION" >> $GITHUB_STEP_SUMMARY
+        echo "- **验证状态**: ✅ 通过" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================================================
   # 代码质量检查
   # ============================================================================
   code-quality:
@@ -289,7 +321,7 @@ jobs:
     name: 测试报告汇总
     runs-on: macos-latest
     timeout-minutes: 5
-    needs: [code-quality, type-check, security, unit-tests, integration-tests]
+    needs: [version-check, code-quality, type-check, security, unit-tests, integration-tests]
     if: always()
     
     steps:
@@ -298,6 +330,7 @@ jobs:
         echo "## 测试结果摘要" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 任务状态" >> $GITHUB_STEP_SUMMARY
+        echo "- 版本号验证: ${{ needs.version-check.result }}" >> $GITHUB_STEP_SUMMARY
         echo "- 代码质量检查: ${{ needs.code-quality.result }}" >> $GITHUB_STEP_SUMMARY
         echo "- 类型检查: ${{ needs.type-check.result }}" >> $GITHUB_STEP_SUMMARY
         echo "- 安全扫描: ${{ needs.security.result }}" >> $GITHUB_STEP_SUMMARY

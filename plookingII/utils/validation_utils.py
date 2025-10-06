@@ -10,7 +10,6 @@
     - 安全性检查
 
 Author: PlookingII Team
-Version: 1.0.0
 """
 
 import logging
@@ -20,7 +19,6 @@ from plookingII.config.constants import APP_NAME
 from plookingII.utils.path_utils import PathUtils
 
 logger = logging.getLogger(APP_NAME)
-
 
 class ValidationUtils:
     """验证工具类"""

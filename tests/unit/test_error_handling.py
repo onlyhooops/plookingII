@@ -7,28 +7,28 @@
 import logging
 import threading
 import time
-from unittest.mock import Mock, MagicMock, patch, call
+from unittest.mock import MagicMock, Mock, call, patch
 
 import pytest
 
 from plookingII.core.error_handling import (
-    ErrorSeverity,
-    ErrorCategory,
-    ErrorInfo,
-    PlookingIIError,
+    CacheError,
     ConfigurationError,
+    DragDropError,
+    ErrorCategory,
+    ErrorHandler,
+    ErrorInfo,
+    ErrorSeverity,
+    FileSystemError,
+    FolderValidationError,
     ImageProcessingError,
     MemoryError,
-    FileSystemError,
+    PlookingIIError,
     UIError,
-    DragDropError,
-    FolderValidationError,
-    CacheError,
-    ErrorHandler,
-    error_handler,
     error_context,
-    setup_error_logging,
+    error_handler,
     get_error_log_path,
+    setup_error_logging,
 )
 
 
@@ -208,7 +208,7 @@ class TestSpecificErrors:
     def test_cache_error(self):
         """测试缓存错误"""
         error = CacheError("cache miss")
-        assert error.category == ErrorCategory.MEMORY
+        assert error.category == ErrorCategory.CACHE
         assert error.severity == ErrorSeverity.LOW
 
 

@@ -6,10 +6,7 @@ UI文案管理模块
 替代硬编码字符串，便于翻译和文案统一。
 
 Author: PlookingII Team
-Version: 1.0.0
 """
-
-
 
 class UIStrings:
     """UI文案管理器"""
@@ -80,54 +77,28 @@ class UIStrings:
 
     # 快捷键说明
     SHORTCUTS_HELP = {
-        "title": "快捷键说明",
-        "basic_navigation": "【基础导航】",
-        "left_right_arrows": "- ←/→：切换上一张/下一张图片",
-        "down_arrow": "- ↓：移动当前图片到精选文件夹",
-        "up_arrow": "- ↑：预留功能",
-        "esc_key": "- ESC：退出当前文件夹",
-        "space_drag": "- Space：拖拽模式（缩放时可用）",
-
-        "function_operations": "【功能操作】",
-        "cmd_o": "- Command+O：选择文件夹",
-        "cmd_q": "- Command+Q：退出程序",
-        "cmd_z": "- Command+Z：撤销最后的精选操作",
-
-        "folder_management": "【文件夹管理】",
-        "cmd_right": "- Command+→：跳过当前文件夹",
-        "cmd_left": "- Command+←：撤回跳过文件夹（最多10次）",
-        "cmd_r": "- Command+R：在Finder中显示当前图片",
-
-        "image_rotation": "【图片旋转】",
-        "cmd_opt_r": "- Command+Option+R：向右旋转90°",
-        "cmd_opt_l": "- Command+Option+L：向左旋转90°",
+        "title": "快捷键",
+        "left_right_arrows": "← / → 切换图片",
+        "down_arrow": "↓ 移动到精选文件夹",
+        "esc_key": "Esc 退出当前文件夹",
+        "space_drag": "空格键 拖拽查看",
+        
+        "cmd_o": "⌘ O 打开文件夹",
+        "cmd_z": "⌘ Z 撤销精选操作",
+        "cmd_r": "⌘ R 在Finder中显示",
+        
+        "cmd_right": "⌘ → 跳过当前文件夹",
+        "cmd_left": "⌘ ← 撤回跳过",
+        
+        "cmd_opt_r": "⌘ ⌥ R 向右旋转90°",
+        "cmd_opt_l": "⌘ ⌥ L 向左旋转90°",
     }
 
     # 关于对话框内容
     ABOUT_DIALOG = {
-        "project_overview": "【项目概述】",
-        "description_line1": "- 面向摄影爱好者的 macOS 原生图片浏览器",
-        "description_line2": "- 专注本地高分辨率照片的流畅切换与可靠呈现",
-
-        "core_capabilities": "【核心能力】",
-        "quartz_only": "- 解码通道  Quartz-only（统一高性能与稳定性）",
-        "source_sampling": "- 源级下采样与目标尺寸驱动的高效解码",
-        "double_buffer": "- 双缓冲显示与自适应预取 热三帧常驻",
-        "two_layer_cache": "- 两层内存缓存 主缓存与预览缓存 动态水位控制",
-
-        "support_range": "【支持范围】",
-        "file_source": "- 文件来源 本地磁盘 APFS 优化",
-        "image_formats": "- 图片格式 JPG JPEG PNG",
-        "browse_mode": "- 浏览模式 单张查看 上下切换",
-
-        "experience_efficiency": "【体验与效率】",
-        "low_latency": "- 低延迟切图 更顺滑的快速连切",
-        "memory_friendly": "- 内存友好 估算驱动的预算控制与回收",
-        "native_ui": "- 原生 UI 一致的系统级交互与外观",
-
-        "privacy_security": "【隐私与安全】",
-        "no_network": "- 不采集网络数据 不写入持久化缩略缓存",
-        "memory_only": "- 仅使用内存级缓存 会话结束不留残留数据",
+        "description": "为macOS设计的原生图片浏览器",
+        "subtitle": "快速浏览与筛选本地高分辨率照片",
+        "privacy": "本地运行 不联网 不留缓存",
     }
 
     # 状态消息
@@ -224,7 +195,6 @@ class UIStrings:
         "cancel": "取消",
     }
 
-
 class UIStringManager:
     """UI文案管理器"""
 
@@ -293,24 +263,18 @@ class UIStringManager:
         shortcuts = self._strings.get("shortcuts_help", {})
 
         sections = [
-            shortcuts.get("basic_navigation", ""),
             shortcuts.get("left_right_arrows", ""),
             shortcuts.get("down_arrow", ""),
-            shortcuts.get("up_arrow", ""),
             shortcuts.get("esc_key", ""),
             shortcuts.get("space_drag", ""),
             "",
-            shortcuts.get("function_operations", ""),
             shortcuts.get("cmd_o", ""),
-            shortcuts.get("cmd_q", ""),
             shortcuts.get("cmd_z", ""),
-            "",
-            shortcuts.get("folder_management", ""),
-            shortcuts.get("cmd_right", ""),
-            shortcuts.get("cmd_left", ""),
             shortcuts.get("cmd_r", ""),
             "",
-            shortcuts.get("image_rotation", ""),
+            shortcuts.get("cmd_right", ""),
+            shortcuts.get("cmd_left", ""),
+            "",
             shortcuts.get("cmd_opt_r", ""),
             shortcuts.get("cmd_opt_l", ""),
         ]
@@ -331,38 +295,21 @@ class UIStringManager:
         about = self._strings.get("about_dialog", {})
 
         sections = [
-            f"{self.get('app_info', 'version_label')}{version}",
-            f"{self.get('app_info', 'developer_label')}{author}",
+            f"V {version}",
+            "",
+            about.get("description", ""),
+            "",
+            about.get("subtitle", ""),
+            "",
+            about.get("privacy", ""),
             "",
             copyright_text,
-            "",
-            about.get("project_overview", ""),
-            about.get("description_line1", ""),
-            about.get("description_line2", ""),
-            about.get("core_capabilities", ""),
-            about.get("quartz_only", ""),
-            about.get("source_sampling", ""),
-            about.get("double_buffer", ""),
-            about.get("two_layer_cache", ""),
-            about.get("support_range", ""),
-            about.get("file_source", ""),
-            about.get("image_formats", ""),
-            about.get("browse_mode", ""),
-            about.get("experience_efficiency", ""),
-            about.get("low_latency", ""),
-            about.get("memory_friendly", ""),
-            about.get("native_ui", ""),
-            about.get("privacy_security", ""),
-            about.get("no_network", ""),
-            about.get("memory_only", ""),
         ]
 
         return "\n".join(section for section in sections if section)
 
-
 # 全局文案管理器实例
 _ui_string_manager = None
-
 
 def get_ui_string_manager() -> UIStringManager:
     """获取全局UI文案管理器实例"""
@@ -370,7 +317,6 @@ def get_ui_string_manager() -> UIStringManager:
     if _ui_string_manager is None:
         _ui_string_manager = UIStringManager()
     return _ui_string_manager
-
 
 def get_ui_string(category: str, key: str, default: str = "") -> str:
     """便捷函数：获取UI文案字符串
@@ -384,7 +330,6 @@ def get_ui_string(category: str, key: str, default: str = "") -> str:
         str: 文案字符串
     """
     return get_ui_string_manager().get(category, key, default)
-
 
 def get_formatted_ui_string(category: str, key: str, *args, **kwargs) -> str:
     """便捷函数：获取格式化UI文案字符串

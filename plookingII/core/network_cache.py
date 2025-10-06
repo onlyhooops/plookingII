@@ -13,7 +13,6 @@ import time
 from collections import OrderedDict
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 from ..config.manager import get_config
 from .enhanced_logging import LogCategory, LogLevel, get_enhanced_logger
@@ -28,7 +27,6 @@ class CacheStrategy(Enum):
     SIZE_BASED = "size"   # 基于大小
     TIME_BASED = "time"   # 基于时间
 
-
 @dataclass
 class CacheEntry:
     """缓存条目数据类"""
@@ -40,7 +38,6 @@ class CacheEntry:
     access_count: int
     checksum: str
     is_valid: bool = True
-
 
 class NetworkCache:
     """
@@ -352,9 +349,12 @@ class NetworkCache:
         os.makedirs(self.cache_dir, exist_ok=True)
 
     def _generate_cache_key(self, remote_path: str) -> str:
-        """生成缓存键"""
-        # 使用路径的哈希值作为缓存键
-        return hashlib.md5(remote_path.encode("utf-8")).hexdigest()
+        """生成缓存键
+        
+        Note: MD5仅用于生成缓存键，不用于安全目的
+        """
+        # 使用路径的哈希值作为缓存键（非安全用途）
+        return hashlib.md5(remote_path.encode("utf-8"), usedforsecurity=False).hexdigest()
 
     def _get_local_cache_path(self, cache_key: str) -> str:
         """获取本地缓存文件路径"""
@@ -370,10 +370,14 @@ class NetworkCache:
             return False
 
     def _calculate_checksum(self, file_path: str) -> str:
-        """计算文件校验和"""
+        """计算文件校验和
+        
+        Note: MD5仅用于文件完整性检查，不用于安全目的
+        """
         try:
             with open(file_path, "rb") as f:
-                return hashlib.md5(f.read()).hexdigest()
+                # MD5仅用于文件完整性检查，不用于加密安全
+                return hashlib.md5(f.read(), usedforsecurity=False).hexdigest()
         except Exception:
             return ""
 
@@ -516,11 +520,9 @@ class NetworkCache:
         except Exception as e:
             self.logging.getLogger(__name__).log_error(e, "metadata_save")
 
-
 # 全局实例
 _network_cache_instance: NetworkCache | None = None
 _network_cache_lock = threading.Lock()
-
 
 def get_network_cache() -> NetworkCache:
     """获取全局NetworkCache实例"""

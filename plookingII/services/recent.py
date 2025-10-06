@@ -4,7 +4,6 @@ from ..imports import os
 from ..utils.path_utils import PathUtils
 from ..utils.validation_utils import ValidationUtils
 
-
 class RecentFoldersManager:
     def __init__(self, db_path=None, max_count=10):
         if db_path is None:
@@ -112,6 +111,8 @@ class RecentFoldersManager:
 
             # 删除无效路径
             if invalid_paths:
+                # 使用参数化查询防止SQL注入
+                # placeholders是基于列表长度生成的安全占位符
                 placeholders = ",".join(["?" for _ in invalid_paths])
                 delete_query = f"DELETE FROM recent_folders WHERE folder_path IN ({placeholders})"
                 cursor.execute(delete_query, invalid_paths)
@@ -174,7 +175,8 @@ class RecentFoldersManager:
             conn = connect_db(self.db_path)
             cursor = conn.cursor()
 
-            # 构建删除查询
+            # 构建删除查询 - 使用参数化查询防止SQL注入
+            # placeholders是基于列表长度生成的安全占位符
             placeholders = ",".join(["?" for _ in invalid_paths])
             query = f"DELETE FROM recent_folders WHERE folder_path IN ({placeholders})"
 

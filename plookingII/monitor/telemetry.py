@@ -19,7 +19,6 @@ from typing import Any
 def _enabled() -> bool:
     return os.environ.get("PLOOKINGII_TELEMETRY", "0") in ("1", "true", "TRUE")
 
-
 def _default_dir() -> str:
     env_dir = os.environ.get("PLOOKINGII_TELEMETRY_DIR")
     if env_dir:
@@ -41,6 +40,13 @@ def _default_dir() -> str:
         except Exception:
             pass
         return base
+
+def is_telemetry_enabled() -> bool:
+    """Check if telemetry is enabled.
+    
+    Returns True if PLOOKINGII_TELEMETRY is set to 1/true/TRUE.
+    """
+    return _enabled()
 
 
 def record_event(event: str, properties: dict[str, Any] | None = None) -> bool:

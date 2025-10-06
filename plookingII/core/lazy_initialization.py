@@ -12,7 +12,6 @@
 - 启动性能监控
 
 Author: PlookingII Team
-Version: 1.0.0
 """
 
 import functools
@@ -26,7 +25,6 @@ from ..imports import logging
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
-
 
 class LazyProperty(Generic[T]):
     """懒加载属性装饰器
@@ -75,7 +73,6 @@ class LazyProperty(Generic[T]):
             self._value = None
             self._initialized = False
 
-
 def lazy_init(factory_func: Callable[[], T]) -> LazyProperty[T]:
     """创建懒加载属性的便捷函数
 
@@ -86,7 +83,6 @@ def lazy_init(factory_func: Callable[[], T]) -> LazyProperty[T]:
         LazyProperty实例
     """
     return LazyProperty(factory_func)
-
 
 class ComponentPool:
     """组件池管理器
@@ -153,7 +149,6 @@ class ComponentPool:
             self._creation_times.clear()
             logging.getLogger(__name__).debug("Component pool cleared")
 
-
 class StartupProfiler:
     """启动性能分析器
 
@@ -214,10 +209,8 @@ class StartupProfiler:
             if component != "total_startup_time":
                 logging.getLogger(__name__).debug(f"  {component}: {duration:.3f}s")
 
-
 # 全局启动分析器实例
 startup_profiler = StartupProfiler()
-
 
 def profile_startup(component_name: str):
     """启动性能分析装饰器
@@ -236,7 +229,6 @@ def profile_startup(component_name: str):
                 startup_profiler.end_timing(component_name)
         return wrapper
     return decorator
-
 
 # 全局组件池实例
 component_pool = ComponentPool()

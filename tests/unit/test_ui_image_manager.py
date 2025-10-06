@@ -9,13 +9,12 @@
 - 预加载和预取
 """
 
-from unittest.mock import MagicMock, Mock, patch, call
 import os
+from unittest.mock import MagicMock, Mock, call, patch
 
 import pytest
 
 from plookingII.ui.managers.image_manager import ImageManager
-
 
 # ==================== 夹具（Fixtures） ====================
 
@@ -324,10 +323,10 @@ class TestStatusUpdates:
 class TestCacheNotification:
     """测试缓存通知"""
 
-    def test_notify_bidirectional_cache_method_exists(self, image_manager):
-        """测试_notify_bidirectional_cache方法存在"""
-        assert hasattr(image_manager, '_notify_bidirectional_cache')
-        assert callable(image_manager._notify_bidirectional_cache)
+    def test_bidi_pool_exists(self, image_manager):
+        """测试双向缓存池存在"""
+        assert hasattr(image_manager, 'bidi_pool')
+        assert image_manager.bidi_pool is not None
 
 
 # ==================== 集成测试 ====================

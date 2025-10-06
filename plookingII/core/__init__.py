@@ -21,29 +21,21 @@ PlookingII 核心模块
     - enhanced_logging: 增强日志系统 (v1.4.0+)
 
 Author: PlookingII Team
-Version: 1.4.0
 """
 
 # 图像处理核心
 from .image_processing import HybridImageProcessor
 from .optimized_loading_strategies import OptimizedLoadingStrategyFactory
 
-# 缓存系统 - 优先使用统一缓存
-try:
-    # 尝试导入新的统一缓存系统（v2.0+）
-    from .cache import (
-        AdvancedImageCacheAdapter,
-        BidirectionalCachePoolAdapter,
-    )
-    # 为向后兼容，创建别名
-    AdvancedImageCache = AdvancedImageCacheAdapter
-    BidirectionalCachePool = BidirectionalCachePoolAdapter
-    _UNIFIED_CACHE_AVAILABLE = True
-except ImportError:
-    # 回退到旧的缓存系统
-    from .bidirectional_cache import BidirectionalCachePool
-    from .cache import AdvancedImageCache
-    _UNIFIED_CACHE_AVAILABLE = False
+# 缓存系统 - 使用简化的统一缓存（v2.0+）
+from .simple_cache import (
+    AdvancedImageCache,
+    BidirectionalCachePool,
+    SimpleImageCache,
+    get_global_cache,
+)
+
+_UNIFIED_CACHE_AVAILABLE = True
 
 # 性能和监控
 from .error_handling import ErrorHandler, error_context, error_handler

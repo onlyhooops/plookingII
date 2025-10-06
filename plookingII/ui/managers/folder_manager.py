@@ -21,7 +21,6 @@ from ...services.recent import RecentFoldersManager
 
 logger = logging.getLogger(APP_NAME)
 
-
 class FolderManager:
     """文件夹管理器，负责文件夹扫描、导航和历史记录"""
 
@@ -208,8 +207,6 @@ class FolderManager:
         except Exception:
             subfolders.sort(reverse=self.reverse_folder_order)
         return subfolders
-
-
 
     def _execute_parallel_scan(self, directories_to_scan, exts, subfolders, scan_lock):
         """执行并行目录扫描

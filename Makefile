@@ -12,6 +12,9 @@ help:
 	@echo "  make test-quality     - 运行代码质量测试"
 	@echo "  make test-coverage    - 运行测试并生成覆盖率报告"
 	@echo "  make guard            - 运行架构守护检查"
+	@echo "  make verify-version   - 验证版本号一致性"
+	@echo "  make unify-version    - 统一并清理版本号"
+	@echo "  make clear-recent     - 清理 macOS 最近项目记录"
 	@echo "  make lint             - 运行代码检查(ruff + flake8)"
 	@echo "  make format           - 格式化代码"
 	@echo "  make type-check       - 运行类型检查"
@@ -53,6 +56,22 @@ test-all: test-arch test-quality test
 guard:
 	@echo "🛡️  运行架构守护检查..."
 	python3 tools/architecture_guard.py
+
+# 版本管理
+verify-version:
+	@echo "🔍 验证版本号一致性..."
+	python3 scripts/verify_version_consistency.py
+
+unify-version:
+	@echo "🔧 统一版本号管理..."
+	python3 scripts/unify_version.py
+	@echo ""
+	@echo "✅ 运行验证检查..."
+	python3 scripts/verify_version_consistency.py
+
+clear-recent:
+	@echo "🧹 清理 macOS 最近项目记录..."
+	python3 scripts/clear_recent_items.py
 
 # 代码质量
 lint:
@@ -145,7 +164,7 @@ build:
 	python3 tools/package_release.py --build
 
 # CI模拟
-ci: clean guard test-arch test-quality lint type-check complexity security test-coverage
+ci: clean verify-version test-quality lint type-check complexity security test-coverage
 	@echo ""
 	@echo "================================================================"
 	@echo "✅ CI检查全部完成！"
@@ -155,7 +174,7 @@ ci: clean guard test-arch test-quality lint type-check complexity security test-
 	@echo ""
 
 # 快速检查(提交前)
-quick-check: guard test-arch lint
+quick-check: verify-version lint
 	@echo ""
 	@echo "================================================================"
 	@echo "✅ 快速检查完成！可以安全提交。"

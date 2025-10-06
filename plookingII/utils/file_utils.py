@@ -10,7 +10,6 @@
     - 安全的文件操作
 
 Author: PlookingII Team
-Version: 1.0.0
 """
 
 import logging
@@ -20,7 +19,6 @@ from plookingII.config.constants import APP_NAME, SUPPORTED_IMAGE_EXTS
 from plookingII.core.error_handling import FolderValidationError
 
 logger = logging.getLogger(APP_NAME)
-
 
 class FileUtils:
     """文件操作工具类"""

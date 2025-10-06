@@ -12,7 +12,6 @@
 - 线程安全
 
 Author: PlookingII Team
-Version: 1.0.0
 """
 
 import threading
@@ -24,7 +23,6 @@ from ..config.constants import APP_NAME
 from ..imports import logging
 
 logger = logging.getLogger(APP_NAME)
-
 
 class LightweightMonitor:
     """轻量级监控系统
@@ -255,7 +253,6 @@ Last Update: {time.ctime(summary['last_update_time'])}
 
         return recommendations
 
-
 class PerformanceTracker:
     """性能跟踪器"""
 
@@ -289,10 +286,8 @@ class PerformanceTracker:
         """
         self.operation_name = name
 
-
 # 全局监控实例
 lightweight_monitor = LightweightMonitor()
-
 
 def get_monitor() -> LightweightMonitor:
     """获取全局监控实例
@@ -301,7 +296,6 @@ def get_monitor() -> LightweightMonitor:
         监控实例
     """
     return lightweight_monitor
-
 
 def track_performance(operation_name: str = None):
     """性能跟踪装饰器

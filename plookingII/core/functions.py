@@ -8,7 +8,6 @@ from ..config.constants import SUPPORTED_IMAGE_EXTS
 from ..imports import NSURL, QUARTZ_AVAILABLE, os
 from ..ui.menu_builder import MenuBuilder
 
-
 def simple_thumbnail_cache(path_and_size):
     """创建并缓存图像缩略图
 
@@ -61,7 +60,6 @@ def simple_thumbnail_cache(path_and_size):
         # 图像处理失败时返回None
         return None
 
-
 def force_gc():
     """强制执行垃圾回收
 
@@ -80,7 +78,6 @@ def force_gc():
     """
     _gc.collect()  # 第一次垃圾回收
     _gc.collect()  # 第二次垃圾回收，确保循环引用被清理
-
 
 def build_menu(app, win):
     """构建应用程序的主菜单栏 - 使用MenuBuilder重构版本
@@ -115,7 +112,6 @@ def build_menu(app, win):
         fallback_menu = NSMenu.alloc().init()
         app.setMainMenu_(fallback_menu)
 
-
 def _env_int(name, default):
     """从环境变量中获取正整数值。
 
@@ -139,7 +135,6 @@ def _env_int(name, default):
         return v if v > 0 else default
     except Exception:
         return default
-
 
 def get_image_dimensions_safe(path: str):
     """安全获取图像尺寸（宽, 高），尽量避免解码与大图告警。

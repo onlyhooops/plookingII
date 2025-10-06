@@ -25,7 +25,7 @@ PlookingII - macOS 原生图片浏览器
     - monitor: 系统监控
 
 Author: PlookingII Team
-Version: 1.0.0
+Version: See plookingII.config.constants.VERSION
 License: MIT
 """
 
@@ -50,7 +50,6 @@ from .imports import QUARTZ_AVAILABLE
 from .imports import _objc as _objc_bridge
 
 logger = logging.getLogger(APP_NAME)
-
 
 def _safe_imports_for_env():
     mac_env = (sys.platform == "darwin") and bool(QUARTZ_AVAILABLE) and (_objc_bridge is not None)
@@ -77,7 +76,6 @@ def _safe_imports_for_env():
                 __import__(__name__ + mod, fromlist=["*"])
             except Exception:
                 logger.exception(f"Failed to import {mod}")
-
 
 _safe_imports_for_env()
 __all__ = [

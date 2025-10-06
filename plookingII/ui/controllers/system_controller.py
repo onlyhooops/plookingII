@@ -25,7 +25,6 @@ from ...config.constants import APP_NAME
 
 logger = logging.getLogger(APP_NAME)
 
-
 class SystemController:
     """
     系统级功能控制器

@@ -45,7 +45,6 @@ PlookingII UI视图组件模块
     - 响应式用户交互
 
 Author: PlookingII Team
-Version: 1.0.0
 """
 
 from ..config.constants import APP_NAME
@@ -56,7 +55,6 @@ from ..imports import _objc, logging, objc, time
 
 # 新增：模块级日志记录器
 logger = logging.getLogger(APP_NAME)
-
 
 def apply_safe_performance_tweaks(win):
     """应用安全的性能优化调整
@@ -143,7 +141,6 @@ def apply_safe_performance_tweaks(win):
     except Exception:
         logger.exception("apply_safe_performance_tweaks failed")
 
-
 class OverlayView(NSView):
     def initWithFrame_andImageView_(self, frame, image_view):
         self = objc.super(OverlayView, self).initWithFrame_(frame)  # type: ignore
@@ -157,7 +154,6 @@ class OverlayView(NSView):
     def drawRect_(self, rect):
         # 覆盖层绘制接口 - 当前无特殊绘制需求
         pass
-
 
 class AdaptiveImageView(NSImageView):
     def initWithFrame_(self, frame):
@@ -803,7 +799,6 @@ class AdaptiveImageView(NSImageView):
         x = view_rect.origin.x + (view_size.width - scaled_width) / 2
         y = view_rect.origin.y + (view_size.height - scaled_height) / 2
         return NSMakeRect(x, y, scaled_width, scaled_height)
-
 
     # 性能优化方法
     def _schedule_optimized_redraw(self):

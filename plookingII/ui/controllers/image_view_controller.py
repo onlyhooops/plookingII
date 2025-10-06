@@ -20,7 +20,6 @@ from AppKit import NSColor, NSRect, NSView
     - 缩放滑块 (NSSlider)
 
 Author: PlookingII Team
-Version: 1.0.0
 """
 
 # pyright: reportUndefinedVariable=false
@@ -30,7 +29,6 @@ from ...config.constants import APP_NAME, IMAGE_PROCESSING_CONFIG
 from ..views import AdaptiveImageView, OverlayView
 
 logger = logging.getLogger(APP_NAME)
-
 
 class ImageViewController:
     """图像视图控制器，负责图像显示和UI交互
@@ -178,7 +176,6 @@ class ImageViewController:
         if self.image_view:
             self.image_view.setImage_(None)
             self.image_view.setNeedsDisplay_(True)
-
 
     def update_zoom_slider(self, scale):
         """更新缩放滑块值（不触发回调）

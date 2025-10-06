@@ -11,7 +11,6 @@
     - 多种颜色模式支持
 
 Author: PlookingII Team
-Version: 1.0.0
 """
 
 import logging
@@ -21,7 +20,6 @@ from ..config.constants import APP_NAME
 from ..imports import NSImage
 
 logger = logging.getLogger(APP_NAME)
-
 
 class ImageMemoryEstimator:
     """精确的图像内存估算器"""
@@ -141,7 +139,6 @@ class ImageMemoryEstimator:
             # 检查主屏幕的缩放因子
             try:
                 from AppKit import NSScreen
-
 
                 main_screen = NSScreen.mainScreen()
                 if main_screen and hasattr(main_screen, "backingScaleFactor"):

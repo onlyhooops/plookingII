@@ -19,7 +19,6 @@
 - 线程安全的事件分发
 
 Author: PlookingII Team
-Version: 1.0.0
 """
 
 import hashlib
@@ -35,14 +34,12 @@ from ..config.constants import APP_NAME
 
 logger = logging.getLogger(APP_NAME)
 
-
 class FileChangeType(Enum):
     """文件变化类型"""
     MODIFIED = "modified"  # 文件被修改
     DELETED = "deleted"   # 文件被删除
     CREATED = "created"   # 文件被创建
     MOVED = "moved"       # 文件被移动/重命名
-
 
 @dataclass
 class FileChangeEvent:
@@ -52,7 +49,6 @@ class FileChangeEvent:
     timestamp: float
     old_path: str | None = None  # 用于MOVED事件
     metadata: dict = None
-
 
 class FileWatcherStrategy:
     """文件监听策略基类"""
@@ -86,7 +82,6 @@ class FileWatcherStrategy:
     def stop_watching(self):
         """停止监听"""
         raise NotImplementedError
-
 
 class PollingFileWatcher(FileWatcherStrategy):
     """基于轮询的文件监听器（兜底方案）
@@ -213,9 +208,13 @@ class PollingFileWatcher(FileWatcherStrategy):
             del self.watched_files[file_path]
 
     def _calculate_file_hash(self, file_path: str, chunk_size: int = 8192) -> str:
-        """计算文件哈希值（仅前64KB，性能优化）"""
+        """计算文件哈希值（仅前64KB，性能优化）
+        
+        Note: MD5用于文件变化检测，不用于安全目的
+        """
         try:
-            hash_md5 = hashlib.md5()
+            # MD5仅用于文件变化检测，不用于加密安全
+            hash_md5 = hashlib.md5(usedforsecurity=False)
             with open(file_path, "rb") as f:
                 # 只读取前64KB计算哈希，对图片文件足够检测变化
                 chunk = f.read(min(chunk_size * 8, 65536))
@@ -224,7 +223,6 @@ class PollingFileWatcher(FileWatcherStrategy):
         except Exception as e:
             logger.debug(f"计算文件哈希失败 {file_path}: {e}")
             return ""
-
 
 try:
     # 尝试导入watchdog库（更高效的文件监听）
@@ -357,7 +355,6 @@ try:
 except ImportError:
     # watchdog不可用，使用None标记
     WatchdogFileWatcher = None
-
 
 class FileWatcher:
     """文件监听器管理类

@@ -20,7 +20,6 @@ from ..core.history import TaskHistoryManager
 
 logger = logging.getLogger(APP_NAME)
 
-
 class HistoryManager:
     """
     历史记录和进度管理服务

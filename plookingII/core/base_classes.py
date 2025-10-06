@@ -12,7 +12,6 @@
 - LoggingMixin: 日志记录混入类
 
 Author: PlookingII Team
-Version: 1.0.0
 """
 
 import logging
@@ -24,9 +23,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import Any
 
-
 @dataclass
-
 
 class ComponentConfig:
     """组件配置数据类"""
@@ -35,7 +32,6 @@ class ComponentConfig:
     timeout: float = 30.0
     max_retries: int = 3
     custom_params: dict[str, Any] = field(default_factory=dict)
-
 
 class StatisticsMixin:
     """统计功能混入类
@@ -113,7 +109,6 @@ class StatisticsMixin:
                 "start_time": time.time()
             }
 
-
 class ConfigurationMixin:
     """配置管理混入类
 
@@ -154,7 +149,6 @@ class ConfigurationMixin:
             bool: 是否启用
         """
         return self._config.enabled
-
 
 class ErrorHandlingMixin:
     """错误处理混入类
@@ -238,7 +232,6 @@ class ErrorHandlingMixin:
         # 所有重试都失败，处理错误
         return self.handle_error(last_error, f"retry_operation({operation.__name__})")
 
-
 class LoggingMixin:
     """日志记录混入类
 
@@ -263,7 +256,6 @@ class LoggingMixin:
             message += f" - {extra_info}"
 
         self.logger.log(level, message)
-
 
 class BaseComponent(StatisticsMixin, ConfigurationMixin, ErrorHandlingMixin, LoggingMixin):
     """基础组件抽象类
@@ -346,7 +338,6 @@ class BaseComponent(StatisticsMixin, ConfigurationMixin, ErrorHandlingMixin, Log
             self._record_operation(False, duration)
             self.log_operation(f"Failed {operation_name}", level=logging.ERROR, error=str(error))
             raise
-
 
 class ComponentRegistry:
     """组件注册表

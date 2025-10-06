@@ -10,7 +10,6 @@
     - 重试机制
 
 Author: PlookingII Team
-Version: 1.0.0
 """
 
 import functools
@@ -23,7 +22,6 @@ from plookingII.config.constants import APP_NAME
 logger = logging.getLogger(APP_NAME)
 
 T = TypeVar("T")
-
 
 def safe_execute(func: Callable[..., T], *args, default: T = None,
                  log_error: bool = True, context: str = "", **kwargs) -> T:
@@ -50,7 +48,6 @@ def safe_execute(func: Callable[..., T], *args, default: T = None,
             error_msg += f": {e}"
             logger.debug(error_msg, exc_info=True)
         return default
-
 
 def handle_exceptions(default_return: Any = None, log_level: str = "debug",
                      context: str = "", reraise: bool = False):
@@ -86,7 +83,6 @@ def handle_exceptions(default_return: Any = None, log_level: str = "debug",
         return wrapper
     return decorator
 
-
 def suppress_exceptions(*exception_types, log_error: bool = True,
                        context: str = "", default_return: Any = None):
     """抑制指定异常类型的装饰器
@@ -118,7 +114,6 @@ def suppress_exceptions(*exception_types, log_error: bool = True,
                 raise
         return wrapper
     return decorator
-
 
 def retry_on_failure(max_retries: int = 3, delay: float = 1.0,
                     backoff_factor: float = 2.0,
@@ -155,7 +150,6 @@ def retry_on_failure(max_retries: int = 3, delay: float = 1.0,
 
         return wrapper
     return decorator
-
 
 class ErrorCollector:
     """错误收集器，用于批量收集和处理错误"""
@@ -211,7 +205,6 @@ class ErrorCollector:
     def clear(self):
         """清空错误记录"""
         self.errors.clear()
-
 
 def validate_parameter(param: Any, param_name: str, expected_type: type = None,
                       allow_none: bool = False, custom_validator: Callable = None) -> bool:

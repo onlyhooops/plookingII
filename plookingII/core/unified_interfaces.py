@@ -16,7 +16,6 @@ from ..imports import logging
 
 logger = logging.getLogger(APP_NAME)
 
-
 class CacheInterface(ABC):
     """统一缓存接口 - 替代多个重复的缓存清理方法"""
 
@@ -38,7 +37,6 @@ class CacheInterface(ABC):
         Returns:
             Dict[str, Any]: 缓存统计信息
         """
-
 
 class StatusInterface(ABC):
     """统一状态接口 - 替代多个重复的状态更新方法"""
@@ -67,7 +65,6 @@ class StatusInterface(ABC):
         Returns:
             Dict[str, Any]: 当前状态信息
         """
-
 
 class ConfigInterface(ABC):
     """统一配置接口 - 替代多个重复的配置管理方法"""
@@ -104,7 +101,6 @@ class ConfigInterface(ABC):
             bool: 保存成功返回True
         """
 
-
 class MonitorInterface(ABC):
     """统一监控接口 - 替代多个重复的监控方法"""
 
@@ -131,7 +127,6 @@ class MonitorInterface(ABC):
         Returns:
             Dict[str, Any]: 监控指标数据
         """
-
 
 class UnifiedCacheManager(CacheInterface):
     """统一缓存管理器 - 实现统一的缓存清理功能"""
@@ -218,7 +213,6 @@ class UnifiedCacheManager(CacheInterface):
         stats["providers"] = provider_stats
         return stats
 
-
 class UnifiedStatusManager(StatusInterface):
     """统一状态管理器 - 实现统一的状态更新功能"""
 
@@ -287,11 +281,9 @@ class UnifiedStatusManager(StatusInterface):
             "providers": list(self._status_providers.keys())
         }
 
-
 # 全局统一接口实例
 _unified_cache_manager = None
 _unified_status_manager = None
-
 
 def get_unified_cache_manager() -> UnifiedCacheManager:
     """获取统一缓存管理器实例
@@ -304,7 +296,6 @@ def get_unified_cache_manager() -> UnifiedCacheManager:
         _unified_cache_manager = UnifiedCacheManager()
     return _unified_cache_manager
 
-
 def get_unified_status_manager() -> UnifiedStatusManager:
     """获取统一状态管理器实例
 
@@ -316,7 +307,6 @@ def get_unified_status_manager() -> UnifiedStatusManager:
         _unified_status_manager = UnifiedStatusManager()
     return _unified_status_manager
 
-
 def clear_all_caches() -> bool:
     """清理所有缓存 - 便捷函数
 
@@ -324,7 +314,6 @@ def clear_all_caches() -> bool:
         bool: 清理成功返回True
     """
     return get_unified_cache_manager().clear_cache()
-
 
 def set_global_status(message: str, timeout: float | None = None) -> None:
     """设置全局状态消息 - 便捷函数

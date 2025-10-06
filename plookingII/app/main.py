@@ -125,8 +125,15 @@ class AppDelegate(NSObject):
             except Exception:
                 pass
             self.main_window._save_task_progress_immediate()
+        
+        # 开发环境下自动清理 macOS 最近文档记录
+        try:
+            from ..utils.macos_cleanup import MacOSCleanupManager
+            MacOSCleanupManager.auto_cleanup_if_dev()
+        except Exception:
+            pass
+        
         return True
-
 
 def main():
     """主应用入口函数"""
@@ -144,7 +151,6 @@ def main():
         except Exception:
             logging.getLogger(APP_NAME).critical("App main loop failed", exc_info=True)
             raise
-
 
 if __name__ == "__main__":
     main()

@@ -21,7 +21,6 @@ v1.1.0 架构简化：
     - 委托模式：通过委托与主窗口通信
 
 Author: PlookingII Team
-Version: 1.1.0
 """
 
 import logging

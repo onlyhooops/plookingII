@@ -21,7 +21,6 @@ from ..config.constants import APP_NAME
 
 logger = logging.getLogger(APP_NAME)
 
-
 class BackgroundTaskManager:
     """
     后台任务管理服务
@@ -136,11 +135,11 @@ class BackgroundTaskManager:
                     old_future = self._active_tasks[task_id]
                     if not old_future.done():
                         old_future_to_cancel = old_future
-            
+
             # 在锁外取消旧任务，避免死锁
             if old_future_to_cancel:
                 old_future_to_cancel.cancel()
-            
+
             # 在锁内注册新任务
             with self._task_lock:
                 # 提交任务
@@ -275,7 +274,7 @@ class BackgroundTaskManager:
                 return [tid for tid, f in self._active_tasks.items() if not f.done()]
         except Exception:
             return []
-    
+
     def get_task_status(self, task_id: str) -> str:
         """
         获取任务状态
@@ -340,7 +339,7 @@ class BackgroundTaskManager:
                 for task_id, future in list(self._active_tasks.items()):
                     if not future.done():
                         tasks_to_cancel.append((task_id, future))
-            
+
             # 在锁外取消任务，避免死锁
             for task_id, future in tasks_to_cancel:
                 future.cancel()
@@ -364,7 +363,7 @@ class BackgroundTaskManager:
     def cleanup(self):
         """清理后台任务管理器资源"""
         self.shutdown_background_tasks()
-    
+
     def shutdown(self):
         """关闭任务管理器的别名方法"""
         self.shutdown_background_tasks()

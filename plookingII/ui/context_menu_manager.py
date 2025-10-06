@@ -9,7 +9,6 @@
 """
 
 import os
-from typing import Optional
 
 import objc
 from AppKit import NSMenu, NSMenuItem, NSWorkspace
@@ -20,7 +19,6 @@ from ..imports import logging
 
 logger = logging.getLogger(APP_NAME)
 
-
 class AppInfo:
     """应用程序信息封装"""
 
@@ -30,7 +28,6 @@ class AppInfo:
         self.path = path
         self.is_default = is_default
         self.icon = None
-
 
 class BrowserFilter:
     """浏览器应用程序过滤器"""
@@ -62,7 +59,6 @@ class BrowserFilter:
                 return True
 
         return False
-
 
 class AppDiscovery:
     """应用程序发现器"""
@@ -113,7 +109,6 @@ class AppDiscovery:
         except Exception as e:
             logger.warning(f"获取应用程序列表失败: {e}")
             return []
-
 
 class MenuItemBuilder:
     """菜单项构建器"""
@@ -215,7 +210,6 @@ class MenuItemBuilder:
         notice_item.setTitle_("(已过滤浏览器应用程序)")
         notice_item.setEnabled_(False)
         return notice_item
-
 
 class ContextMenuManager:
     """上下文菜单管理器 - 负责整个右键菜单的创建和管理"""

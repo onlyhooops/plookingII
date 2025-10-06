@@ -18,12 +18,10 @@
     - 大批量文件操作的并发处理
 
 Author: PlookingII Team
-Version: 1.0.0
 """
 
 import os
 from concurrent.futures import ThreadPoolExecutor
-
 
 class _PatchedThreadPoolExecutor(ThreadPoolExecutor):
     """优化的线程池执行器

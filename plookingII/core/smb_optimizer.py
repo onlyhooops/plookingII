@@ -11,13 +11,12 @@ import threading
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from ..config.manager import get_config
 from .enhanced_logging import LogCategory, LogLevel, get_enhanced_logger
 from .error_handling import ErrorCategory, error_context
 from .remote_file_detector import MountType, get_remote_detector
-
 
 class ReadStrategy(Enum):
     """读取策略枚举"""
@@ -25,7 +24,6 @@ class ReadStrategy(Enum):
     BATCH = "batch"               # 批量读取
     PRELOAD = "preload"           # 预加载
     ADAPTIVE = "adaptive"         # 自适应
-
 
 @dataclass
 class ReadRequest:
@@ -36,7 +34,6 @@ class ReadRequest:
     priority: int = 0  # 优先级，数字越大优先级越高
     timestamp: float = 0.0
 
-
 @dataclass
 class ReadResult:
     """读取结果数据类"""
@@ -45,7 +42,6 @@ class ReadResult:
     success: bool
     latency_ms: float
     error: Exception | None = None
-
 
 class SMBOptimizer:
     """
@@ -379,11 +375,9 @@ class SMBOptimizer:
                 error=e
             )
 
-
 # 全局实例
 _smb_optimizer_instance: SMBOptimizer | None = None
 _smb_optimizer_lock = threading.Lock()
-
 
 def get_smb_optimizer() -> SMBOptimizer:
     """获取全局SMBOptimizer实例"""

@@ -18,7 +18,6 @@ from ...imports import logging, threading, time
 
 logger = logging.getLogger(APP_NAME)
 
-
 class NavigationController:
     """导航控制器，负责键盘导航和防抖逻辑
 
@@ -386,7 +385,6 @@ class NavigationController:
             with self._navigation_lock:
                 self._is_navigating = False
                 self._state = self._state_idle
-
 
     def set_debounce_delay(self, delay):
         """设置防抖延迟时间

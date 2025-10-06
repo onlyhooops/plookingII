@@ -13,7 +13,6 @@
 - 简化的消息提示
 
 Author: PlookingII Team
-Version: 1.0.0
 """
 
 import objc
@@ -26,7 +25,6 @@ from ...imports import logging, objc
 # pyright: reportUndefinedVariable=false
 
 logger = logging.getLogger(APP_NAME)
-
 
 class UnifiedStatusController:
     """统一状态控制器
@@ -585,7 +583,6 @@ class UnifiedStatusController:
     def __del__(self):
         """析构函数"""
         self.cleanup()
-
 
 # 向后兼容的别名
 StatusBarController = UnifiedStatusController

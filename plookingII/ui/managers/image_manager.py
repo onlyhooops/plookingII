@@ -11,15 +11,13 @@ import time
 
 from ...config.constants import APP_NAME, IMAGE_PROCESSING_CONFIG
 from ...config.manager import get_config, set_config
-from ...core.bidirectional_cache import BidirectionalCachePool
-from ...core.cache import AdvancedImageCache
 from ...core.image_processing import HybridImageProcessor
+from ...core.simple_cache import AdvancedImageCache, BidirectionalCachePool
 
-# 使用统一监控系统适配器（自动适配到 UnifiedMonitorV2）
-from ...monitor import MemoryMonitor, PerformanceMonitor
+# 使用统一监控系统
+from ...monitor import get_unified_monitor
 
 logger = logging.getLogger(APP_NAME)
-
 
 class ImageManager:
     """图像管理器，负责图像加载、缓存和处理策略"""
@@ -32,17 +30,12 @@ class ImageManager:
         """
         self.main_window = main_window
 
-        # 内存监控器（使用适配器自动连接到 UnifiedMonitorV2）
-        self.memory_monitor = MemoryMonitor()
-        self.perf_monitor = PerformanceMonitor(history_size=1000)
+        # 统一监控器
+        self.monitor = get_unified_monitor()
         self.slim_mode = get_config("feature.slim_mode", False)
 
         # 高级图像缓存
         self.image_cache = AdvancedImageCache()
-        try:
-            self.image_cache.memory_monitor = self.memory_monitor
-        except Exception:
-            pass
 
         # 竖向图片缓存优化配置
         self._portrait_cache_config = {
@@ -70,7 +63,6 @@ class ImageManager:
             preload_count=5,
             keep_previous=3,
             image_processor=self.hybrid_processor,
-            memory_monitor=self.memory_monitor,
             advanced_cache=self.image_cache,
         )
 
@@ -215,7 +207,7 @@ class ImageManager:
     def _record_cache_hit(self):
         """记录缓存命中"""
         try:
-            self.perf_monitor.record_cache_hit("main")
+            self.monitor.record_operation("cache_hit", 0, cache_hit=True)
         except Exception:
             pass
 
@@ -240,9 +232,9 @@ class ImageManager:
 
         # 记录性能
         try:
-            self.perf_monitor.record_load_time(
-                image_path,
-                max(0.0, time.time() - t_start),
+            self.monitor.record_operation(
+                "load_image",
+                max(0.0, time.time() - t_start) * 1000,  # 转换为毫秒
                 method=method,
                 success=True
             )
@@ -956,7 +948,11 @@ class ImageManager:
 
     def _check_memory_usage(self):
         """检查内存使用情况"""
-        memory_info = self.memory_monitor.get_memory_info()
+        memory_status = self.monitor.get_memory_status()
+        memory_info = {
+            "available_mb": memory_status.available_mb,
+            "used_mb": memory_status.used_mb,
+        }
         cache_stats = self.image_cache.get_stats()
 
         # 从各层缓存统计中获取内存使用量
@@ -987,7 +983,7 @@ class ImageManager:
             self._emergency_memory_cleanup()
         elif available_mb < 1000:  # 提升到1000MB
             self._aggressive_memory_cleanup()
-        elif self.memory_monitor.is_memory_high() or total_cache_memory > 400:  # 提升到400MB
+        elif memory_status.pressure_level in ("high", "critical") or total_cache_memory > 400:  # 提升到400MB
             self._moderate_memory_cleanup()
         elif total_cache_memory > 300:  # 提升到300MB
             self._preventive_memory_cleanup()
@@ -1003,8 +999,6 @@ class ImageManager:
                 self.image_cache.preload_cache.clear()
             if hasattr(self.image_cache, "preload_memory_mb"):
                 self.image_cache.preload_memory_mb = 0
-            if hasattr(self.memory_monitor, "update_preload_memory_usage"):
-                self.memory_monitor.update_preload_memory_usage(0)
         except Exception:
             pass
 
@@ -1028,7 +1022,9 @@ class ImageManager:
             except Exception:
                 pass
 
-        self.memory_monitor.force_garbage_collection()
+        # 强制垃圾回收
+        import gc
+        gc.collect()
 
     def _aggressive_memory_cleanup(self):
         """激进内存清理"""
@@ -1044,8 +1040,8 @@ class ImageManager:
                         self.image_cache._evict_oldest_preload()
                 except Exception:
                     break
-        if hasattr(self.memory_monitor, "update_preload_memory_usage"):
-            self.memory_monitor.update_preload_memory_usage(getattr(self.image_cache, "preload_memory_mb", 0))
+        # 预加载内存使用更新已移除（统一监控自动管理）
+        pass
 
         cache_size = self.image_cache.get_size()
         if cache_size > 3:
@@ -1054,7 +1050,9 @@ class ImageManager:
                 if self.image_cache.get_size() > 3:
                     self.image_cache._evict_oldest()
 
-        self.memory_monitor.force_garbage_collection()
+        # 强制垃圾回收
+        import gc
+        gc.collect()
 
     def _moderate_memory_cleanup(self):
         """适度内存清理"""
@@ -1074,8 +1072,8 @@ class ImageManager:
                         self.image_cache._evict_oldest_preload()
                 except Exception:
                     break
-        if hasattr(self.memory_monitor, "update_preload_memory_usage"):
-            self.memory_monitor.update_preload_memory_usage(getattr(self.image_cache, "preload_memory_mb", 0))
+        # 预加载内存使用更新已移除（统一监控自动管理）
+        pass
 
         cache_size = self.image_cache.get_size()
         if cache_size > 5:
@@ -1102,8 +1100,8 @@ class ImageManager:
                         self.image_cache._evict_oldest_preload()
                 except Exception:
                     break
-        if hasattr(self.memory_monitor, "update_preload_memory_usage"):
-            self.memory_monitor.update_preload_memory_usage(getattr(self.image_cache, "preload_memory_mb", 0))
+        # 预加载内存使用更新已移除（统一监控自动管理）
+        pass
 
         cache_size = self.image_cache.get_size()
         if cache_size > 8:
@@ -1114,7 +1112,8 @@ class ImageManager:
 
     def _trim_preload_if_needed(self):
         """根据需要修剪预加载缓存"""
-        if self.memory_monitor.is_preload_memory_high():
+        memory_status = self.monitor.get_memory_status()
+        if memory_status.pressure_level in ("high", "critical"):
             preload_size = len(self.image_cache.preload_cache) if getattr(self.image_cache, "preload_cache", None) is not None else 0
             if preload_size > 3:
                 items_to_remove = preload_size - 3
@@ -1129,7 +1128,8 @@ class ImageManager:
 
     def _trim_main_caches_if_needed(self):
         """根据需要修剪主缓存"""
-        if self.memory_monitor.is_main_memory_high():
+        memory_status = self.monitor.get_memory_status()
+        if memory_status.pressure_level in ("high", "critical"):
             preview_size = len(self.image_cache.preview_cache)
             if preview_size > 3:
                 items_to_remove = preview_size - 3
@@ -1151,9 +1151,6 @@ class ImageManager:
             return
 
         def _monitor_once():
-            if hasattr(self.image_cache, "get_preload_memory_usage") and hasattr(self.memory_monitor, "update_preload_memory_usage"):
-                preload_memory_usage = self.image_cache.get_preload_memory_usage()
-                self.memory_monitor.update_preload_memory_usage(preload_memory_usage)
             self._trim_preload_if_needed()
             self._trim_main_caches_if_needed()
             self._apply_background_policy()
@@ -1176,15 +1173,16 @@ class ImageManager:
 
     def _apply_background_policy(self):
         """应用后台策略"""
-        memory_info = self.memory_monitor.get_memory_info()
-        if memory_info["available_mb"] < 800:  # 提升到800MB，适配4GB内存预算
+        memory_status = self.monitor.get_memory_status()
+        if memory_status.available_mb < 800:  # 提升到800MB，适配4GB内存预算
             self._moderate_memory_cleanup()
 
         # 根据性能评分与建议进行轻量自适应调参（非破坏性）
         try:
-            if hasattr(self, "perf_monitor") and self.perf_monitor:
-                score =  self.perf_monitor.get_score()
-                suggestions = self.perf_monitor.get_optimization_suggestions()
+            stats = self.monitor.get_stats()
+            if stats["total_operations"] > 0:
+                score = stats.get("success_rate", 1.0)
+                suggestions = []
                 tuning = suggestions[-1]["tuning"] if suggestions and isinstance(suggestions[-1], dict) and "tuning" in suggestions[-1] else {}
 
                 # 统一的tier与回拨逻辑

@@ -13,7 +13,6 @@
 - 敏感信息过滤
 
 Author: PlookingII Team
-Version: 1.0.0
 """
 
 import json
@@ -30,7 +29,6 @@ from typing import Any
 
 from ..config.constants import APP_NAME
 
-
 class LogLevel(Enum):
     """日志级别枚举"""
     DEBUG = "DEBUG"
@@ -38,7 +36,6 @@ class LogLevel(Enum):
     WARNING = "WARNING"
     ERROR = "ERROR"
     CRITICAL = "CRITICAL"
-
 
 class LogCategory(Enum):
     """日志类别枚举"""
@@ -55,7 +52,6 @@ class LogCategory(Enum):
     DEBUG = "debug"
     UNKNOWN = "unknown"
 
-
 @dataclass
 class LogEntry:
     """结构化日志条目"""
@@ -71,7 +67,6 @@ class LogEntry:
     metadata: dict[str, Any] = field(default_factory=dict)
     exception_info: str | None = None
     performance_data: dict[str, Any] | None = None
-
 
 class StructuredFormatter(logging.Formatter):
     """结构化日志格式化器"""
@@ -119,7 +114,6 @@ class StructuredFormatter(logging.Formatter):
 
         return formatted
 
-
 class JSONFormatter(logging.Formatter):
     """JSON日志格式化器"""
 
@@ -162,7 +156,6 @@ class JSONFormatter(logging.Formatter):
             log_entry["performance"] = record.performance_data
 
         return json.dumps(log_entry, ensure_ascii=False)
-
 
 class EnhancedLogger:
     """增强日志记录器"""
@@ -403,10 +396,8 @@ class EnhancedLogger:
             perf_data["duration"] = duration
             self.log_performance(operation, duration, perf_data)
 
-
 # 全局增强日志记录器实例
 enhanced_logger = EnhancedLogger()
-
 
 def get_enhanced_logger(name: str = APP_NAME) -> EnhancedLogger:
     """获取增强日志记录器实例
@@ -421,22 +412,18 @@ def get_enhanced_logger(name: str = APP_NAME) -> EnhancedLogger:
         return enhanced_logger
     return EnhancedLogger(name)
 
-
 # 便捷函数
 def log_performance(operation: str, duration: float, metadata: dict[str, Any] | None = None):
     """记录性能日志"""
     enhanced_logger.log_performance(operation, duration, metadata)
 
-
 def log_user_action(action: str, metadata: dict[str, Any] | None = None):
     """记录用户行为日志"""
     enhanced_logger.log_user_action(action, metadata)
 
-
 def log_error(error: Exception, context: str = "", metadata: dict[str, Any] | None = None):
     """记录错误日志"""
     enhanced_logger.log_error(error, context, metadata)
-
 
 @contextmanager
 def performance_timer(operation: str, metadata: dict[str, Any] | None = None):

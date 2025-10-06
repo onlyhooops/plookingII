@@ -12,7 +12,6 @@
 - 错误统计和分析
 
 Author: PlookingII Team
-Version: 1.0.0
 """
 
 import functools
@@ -26,7 +25,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum
 from logging.handlers import RotatingFileHandler
-from typing import Any, Optional
+from typing import Any
 
 
 class ErrorSeverity(Enum):
@@ -35,7 +34,6 @@ class ErrorSeverity(Enum):
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
-
 
 class ErrorCategory(Enum):
     """错误类别"""
@@ -51,9 +49,7 @@ class ErrorCategory(Enum):
     PERFORMANCE = "performance"
     UNKNOWN = "unknown"
 
-
 @dataclass
-
 
 class ErrorInfo:
     """错误信息"""
@@ -66,7 +62,6 @@ class ErrorInfo:
     recovery_action: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
-
 class PlookingIIError(Exception):
     """PlookingII基础异常类"""
 
@@ -77,13 +72,11 @@ class PlookingIIError(Exception):
         self.severity = severity
         self.metadata = kwargs
 
-
 class ConfigurationError(PlookingIIError):
     """配置错误"""
 
     def __init__(self, message: str, **kwargs):
         super().__init__(message, ErrorCategory.CONFIGURATION, ErrorSeverity.MEDIUM, **kwargs)
-
 
 class ImageProcessingError(PlookingIIError):
     """图像处理错误"""
@@ -91,13 +84,11 @@ class ImageProcessingError(PlookingIIError):
     def __init__(self, message: str, severity: ErrorSeverity = ErrorSeverity.MEDIUM, **kwargs):
         super().__init__(message, ErrorCategory.IMAGE_PROCESSING, severity, **kwargs)
 
-
 class MemoryError(PlookingIIError):
     """内存错误"""
 
     def __init__(self, message: str, **kwargs):
         super().__init__(message, ErrorCategory.MEMORY, ErrorSeverity.HIGH, **kwargs)
-
 
 class FileSystemError(PlookingIIError):
     """文件系统错误"""
@@ -105,20 +96,17 @@ class FileSystemError(PlookingIIError):
     def __init__(self, message: str, **kwargs):
         super().__init__(message, ErrorCategory.FILE_SYSTEM, ErrorSeverity.MEDIUM, **kwargs)
 
-
 class UIError(PlookingIIError):
     """UI错误"""
 
     def __init__(self, message: str, **kwargs):
         super().__init__(message, ErrorCategory.UI, ErrorSeverity.MEDIUM, **kwargs)
 
-
 class DragDropError(PlookingIIError):
     """拖拽操作错误"""
 
     def __init__(self, message: str, severity: ErrorSeverity = ErrorSeverity.LOW, **kwargs):
         super().__init__(message, ErrorCategory.UI, severity, **kwargs)
-
 
 class FolderValidationError(PlookingIIError):
     """文件夹验证错误"""
@@ -127,13 +115,11 @@ class FolderValidationError(PlookingIIError):
         super().__init__(message, ErrorCategory.FILE_SYSTEM, ErrorSeverity.LOW,
                         folder_path=folder_path, **kwargs)
 
-
 class CacheError(PlookingIIError):
     """缓存错误"""
 
     def __init__(self, message: str, severity: ErrorSeverity = ErrorSeverity.LOW, **kwargs):
-        super().__init__(message, ErrorCategory.MEMORY, severity, **kwargs)
-
+        super().__init__(message, ErrorCategory.CACHE, severity, **kwargs)
 
 class ErrorHandler:
     """错误处理器"""
@@ -440,7 +426,6 @@ class ErrorHandler:
                 "recent_errors": len([e for e in self._error_history if e.timestamp > __import__("time").time() - 3600])
             }
 
-
 def error_handler(category: ErrorCategory = ErrorCategory.UNKNOWN,
                  severity: ErrorSeverity = ErrorSeverity.MEDIUM,
                  context: str = ""):
@@ -472,9 +457,7 @@ def error_handler(category: ErrorCategory = ErrorCategory.UNKNOWN,
         return wrapper
     return decorator
 
-
 @contextmanager
-
 
 def error_context(context: str, category: ErrorCategory = ErrorCategory.UNKNOWN):
     """错误上下文管理器
@@ -494,10 +477,8 @@ def error_context(context: str, category: ErrorCategory = ErrorCategory.UNKNOWN)
 # 全局错误处理器实例
 global_error_handler = ErrorHandler()
 
-
 # ========== 轮转文件日志与全局异常钩子 ==========
 _ERROR_LOG_PATH: str | None = None
-
 
 def _default_log_dir() -> str:
     """获取默认日志目录（macOS 优先 ~/Library/Logs/PlookingII，失败回退到临时目录）。"""
@@ -515,7 +496,6 @@ def _default_log_dir() -> str:
         except Exception:
             pass
         return base
-
 
 def setup_error_logging(max_bytes: int = 2 * 1024 * 1024, backup_count: int = 3) -> str:
     """配置轮转文件日志处理器，并附加到 root logger。
@@ -559,11 +539,9 @@ def setup_error_logging(max_bytes: int = 2 * 1024 * 1024, backup_count: int = 3)
         # 安静失败，不影响主流程
         return log_path
 
-
 def get_error_log_path() -> str | None:
     """返回当前错误日志路径（若已初始化）。"""
     return _ERROR_LOG_PATH
-
 
 def install_global_exception_hook() -> None:
     """安装全局异常钩子，将未捕获异常记录到日志并通过统一处理器记录。"""
@@ -582,7 +560,6 @@ def install_global_exception_hook() -> None:
     except Exception:
         pass
 
-
 # 测试辅助：显式触发当前 excepthook（不抛出）
 def _invoke_global_excepthook(err: Exception) -> None:  # pragma: no cover - 简单桥接
     try:
@@ -591,7 +568,6 @@ def _invoke_global_excepthook(err: Exception) -> None:  # pragma: no cover - 简
             hook(type(err), err, err.__traceback__)
     except Exception:
         pass
-
 
 # 模块导入时尝试初始化日志与异常钩子（静默失败）
 try:

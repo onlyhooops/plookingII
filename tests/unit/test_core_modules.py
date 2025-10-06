@@ -2,10 +2,11 @@
 核心模块单元测试
 演示复杂模块的测试策略
 """
-import pytest
-from unittest.mock import Mock, patch, MagicMock
 import threading
 import time
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 
 @pytest.mark.unit
@@ -42,29 +43,32 @@ class TestCoreImports:
 class TestCacheModules:
     """缓存模块测试 - 带超时保护"""
     
-    def test_cache_interface_import(self):
-        """测试缓存接口导入"""
+    def test_simple_cache_import(self):
+        """测试简化缓存导入"""
         try:
-            from plookingII.core import cache_interface
-            assert cache_interface is not None
+            from plookingII.core import simple_cache
+            assert simple_cache is not None
+            # 测试关键类
+            from plookingII.core.simple_cache import (
+                AdvancedImageCache,
+                BidirectionalCachePool,
+                SimpleImageCache,
+            )
+            assert SimpleImageCache is not None
+            assert AdvancedImageCache is not None
+            assert BidirectionalCachePool is not None
         except ImportError as e:
-            pytest.fail(f"缓存接口模块导入失败: {e}")
+            pytest.fail(f"简化缓存模块导入失败: {e}")
     
-    def test_unified_cache_import(self):
-        """测试统一缓存导入"""
+    def test_loading_module_import(self):
+        """测试加载模块导入"""
         try:
-            from plookingII.core.cache import unified_cache
-            assert unified_cache is not None
+            from plookingII.core import loading
+            assert loading is not None
+            from plookingII.core.loading import get_loader
+            assert get_loader is not None
         except ImportError as e:
-            pytest.fail(f"统一缓存模块导入失败: {e}")
-    
-    def test_bidirectional_cache_import(self):
-        """测试双向缓存导入"""
-        try:
-            from plookingII.core import bidirectional_cache
-            assert bidirectional_cache is not None
-        except ImportError as e:
-            pytest.fail(f"双向缓存模块导入失败: {e}")
+            pytest.fail(f"加载模块导入失败: {e}")
 
 
 @pytest.mark.unit

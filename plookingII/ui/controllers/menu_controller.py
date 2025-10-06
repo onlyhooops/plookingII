@@ -26,7 +26,6 @@ from ...utils.file_utils import FileUtils
 
 logger = logging.getLogger(APP_NAME)
 
-
 class MenuController:
     """
     菜单控制器
@@ -95,11 +94,11 @@ class MenuController:
             ui_strings = get_ui_string_manager()
 
             alert = NSAlert.alloc().init()
-            alert.setMessageText_(APP_NAME)
+            alert.setMessageText_(ui_strings.get('shortcuts_help', 'title', '快捷键'))
 
             # 使用统一文案管理器获取快捷键帮助内容
             shortcuts_text = ui_strings.get_shortcuts_help_text()
-            alert.setInformativeText_(f"{ui_strings.get('shortcuts_help', 'title', '快捷键说明')}\n\n{shortcuts_text}")
+            alert.setInformativeText_(shortcuts_text)
 
             # 使用统一按钮文案
             alert.addButtonWithTitle_(ui_strings.get("buttons", "ok", "确定"))

@@ -25,7 +25,7 @@ class TestConstants:
 
     def test_version(self):
         """测试版本号"""
-        assert constants.VERSION == "1.6.0"
+        assert constants.VERSION == "1.7.1"
         assert isinstance(constants.VERSION, str)
         # 验证版本号格式 x.y.z
         parts = constants.VERSION.split(".")

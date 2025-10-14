@@ -15,27 +15,26 @@
 - log_performance装饰器
 """
 
-from unittest.mock import MagicMock, Mock, patch, call
 import time
+from unittest.mock import MagicMock, Mock, call, patch
 
 import pytest
 
 from plookingII.core.cleanup_utils import (
+    batch_clear_cache,
+    cleanup_resources,
+    create_fallback_chain,
+    error_context,
+    is_callable_attr,
+    is_not_empty,
+    is_not_none,
+    log_performance,
+    logged_operation,
     safe_call,
     safe_method_call,
-    logged_operation,
-    error_context,
-    validate_and_get,
-    batch_clear_cache,
     unified_status_update,
-    create_fallback_chain,
-    is_not_none,
-    is_not_empty,
-    is_callable_attr,
-    cleanup_resources,
-    log_performance,
+    validate_and_get,
 )
-
 
 # ==================== safe_call 测试 ====================
 
@@ -162,7 +161,7 @@ class TestLoggedOperation:
         with patch('plookingII.core.cleanup_utils.logger') as mock_logger:
             with pytest.raises(ValueError):
                 test_func()
-            mock_logger.error.assert_called()
+            mock_logger.exception.assert_called()
 
     def test_logged_operation_with_args(self):
         """测试带参数的装饰器"""
@@ -194,14 +193,14 @@ class TestErrorContext:
             with pytest.raises(ValueError):
                 with error_context("失败上下文", reraise=True):
                     raise ValueError("Test error")
-            mock_logger.error.assert_called()
+            mock_logger.exception.assert_called()
 
     def test_error_context_exception_no_reraise(self):
         """测试异常不重新抛出"""
         with patch('plookingII.core.cleanup_utils.logger') as mock_logger:
             with error_context("失败上下文", reraise=False):
                 raise ValueError("Test error")
-            mock_logger.error.assert_called()
+            mock_logger.exception.assert_called()
 
 
 # ==================== validate_and_get 测试 ====================

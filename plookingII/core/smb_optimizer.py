@@ -133,7 +133,7 @@ class SMBOptimizer:
                 return ReadStrategy.SEQUENTIAL
 
         except Exception as e:
-            self.logger.error("Failed to optimize read strategy: %s", e)
+            self.logger.exception("Failed to optimize read strategy: %s", e)
             return ReadStrategy.SEQUENTIAL
 
     def batch_read_files(self, file_paths: list[str]) -> list[ReadResult]:

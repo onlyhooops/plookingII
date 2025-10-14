@@ -193,7 +193,7 @@ class UnifiedCacheManager(CacheInterface):
             return success_count == total_count
 
         except Exception as e:
-            logger.error("统一缓存清理失败: %s", e)
+            logger.exception("统一缓存清理失败: %s", e)
             return False
 
     def get_cache_stats(self) -> dict[str, Any]:
@@ -251,7 +251,7 @@ class UnifiedStatusManager(StatusInterface):
                     logger.warning("设置状态消息失败 %s: {e}", name)
 
         except Exception as e:
-            logger.error("统一状态设置失败: %s", e)
+            logger.exception("统一状态设置失败: %s", e)
 
     def update_status_display(self, **kwargs) -> None:
         """更新状态显示 - 统一入口
@@ -270,7 +270,7 @@ class UnifiedStatusManager(StatusInterface):
                     logger.warning("更新状态显示失败 %s: {e}", name)
 
         except Exception as e:
-            logger.error("统一状态更新失败: %s", e)
+            logger.exception("统一状态更新失败: %s", e)
 
     def get_current_status(self) -> dict[str, Any]:
         """获取当前状态

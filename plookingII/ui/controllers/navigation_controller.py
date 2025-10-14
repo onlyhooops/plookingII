@@ -187,7 +187,7 @@ class NavigationController:
                     else:
                         self.main_window.rotate_image_counterclockwise()
                 except Exception as e:
-                    logger.error("后台旋转操作失败: %s", e)
+                    logger.exception("后台旋转操作失败: %s", e)
 
             # 启动后台线程
             import threading
@@ -196,7 +196,7 @@ class NavigationController:
             thread.start()
 
         except Exception as e:
-            logger.error("启动旋转线程失败: %s", e)
+            logger.exception("启动旋转线程失败: %s", e)
 
     def _handle_navigation_key(self, direction):
         """处理导航按键的防抖动逻辑（性能优化版）

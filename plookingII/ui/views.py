@@ -590,7 +590,7 @@ class AdaptiveImageView(NSImageView):
                 logger.warning("显示右键菜单失败")
 
         except Exception as e:
-            logger.error("显示右键菜单失败: %s", e)
+            logger.exception("显示右键菜单失败: %s", e)
 
     def openWithDefaultApp_(self, sender):
         """使用默认应用程序打开文件
@@ -618,7 +618,7 @@ class AdaptiveImageView(NSImageView):
                 # result是NSRunningApplication对象，表示成功启动的应用
                 logger.info("成功使用默认应用程序打开文件")
         except Exception as e:
-            logger.error("使用默认应用程序打开文件失败: %s", e)
+            logger.exception("使用默认应用程序打开文件失败: %s", e)
 
     def openWithApp_(self, sender):
         """使用指定应用程序打开文件
@@ -650,7 +650,7 @@ class AdaptiveImageView(NSImageView):
                 # result是NSRunningApplication对象，表示成功启动的应用
                 logger.info("成功使用 %s 打开文件", app_name)
         except Exception as e:
-            logger.error("使用指定应用程序打开文件失败: %s", e)
+            logger.exception("使用指定应用程序打开文件失败: %s", e)
 
     def openWithOtherApp_(self, sender):
         """使用其他应用程序打开文件（显示文件选择对话框）
@@ -668,7 +668,7 @@ class AdaptiveImageView(NSImageView):
             else:
                 logger.warning("应用程序选择对话框显示失败")
         except Exception as e:
-            logger.error("显示应用程序选择对话框失败: %s", e)
+            logger.exception("显示应用程序选择对话框失败: %s", e)
 
     def drawRect_(self, rect):
         NSColor.clearColor().set()

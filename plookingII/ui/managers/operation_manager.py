@@ -446,7 +446,7 @@ class OperationManager:
             except ValueError:
                 self._show_info_("请输入有效的数字。")
             except Exception as e:
-                logger.error("跳转到文件失败: %s", e)
+                logger.exception("跳转到文件失败: %s", e)
                 self._show_info_(f"跳转失败: {e!s}")
 
     def show_in_finder(self):
@@ -574,7 +574,7 @@ class OperationManager:
                         self.main_window.onRotationCompleted_({"success": False, "direction": direction})
 
             except Exception as e:
-                logger.error("旋转操作失败: %s", e)
+                logger.exception("旋转操作失败: %s", e)
                 try:
                     from Foundation import NSOperationQueue
 
@@ -634,7 +634,7 @@ class OperationManager:
             return processor.rotate_image(image_path, direction, self._on_rotation_callback)
 
         except Exception as e:
-            logger.error("执行旋转失败 %s: {e}", image_path)
+            logger.exception("执行旋转失败 %s: {e}", image_path)
             return False
 
     def _on_rotation_callback(self, image_path, direction):

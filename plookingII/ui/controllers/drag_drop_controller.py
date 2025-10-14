@@ -115,7 +115,7 @@ class DragDropController:
             logger.warning("拖拽验证失败: %s", e)
             return NSDragOperationNone
         except Exception as e:
-            logger.error("拖拽进入处理异常: %s", e)
+            logger.exception("拖拽进入处理异常: %s", e)
             return NSDragOperationNone
 
     def dragging_updated(self, sender):
@@ -258,7 +258,7 @@ class DragDropController:
                 error = DragDropError(f"拖拽操作失败: {e!s}")
                 show_error(error, "拖拽操作")
 
-            logger.error("拖拽操作执行失败: %s", e)
+            logger.exception("拖拽操作执行失败: %s", e)
             return False
 
     def _clear_drag_highlight(self):

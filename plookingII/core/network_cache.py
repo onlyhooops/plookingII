@@ -295,7 +295,7 @@ class NetworkCache:
                     self.logger.info("Cleaned up %s expired cache entries", len(expired_keys))
 
         except Exception as e:
-            self.logger.error("Failed to cleanup expired cache: %s", e)
+            self.logger.exception("Failed to cleanup expired cache: %s", e)
 
     def clear_all_cache(self):
         """清空所有缓存"""

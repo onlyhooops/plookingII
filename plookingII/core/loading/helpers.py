@@ -84,7 +84,7 @@ def load_with_nsimage(file_path: str) -> Any | None:
         image = NSImage.alloc().initWithContentsOfFile_(file_path)
         return image
     except Exception as e:
-        logger.error("NSImage加载失败 %s: {e}", file_path)
+        logger.exception("NSImage加载失败 %s: {e}", file_path)
         return None
 
 
@@ -138,7 +138,7 @@ def load_with_quartz(file_path: str, target_size: tuple[int, int] | None = None,
         return CGImageSourceCreateImageAtIndex(source, 0, options)
 
     except Exception as e:
-        logger.error("Quartz加载失败 %s: {e}", file_path)
+        logger.exception("Quartz加载失败 %s: {e}", file_path)
         return None
 
 
@@ -161,7 +161,7 @@ def load_with_memory_map(file_path: str, target_size: tuple[int, int] | None = N
             image = NSImage.alloc().initWithData_(data)
             return image
     except Exception as e:
-        logger.error("内存映射加载失败 %s: {e}", file_path)
+        logger.exception("内存映射加载失败 %s: {e}", file_path)
         return None
 
 
@@ -193,7 +193,7 @@ def cgimage_to_nsimage(cgimage: Any) -> Any | None:
 
         return image
     except Exception as e:
-        logger.error("CGImage转NSImage失败: %s", e)
+        logger.exception("CGImage转NSImage失败: %s", e)
         return None
 
 
@@ -230,7 +230,7 @@ def get_image_dimensions(file_path: str) -> tuple[int, int] | None:
 
         return (int(width), int(height))
     except Exception as e:
-        logger.error("获取图片尺寸失败 %s: {e}", file_path)
+        logger.exception("获取图片尺寸失败 %s: {e}", file_path)
         return None
 
 

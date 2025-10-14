@@ -78,7 +78,7 @@ class FileWatcherStrategy:
             try:
                 callback(event)
             except Exception as e:
-                logger.error("文件监听回调执行失败: %s", e)
+                logger.exception("文件监听回调执行失败: %s", e)
 
     def start_watching(self, file_path: str):
         """开始监听文件"""
@@ -119,7 +119,7 @@ class PollingFileWatcher(FileWatcherStrategy):
                 self._start_polling()
 
         except Exception as e:
-            logger.error("开始监听文件失败 %s: %s", file_path, e)
+            logger.exception("开始监听文件失败 %s: %s", file_path, e)
 
     def stop_watching(self):
         """停止监听"""
@@ -151,7 +151,7 @@ class PollingFileWatcher(FileWatcherStrategy):
             try:
                 self._check_files()
             except Exception as e:
-                logger.error("文件监听轮询错误: %s", e)
+                logger.exception("文件监听轮询错误: %s", e)
 
     def _check_files(self):
         """检查所有监听的文件"""
@@ -262,7 +262,7 @@ try:
                         logger.info("Watchdog文件监听已启动")
 
                 except Exception as e:
-                    logger.error("添加目录监听失败 %s: %s", file_dir, e)
+                    logger.exception("添加目录监听失败 %s: %s", file_dir, e)
             else:
                 self.watched_dirs[file_dir] += 1
 
@@ -273,7 +273,7 @@ try:
                     self.observer.stop()
                     self.observer.join(timeout=2.0)
                 except Exception as e:
-                    logger.error("停止文件监听失败: %s", e)
+                    logger.exception("停止文件监听失败: %s", e)
 
                 self.is_watching = False
                 self.watched_files.clear()
@@ -296,7 +296,7 @@ try:
                         logger.debug("重新添加目录监听: %s", file_dir)
 
             except Exception as e:
-                logger.error("重建目录监听失败: %s", e)
+                logger.exception("重建目录监听失败: %s", e)
 
         def remove_file(self, file_path: str):
             """移除对特定文件的监听"""

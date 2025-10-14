@@ -90,7 +90,7 @@ class ImageUpdateManager:
                 self._notify_update_callbacks(image_path, False)
 
         except Exception as e:
-            logger.error("设置当前监听图片失败: %s", e)
+            logger.exception("设置当前监听图片失败: %s", e)
 
     def clear_current_image(self):
         """清除当前监听的图片"""
@@ -122,7 +122,7 @@ class ImageUpdateManager:
                 self._handle_file_moved(event)
 
         except Exception as e:
-            logger.error("处理文件变化事件失败: %s", e)
+            logger.exception("处理文件变化事件失败: %s", e)
 
     def _handle_file_modified(self, event: FileChangeEvent):
         """处理文件修改事件
@@ -152,7 +152,7 @@ class ImageUpdateManager:
                     self.reload_current_image()
 
             except Exception as e:
-                logger.error("显示更新通知失败: %s", e)
+                logger.exception("显示更新通知失败: %s", e)
 
         # 在主线程中显示通知
         self._schedule_main_thread(show_update_notification)
@@ -181,7 +181,7 @@ class ImageUpdateManager:
                     self.main_window.navigation_controller._handle_navigation_key("right")
 
             except Exception as e:
-                logger.error("显示删除通知失败: %s", e)
+                logger.exception("显示删除通知失败: %s", e)
 
         self._schedule_main_thread(show_delete_notification)
 
@@ -206,7 +206,7 @@ class ImageUpdateManager:
                 show_info("图片已移动", f'图片已从 "{old_name}" 移动到 "{new_name}"。')
 
             except Exception as e:
-                logger.error("显示移动通知失败: %s", e)
+                logger.exception("显示移动通知失败: %s", e)
 
         self._schedule_main_thread(show_move_notification)
 
@@ -258,7 +258,7 @@ class ImageUpdateManager:
                 self._schedule_main_thread(show_reload_success)
 
         except Exception as e:
-            logger.error("重新加载图片失败: %s", e)
+            logger.exception("重新加载图片失败: %s", e)
 
             def show_reload_error():
                 show_info("重新加载失败", f"重新加载图片时发生错误: {e!s}")
@@ -276,7 +276,7 @@ class ImageUpdateManager:
             try:
                 callback(image_path, has_update)
             except Exception as e:
-                logger.error("更新状态回调执行失败: %s", e)
+                logger.exception("更新状态回调执行失败: %s", e)
 
     def _schedule_main_thread(self, func: Callable):
         """在主线程中执行函数
@@ -326,7 +326,7 @@ class ImageUpdateManager:
                 self._handle_file_deleted(event)
 
         except Exception as e:
-            logger.error("强制检查更新失败: %s", e)
+            logger.exception("强制检查更新失败: %s", e)
 
     def cleanup(self):
         """清理资源"""
@@ -337,4 +337,4 @@ class ImageUpdateManager:
             self.update_callbacks.clear()
             logger.info("图片更新管理器已清理")
         except Exception as e:
-            logger.error("清理图片更新管理器失败: %s", e)
+            logger.exception("清理图片更新管理器失败: %s", e)

@@ -142,7 +142,7 @@ class HybridImageProcessor:
             return result
 
         except Exception as e:
-            logger.error("Failed to load image {file_path}: %s", e)
+            logger.exception("Failed to load image {file_path}: %s", e)
             self._update_performance_stats(file_ext, time.time() - start_time)
             return None
 
@@ -385,7 +385,7 @@ class HybridImageProcessor:
             return strategy.load(file_path, target_size)
 
         except Exception as e:
-            logger.error("Strategy {strategy.name} failed to load {file_path}: %s", e)
+            logger.exception("Strategy {strategy.name} failed to load {file_path}: %s", e)
             return None
 
     def _update_performance_stats(self, file_ext: str, processing_time: float):
@@ -479,7 +479,7 @@ class HybridImageProcessor:
             return self.rotation_processor.rotate_image(image_path, direction, callback)
 
         except Exception as e:
-            logger.error("图像旋转失败 {image_path}: %s", e)
+            logger.exception("图像旋转失败 {image_path}: %s", e)
             return False
 
     def get_rotation_stats(self):

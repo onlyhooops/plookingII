@@ -85,7 +85,7 @@ def logged_operation(operation_name: str):
                 logger.debug("完成 %s", operation_name)
                 return result
             except Exception as e:
-                logger.error("%s 失败: %s", operation_name, e)
+                logger.exception("%s 失败: %s", operation_name, e)
                 raise
 
         return wrapper
@@ -109,7 +109,7 @@ def error_context(operation_name: str, reraise: bool = True):
         yield
         logger.debug("完成 %s", operation_name)
     except Exception as e:
-        logger.error("%s 失败: %s", operation_name, e)
+        logger.exception("%s 失败: %s", operation_name, e)
         if reraise:
             raise
 
@@ -232,7 +232,7 @@ def create_fallback_chain(*functions):
                 return func(*args, **kwargs)
             except Exception as e:
                 if i == len(functions) - 1:  # 最后一个函数
-                    logger.error("所有回退函数都失败，最后错误: %s", e)
+                    logger.exception("所有回退函数都失败，最后错误: %s", e)
                     raise
                 logger.debug("函数 %s 失败，尝试回退: %s", func.__name__, e)
         return None

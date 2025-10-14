@@ -149,7 +149,7 @@ def retry_on_failure(
                     return func(*args, **kwargs)
                 except exceptions as e:
                     if attempt == max_retries:
-                        logger.error("函数 %s 重试 {max_retries} 次后仍然失败: {e}", func.__name__)
+                        logger.exception("函数 %s 重试 {max_retries} 次后仍然失败: {e}", func.__name__)
                         raise
 
                     logger.debug("函数 %s 第 {attempt + 1} 次尝试失败，{current_delay}秒后重试: {e}", func.__name__)

@@ -199,7 +199,7 @@ class ErrorHandlingMixin:
                 try:
                     return handler(error, context)
                 except Exception as handler_error:
-                    self.logger.error("Error handler failed: %s", handler_error)
+                    self.logger.exception("Error handler failed: %s", handler_error)
 
         # 默认错误处理
         self.logger.error("Unhandled error in %s: {error}", context)
@@ -231,7 +231,7 @@ class ErrorHandlingMixin:
                     self.logger.warning("Operation failed (attempt %s/{max_retries + 1}): {error}", attempt + 1)
                     time.sleep(delay * (backoff**attempt))
                 else:
-                    self.logger.error("Operation failed after %s attempts: {error}", max_retries + 1)
+                    self.logger.exception("Operation failed after %s attempts: {error}", max_retries + 1)
 
         # 所有重试都失败，处理错误
         return self.handle_error(last_error, f"retry_operation({operation.__name__})")
@@ -411,7 +411,7 @@ class ComponentRegistry:
                     component.cleanup()
                     component.logger.info("Cleaned up component: %s", name)
                 except Exception as error:
-                    component.logger.error("Failed to cleanup component %s: {error}", name)
+                    component.logger.exception("Failed to cleanup component %s: {error}", name)
 
             self._components.clear()
 

@@ -310,7 +310,7 @@ class ConfigManager:
 
             logger.info("用户配置已保存: %s", config_file)
         except Exception as e:
-            logger.error("保存用户配置失败: %s", e)
+            logger.exception("保存用户配置失败: %s", e)
 
     def _apply_env_overrides(self):
         """应用环境变量覆盖"""
@@ -366,7 +366,7 @@ class ConfigManager:
                 if isinstance(value, str):
                     value.lower() in ("true", "false", "1", "0", "yes", "no")
         except (ValueError, TypeError):
-            logger.error("配置值类型错误: %s = {value}", key)
+            logger.exception("配置值类型错误: %s = {value}", key)
             return False
 
         # 自定义验证
@@ -376,7 +376,7 @@ class ConfigManager:
                     logger.error("配置值验证失败: %s = {value}", key)
                     return False
             except Exception as e:
-                logger.error("配置验证器执行失败: %s", e)
+                logger.exception("配置验证器执行失败: %s", e)
                 return False
 
         return True
@@ -387,7 +387,7 @@ class ConfigManager:
             try:
                 observer(key, old_value, new_value)
             except Exception as e:
-                logger.error("配置观察者通知失败: %s", e)
+                logger.exception("配置观察者通知失败: %s", e)
 
     # 配置验证器
     @staticmethod

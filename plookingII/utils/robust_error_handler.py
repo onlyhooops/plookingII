@@ -320,7 +320,7 @@ def boundary_check(check_func: Callable[[Any], bool], fallback: Any = None, erro
                     logger.warning("%s for {func.__name__}", error_msg)
                     return fallback
             except Exception as e:
-                logger.error("Boundary check error in %s: {e}", func.__name__)
+                logger.exception("Boundary check error in %s: {e}", func.__name__)
                 return fallback
 
             # 执行函数

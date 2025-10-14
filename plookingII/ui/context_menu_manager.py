@@ -264,7 +264,7 @@ class ContextMenuManager:
             return True
 
         except Exception as e:
-            logger.error("显示右键菜单失败: %s", e)
+            logger.exception("显示右键菜单失败: %s", e)
             return False
 
     def _create_menu(self, apps: list[AppInfo], file_path: str) -> NSMenu | None:

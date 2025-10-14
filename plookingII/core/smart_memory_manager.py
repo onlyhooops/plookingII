@@ -120,7 +120,7 @@ class SmartMemoryManager:
                 return result
 
             except Exception as e:
-                logger.error("Computation failed for key %s: {e}", key)
+                logger.exception("Computation failed for key %s: {e}", key)
                 raise
 
     def get_file_size_mb(self, file_path: str) -> float:
@@ -301,7 +301,7 @@ class SmartMemoryManager:
             return sys.getsizeof(image) / (1024 * 1024)
 
         except Exception as e:
-            logger.error("Failed to estimate image size: %s", e)
+            logger.exception("Failed to estimate image size: %s", e)
             return 1.0  # 默认返回1MB
 
     def force_cleanup(self):
@@ -378,5 +378,5 @@ class MemoryMonitor:
                 self.memory_manager.monitor_memory()
                 time.sleep(self.interval)
             except Exception as e:
-                logger.error("Memory monitoring error: %s", e)
+                logger.exception("Memory monitoring error: %s", e)
                 time.sleep(self.interval)

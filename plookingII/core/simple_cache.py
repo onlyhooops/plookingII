@@ -304,7 +304,7 @@ class AdvancedImageCache(SimpleImageCache):
             return image
 
         except Exception as e:
-            logger.error("Failed to load image %s: %s", image_path, e)
+            logger.exception("Failed to load image %s: %s", image_path, e)
             return None
 
     def get_file_size_mb(self, file_path: str) -> float:

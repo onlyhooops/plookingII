@@ -360,7 +360,7 @@ class MenuBuilder:
             return main_menu
 
         except Exception as e:
-            logger.error("构建菜单失败: %s", e)
+            logger.exception("构建菜单失败: %s", e)
             # 返回一个基本菜单作为回退
             fallback_menu = NSMenu.alloc().init()
             return fallback_menu

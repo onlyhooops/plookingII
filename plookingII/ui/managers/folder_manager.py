@@ -840,7 +840,7 @@ class FolderManager:
                 result = alert.runModal()
                 self._handle_task_history_dialog_result(result, history_data)
             except Exception as e:
-                logger.error("Failed to show history dialog: %s", e)
+                logger.exception("Failed to show history dialog: %s", e)
                 # 出错时默认重新开始
                 self.main_window.current_subfolder_index = 0
                 self.main_window.current_index = 0

@@ -132,7 +132,7 @@ class SystemController:
                     )
                 )
         except Exception as e:
-            logger.error("切换文件夹浏览顺序失败: %s", e)
+            logger.exception("切换文件夹浏览顺序失败: %s", e)
 
     def update_reverse_folder_order_menu(self, sender=None):
         """

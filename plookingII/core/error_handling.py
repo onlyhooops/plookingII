@@ -210,7 +210,7 @@ class ErrorHandler:
             try:
                 return handler(error_info)
             except Exception as handler_error:
-                self.logger.error("Error handler failed: %s", handler_error)
+                self.logger.exception("Error handler failed: %s", handler_error)
 
         # 尝试恢复
         return self._attempt_recovery(error_info)
@@ -366,7 +366,7 @@ class ErrorHandler:
                 self.logger.info("Error recovered: %s", error_info.error)
                 return result
             except Exception as recovery_error:
-                self.logger.error("Recovery failed: %s", recovery_error)
+                self.logger.exception("Recovery failed: %s", recovery_error)
 
         return None
 

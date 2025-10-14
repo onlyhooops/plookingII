@@ -63,7 +63,7 @@ class BackgroundTaskManager:
             )
             logger.debug("后台任务线程池初始化完成，最大工作线程数: %s", self._max_workers)
         except Exception as e:
-            logger.error("初始化后台任务线程池失败: %s", e)
+            logger.exception("初始化后台任务线程池失败: %s", e)
 
     # ==================== 任务调度管理 ====================
 

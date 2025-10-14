@@ -241,7 +241,7 @@ class UnifiedMonitor:
             return status
 
         except Exception as e:
-            logger.error("获取内存状态失败: %s", e)
+            logger.exception("获取内存状态失败: %s", e)
             return MemoryStatus(
                 used_mb=0.0,
                 available_mb=0.0,
@@ -303,7 +303,7 @@ class UnifiedMonitor:
             )
 
                 except Exception as e:
-                    logger.error("监控循环错误: %s", e)
+                    logger.exception("监控循环错误: %s", e)
 
                 # 等待间隔
                 self.stop_event.wait(interval)

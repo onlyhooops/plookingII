@@ -122,7 +122,7 @@ class OptimizedStrategy:
             return image
 
         except Exception as e:
-            logger.error("加载失败 %s: {e}", file_path)
+            logger.exception("加载失败 %s: {e}", file_path)
             self.stats.record_failure()
             return None
 
@@ -266,7 +266,7 @@ class PreviewStrategy:
             return None
 
         except Exception as e:
-            logger.error("预览加载失败 %s: {e}", file_path)
+            logger.exception("预览加载失败 %s: {e}", file_path)
             self.stats.record_failure()
             return None
 
@@ -312,7 +312,7 @@ class PreviewStrategy:
             return resized
 
         except Exception as e:
-            logger.error("缩放NSImage失败: %s", e)
+            logger.exception("缩放NSImage失败: %s", e)
             return image
 
     def get_stats(self) -> dict[str, Any]:

@@ -65,7 +65,7 @@ class RotationController:
             self.window.operation_manager.rotate_current_image("clockwise")
             logger.debug("向右旋转操作已启动")
         except Exception as e:
-            logger.error("向右旋转失败: %s", e)
+            logger.exception("向右旋转失败: %s", e)
             self._set_status_message("旋转操作失败")
 
     def rotate_counterclockwise(self):
@@ -96,7 +96,7 @@ class RotationController:
             self.window.operation_manager.rotate_current_image("counterclockwise")
             logger.debug("向左旋转操作已启动")
         except Exception as e:
-            logger.error("向左旋转失败: %s", e)
+            logger.exception("向左旋转失败: %s", e)
             self._set_status_message("旋转操作失败")
 
     def _set_status_message(self, message: str):

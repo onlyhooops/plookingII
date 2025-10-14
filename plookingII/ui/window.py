@@ -337,7 +337,7 @@ class MainWindow(NSWindow):
                 NSWindow.keyDown_(self, event)
             except Exception:
                 # 如果连系统调用都失败，记录错误但不继续递归
-                logger.error("系统键盘事件处理也失败，停止处理")
+                logger.exception("系统键盘事件处理也失败，停止处理")
 
     def zoomSliderChanged_(self, sender):
         """
@@ -556,42 +556,42 @@ class MainWindow(NSWindow):
         try:
             self.operation_manager.open_folder()
         except Exception as e:
-            logger.error("打开文件夹失败: %s", e)
+            logger.exception("打开文件夹失败: %s", e)
 
     def gotoKeepFolder_(self, sender):
         """跳转到保留文件夹"""
         try:
             self.operation_manager.goto_keep_folder()
         except Exception as e:
-            logger.error("跳转到保留文件夹失败: %s", e)
+            logger.exception("跳转到保留文件夹失败: %s", e)
 
     def jumpToFolder_(self, sender):
         """跳转到指定文件夹"""
         try:
             self.operation_manager.jump_to_folder()
         except Exception as e:
-            logger.error("跳转到指定文件夹失败: %s", e)
+            logger.exception("跳转到指定文件夹失败: %s", e)
 
     def gotoFile_(self, sender):
         """跳转到指定文件"""
         try:
             self.operation_manager.goto_file()
         except Exception as e:
-            logger.error("跳转到文件失败: %s", e)
+            logger.exception("跳转到文件失败: %s", e)
 
     def rotateImageClockwise_(self, sender):
         """菜单项：向右旋转90°"""
         try:
             self.rotate_image_clockwise()
         except Exception as e:
-            logger.error("菜单旋转失败: %s", e)
+            logger.exception("菜单旋转失败: %s", e)
 
     def rotateImageCounterclockwise_(self, sender):
         """菜单项：向左旋转90°"""
         try:
             self.rotate_image_counterclockwise()
         except Exception as e:
-            logger.error("菜单旋转失败: %s", e)
+            logger.exception("菜单旋转失败: %s", e)
 
     def onRotationCompleted_(self, result):
         """旋转完成回调
@@ -615,7 +615,7 @@ class MainWindow(NSWindow):
                 self.status_bar_controller.set_status_message(error_msg)
 
         except Exception as e:
-            logger.error("旋转完成回调处理失败: %s", e)
+            logger.exception("旋转完成回调处理失败: %s", e)
             self.status_bar_controller.set_status_message("旋转操作异常")
 
     def showInFinder_(self, sender):
@@ -623,14 +623,14 @@ class MainWindow(NSWindow):
         try:
             self.operation_manager.show_in_finder()
         except Exception as e:
-            logger.error("在Finder中显示当前图片失败: %s", e)
+            logger.exception("在Finder中显示当前图片失败: %s", e)
 
     def clearCache_(self, sender):
         """清除任务历史记录与缓存"""
         try:
             self.operation_manager.clear_cache()
         except Exception as e:
-            logger.error("清除缓存失败: %s", e)
+            logger.exception("清除缓存失败: %s", e)
 
     def set_status_message(self, msg):
         """设置状态消息 - 使用统一接口重构版本
@@ -792,7 +792,7 @@ class MainWindow(NSWindow):
             if hasattr(self, "status_bar_controller"):
                 self.status_bar_controller.set_update_indicator(has_update)
         except Exception as e:
-            logger.error("更新状态指示器失败: %s", e)
+            logger.exception("更新状态指示器失败: %s", e)
 
     def _save_task_progress(self):
         """委托给 HistoryManager"""

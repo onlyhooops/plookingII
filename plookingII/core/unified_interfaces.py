@@ -171,7 +171,7 @@ class UnifiedCacheManager(CacheInterface):
                     if self._cache_providers[cache_type].clear_cache():
                         success_count = 1
                 else:
-                    logger.warning(f"未找到缓存类型: {cache_type}")
+                    logger.warning("未找到缓存类型: %s", cache_type)
                     return False
             else:
                 # 清理所有缓存
@@ -181,7 +181,7 @@ class UnifiedCacheManager(CacheInterface):
                         if provider.clear_cache():
                             success_count += 1
                     except Exception as e:
-                        logger.warning(f"清理缓存失败 {name}: {e}")
+                        logger.warning("清理缓存失败 %s: {e}", name)
 
             # 更新统计
             self._stats["total_clears"] += success_count
@@ -189,11 +189,11 @@ class UnifiedCacheManager(CacheInterface):
 
             self._stats["last_clear_time"] = time.time()
 
-            logger.info(f"缓存清理完成: {success_count}/{total_count}")
+            logger.info("缓存清理完成: %s/{total_count}", success_count)
             return success_count == total_count
 
         except Exception as e:
-            logger.error(f"统一缓存清理失败: {e}")
+            logger.error("统一缓存清理失败: %s", e)
             return False
 
     def get_cache_stats(self) -> dict[str, Any]:
@@ -248,10 +248,10 @@ class UnifiedStatusManager(StatusInterface):
                 try:
                     provider.set_status_message(message, timeout)
                 except Exception as e:
-                    logger.warning(f"设置状态消息失败 {name}: {e}")
+                    logger.warning("设置状态消息失败 %s: {e}", name)
 
         except Exception as e:
-            logger.error(f"统一状态设置失败: {e}")
+            logger.error("统一状态设置失败: %s", e)
 
     def update_status_display(self, **kwargs) -> None:
         """更新状态显示 - 统一入口
@@ -267,10 +267,10 @@ class UnifiedStatusManager(StatusInterface):
                 try:
                     provider.update_status_display(**kwargs)
                 except Exception as e:
-                    logger.warning(f"更新状态显示失败 {name}: {e}")
+                    logger.warning("更新状态显示失败 %s: {e}", name)
 
         except Exception as e:
-            logger.error(f"统一状态更新失败: {e}")
+            logger.error("统一状态更新失败: %s", e)
 
     def get_current_status(self) -> dict[str, Any]:
         """获取当前状态

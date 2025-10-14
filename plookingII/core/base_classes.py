@@ -199,10 +199,10 @@ class ErrorHandlingMixin:
                 try:
                     return handler(error, context)
                 except Exception as handler_error:
-                    self.logger.error(f"Error handler failed: {handler_error}")
+                    self.logger.error("Error handler failed: %s", handler_error)
 
         # 默认错误处理
-        self.logger.error(f"Unhandled error in {context}: {error}")
+        self.logger.error("Unhandled error in %s: {error}", context)
         return None
 
     def retry_operation(self, operation: Callable, *args, **kwargs) -> Any:
@@ -228,10 +228,10 @@ class ErrorHandlingMixin:
             except Exception as error:
                 last_error = error
                 if attempt < max_retries:
-                    self.logger.warning(f"Operation failed (attempt {attempt + 1}/{max_retries + 1}): {error}")
+                    self.logger.warning("Operation failed (attempt %s/{max_retries + 1}): {error}", attempt + 1)
                     time.sleep(delay * (backoff**attempt))
                 else:
-                    self.logger.error(f"Operation failed after {max_retries + 1} attempts: {error}")
+                    self.logger.error("Operation failed after %s attempts: {error}", max_retries + 1)
 
         # 所有重试都失败，处理错误
         return self.handle_error(last_error, f"retry_operation({operation.__name__})")
@@ -291,7 +291,7 @@ class BaseComponent(StatisticsMixin, ConfigurationMixin, ErrorHandlingMixin, Log
         if config:
             self._config = config
 
-        self.logger.info(f"Initialized {self.__class__.__name__}")
+        self.logger.info("Initialized %s", self.__class__.__name__)
 
     @abstractmethod
     def initialize(self) -> bool:
@@ -368,7 +368,7 @@ class ComponentRegistry:
 
         with self._lock:
             self._components[name] = component
-            component.logger.info(f"Registered component: {name}")
+            component.logger.info("Registered component: %s", name)
 
     def get(self, name: str) -> BaseComponent | None:
         """获取组件
@@ -392,7 +392,7 @@ class ComponentRegistry:
             if name in self._components:
                 component = self._components.pop(name)
                 component.cleanup()
-                component.logger.info(f"Unregistered component: {name}")
+                component.logger.info("Unregistered component: %s", name)
 
     def get_all(self) -> dict[str, BaseComponent]:
         """获取所有组件
@@ -409,9 +409,9 @@ class ComponentRegistry:
             for name, component in list(self._components.items()):
                 try:
                     component.cleanup()
-                    component.logger.info(f"Cleaned up component: {name}")
+                    component.logger.info("Cleaned up component: %s", name)
                 except Exception as error:
-                    component.logger.error(f"Failed to cleanup component {name}: {error}")
+                    component.logger.error("Failed to cleanup component %s: {error}", name)
 
             self._components.clear()
 

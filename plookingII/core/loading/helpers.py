@@ -50,7 +50,7 @@ def get_file_size_mb(file_path: str, use_cache: bool = True) -> float:
 
         return size_mb
     except Exception as e:
-        logger.warning(f"获取文件大小失败 {file_path}: {e}")
+        logger.warning("获取文件大小失败 %s: {e}", file_path)
         return 0.0
 
 
@@ -84,7 +84,7 @@ def load_with_nsimage(file_path: str) -> Any | None:
         image = NSImage.alloc().initWithContentsOfFile_(file_path)
         return image
     except Exception as e:
-        logger.error(f"NSImage加载失败 {file_path}: {e}")
+        logger.error("NSImage加载失败 %s: {e}", file_path)
         return None
 
 
@@ -116,7 +116,7 @@ def load_with_quartz(file_path: str, target_size: tuple[int, int] | None = None,
         source = CGImageSourceCreateWithURL(url, None)
 
         if not source:
-            logger.warning(f"无法创建CGImageSource: {file_path}")
+            logger.warning("无法创建CGImageSource: %s", file_path)
             return None
 
         if thumbnail and target_size:
@@ -138,7 +138,7 @@ def load_with_quartz(file_path: str, target_size: tuple[int, int] | None = None,
         return CGImageSourceCreateImageAtIndex(source, 0, options)
 
     except Exception as e:
-        logger.error(f"Quartz加载失败 {file_path}: {e}")
+        logger.error("Quartz加载失败 %s: {e}", file_path)
         return None
 
 
@@ -161,7 +161,7 @@ def load_with_memory_map(file_path: str, target_size: tuple[int, int] | None = N
             image = NSImage.alloc().initWithData_(data)
             return image
     except Exception as e:
-        logger.error(f"内存映射加载失败 {file_path}: {e}")
+        logger.error("内存映射加载失败 %s: {e}", file_path)
         return None
 
 
@@ -193,7 +193,7 @@ def cgimage_to_nsimage(cgimage: Any) -> Any | None:
 
         return image
     except Exception as e:
-        logger.error(f"CGImage转NSImage失败: {e}")
+        logger.error("CGImage转NSImage失败: %s", e)
         return None
 
 
@@ -230,7 +230,7 @@ def get_image_dimensions(file_path: str) -> tuple[int, int] | None:
 
         return (int(width), int(height))
     except Exception as e:
-        logger.error(f"获取图片尺寸失败 {file_path}: {e}")
+        logger.error("获取图片尺寸失败 %s: {e}", file_path)
         return None
 
 
@@ -251,7 +251,7 @@ def get_loader(strategy: str = "auto"):
         return OptimizedStrategy()
     if strategy == "preview":
         return PreviewStrategy()
-    logger.warning(f"未知策略 {strategy}，使用 auto")
+    logger.warning("未知策略 %s，使用 auto", strategy)
     return AutoStrategy()
 
 

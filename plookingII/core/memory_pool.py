@@ -83,7 +83,7 @@ class ImageMemoryPool:
                 return None
 
             except Exception as e:
-                logger.error(f"Failed to get buffer: {e}")
+                logger.error("Failed to get buffer: %s", e)
                 return None
 
     def return_buffer(self, buffer: bytearray, original_size: int):
@@ -117,7 +117,7 @@ class ImageMemoryPool:
                     self.total_deallocations += 1
 
             except Exception as e:
-                logger.error(f"Failed to return buffer: {e}")
+                logger.error("Failed to return buffer: %s", e)
 
     def _find_best_pool_size(self, size_bytes: int) -> int:
         """找到最适合的池大小
@@ -164,7 +164,7 @@ class ImageMemoryPool:
 
             return False
         except Exception as e:
-            logger.error(f"Failed to cleanup pools: {e}")
+            logger.error("Failed to cleanup pools: %s", e)
             return False
 
     def clear_all(self):

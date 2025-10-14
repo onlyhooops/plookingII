@@ -480,7 +480,7 @@ class TaskHistoryManager:
         """
         # 验证路径，排除精选文件夹
         if not self._validate_recent_folder_path(folder_path):
-            logger.debug(f"拒绝添加无效的最近文件夹路径: {folder_path}")
+            logger.debug("拒绝添加无效的最近文件夹路径: %s", folder_path)
             return
 
         conn = None

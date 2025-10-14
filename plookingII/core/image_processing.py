@@ -125,7 +125,7 @@ class HybridImageProcessor:
             # 选择并执行加载策略（原图优先：禁用预览策略介入）
             selected_strategy = self._select_loading_strategy(strategy, file_size_mb)
             if not selected_strategy:
-                logger.warning(f"No suitable loading strategy found for {file_path}")
+                logger.warning("No suitable loading strategy found for %s", file_path)
                 return None
 
             # 执行加载
@@ -142,7 +142,7 @@ class HybridImageProcessor:
             return result
 
         except Exception as e:
-            logger.error(f"Failed to load image {file_path}: {e}")
+            logger.error("Failed to load image {file_path}: %s", e)
             self._update_performance_stats(file_ext, time.time() - start_time)
             return None
 
@@ -166,7 +166,7 @@ class HybridImageProcessor:
             self._file_size_cache[file_path] = size_mb
             return size_mb
         except Exception as e:
-            logger.warning(f"Failed to get file size for {file_path}: {e}")
+            logger.warning("Failed to get file size for {file_path}: %s", e)
             return 0.0
 
     def _get_file_extension(self, file_path: str) -> str:
@@ -356,11 +356,11 @@ class HybridImageProcessor:
             if strategy.can_handle("", file_size_mb):
                 return strategy
             # 策略无法处理，回退到自动策略
-            logger.debug(f"Strategy {strategy_name} cannot handle file size {file_size_mb}MB, falling back to auto")
+            logger.debug("Strategy {strategy_name} cannot handle file size %sMB, falling back to auto", file_size_mb)
             return self.loading_strategies["auto"]
 
         # 如果策略不存在，使用自动策略
-        logger.warning(f"Unknown loading strategy: {strategy_name}, falling back to auto")
+        logger.warning("Unknown loading strategy: %s, falling back to auto", strategy_name)
         return self.loading_strategies["auto"]
 
     def _execute_loading_strategy(self, strategy, file_path: str, target_size, file_size_mb: float):
@@ -378,14 +378,14 @@ class HybridImageProcessor:
         try:
             # 检查策略是否可以处理该文件
             if not strategy.can_handle(file_path, file_size_mb, target_size):
-                logger.warning(f"Strategy {strategy.name} cannot handle {file_path}")
+                logger.warning("Strategy {strategy.name} cannot handle %s", file_path)
                 return None
 
             # 执行加载
             return strategy.load(file_path, target_size)
 
         except Exception as e:
-            logger.error(f"Strategy {strategy.name} failed to load {file_path}: {e}")
+            logger.error("Strategy {strategy.name} failed to load {file_path}: %s", e)
             return None
 
     def _update_performance_stats(self, file_ext: str, processing_time: float):
@@ -401,7 +401,7 @@ class HybridImageProcessor:
             # 旧签名不区分策略与成功与否，这里仅累计时间
 
         except Exception as e:
-            logger.warning(f"Failed to update performance stats: {e}")
+            logger.warning("Failed to update performance stats: %s", e)
 
     def _init_dual_thread_processing(self):
         """初始化双线程处理机制"""
@@ -479,7 +479,7 @@ class HybridImageProcessor:
             return self.rotation_processor.rotate_image(image_path, direction, callback)
 
         except Exception as e:
-            logger.error(f"图像旋转失败 {image_path}: {e}")
+            logger.error("图像旋转失败 {image_path}: %s", e)
             return False
 
     def get_rotation_stats(self):

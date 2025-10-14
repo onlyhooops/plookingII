@@ -71,7 +71,7 @@ class ImageMemoryEstimator:
             return memory_mb
 
         except Exception as e:
-            logger.warning(f"Failed to estimate NSImage memory: {e}")
+            logger.warning("Failed to estimate NSImage memory: %s", e)
             return 1.0  # 回退到默认值
 
     def estimate_pil_memory(self, image) -> float:
@@ -107,7 +107,7 @@ class ImageMemoryEstimator:
             return memory_mb
 
         except Exception as e:
-            logger.warning(f"Failed to estimate PIL memory: {e}")
+            logger.warning("Failed to estimate PIL memory: %s", e)
             return 1.0
 
     def estimate_image_memory(self, image: Any) -> float:
@@ -126,7 +126,7 @@ class ImageMemoryEstimator:
             # PIL Image
             return self.estimate_pil_memory(image)
         # 未知类型，使用默认估算
-        logger.debug(f"Unknown image type: {type(image)}")
+        logger.debug("Unknown image type: %s", type(image))
         return 1.0
 
     def _get_nsimage_scale_factor(self, image: NSImage) -> float:

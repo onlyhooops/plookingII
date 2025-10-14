@@ -59,7 +59,7 @@ class OptimizedStrategy:
 
         global _optimized_init_logged
         if not _optimized_init_logged:
-            logger.info(f"OptimizedStrategy initialized - Quartz: {self.quartz_available}, Config: {self.config}")
+            logger.info("OptimizedStrategy initialized - Quartz: %s, Config: {self.config}", self.quartz_available)
             _optimized_init_logged = True
 
     def can_handle(self, file_path: str, file_size_mb: float, target_size: tuple[int, int] | None = None) -> bool:
@@ -95,7 +95,7 @@ class OptimizedStrategy:
             # 检查文件格式
             ext = os.path.splitext(file_path)[1].lower()
             if ext not in (".jpg", ".jpeg", ".png"):
-                logger.debug(f"不支持的文件格式: {ext}")
+                logger.debug("不支持的文件格式: %s", ext)
                 return None
 
             # 获取文件大小
@@ -122,7 +122,7 @@ class OptimizedStrategy:
             return image
 
         except Exception as e:
-            logger.error(f"加载失败 {file_path}: {e}")
+            logger.error("加载失败 %s: {e}", file_path)
             self.stats.record_failure()
             return None
 
@@ -143,7 +143,7 @@ class OptimizedStrategy:
         cgimage = load_with_quartz(file_path, target_size, thumbnail=False)
         if cgimage is None:
             # 加载失败，回退到NSImage
-            logger.warning(f"Quartz加载失败，回退到NSImage: {file_path}")
+            logger.warning("Quartz加载失败，回退到NSImage: %s", file_path)
             return self._load_small(file_path, target_size)
 
         self.stats.quartz_loads += 1
@@ -162,7 +162,7 @@ class OptimizedStrategy:
         image = load_with_memory_map(file_path, target_size)
         if image is None:
             # 加载失败，回退到Quartz
-            logger.warning(f"内存映射加载失败，回退到Quartz: {file_path}")
+            logger.warning("内存映射加载失败，回退到Quartz: %s", file_path)
             return self._load_medium(file_path, target_size)
 
         self.stats.memory_map_loads += 1
@@ -211,7 +211,7 @@ class PreviewStrategy:
         # 检查Quartz可用性
         self.quartz_available = check_quartz_availability()
 
-        logger.debug(f"PreviewStrategy initialized - max_size: {self.max_size}")
+        logger.debug("PreviewStrategy initialized - max_size: %s", self.max_size)
 
     def can_handle(self, file_path: str, file_size_mb: float, target_size: tuple[int, int] | None = None) -> bool:
         """检查是否可以处理"""
@@ -266,7 +266,7 @@ class PreviewStrategy:
             return None
 
         except Exception as e:
-            logger.error(f"预览加载失败 {file_path}: {e}")
+            logger.error("预览加载失败 %s: {e}", file_path)
             self.stats.record_failure()
             return None
 
@@ -312,7 +312,7 @@ class PreviewStrategy:
             return resized
 
         except Exception as e:
-            logger.error(f"缩放NSImage失败: {e}")
+            logger.error("缩放NSImage失败: %s", e)
             return image
 
     def get_stats(self) -> dict[str, Any]:

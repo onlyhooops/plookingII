@@ -210,7 +210,7 @@ class ErrorHandler:
             try:
                 return handler(error_info)
             except Exception as handler_error:
-                self.logger.error(f"Error handler failed: {handler_error}")
+                self.logger.error("Error handler failed: %s", handler_error)
 
         # 尝试恢复
         return self._attempt_recovery(error_info)
@@ -363,21 +363,21 @@ class ErrorHandler:
             try:
                 result = recovery_strategy(error_info)
                 error_info.recovery_action = "recovered"
-                self.logger.info(f"Error recovered: {error_info.error}")
+                self.logger.info("Error recovered: %s", error_info.error)
                 return result
             except Exception as recovery_error:
-                self.logger.error(f"Recovery failed: {recovery_error}")
+                self.logger.error("Recovery failed: %s", recovery_error)
 
         return None
 
     def _handle_configuration_error(self, error_info: ErrorInfo) -> Any:
         """处理配置错误"""
-        self.logger.error(f"Configuration error: {error_info.error}")
+        self.logger.error("Configuration error: %s", error_info.error)
         return None
 
     def _handle_image_processing_error(self, error_info: ErrorInfo) -> Any:
         """处理图像处理错误"""
-        self.logger.error(f"Image processing error: {error_info.error}")
+        self.logger.error("Image processing error: %s", error_info.error)
         return None
 
     def _handle_memory_error(self, error_info: ErrorInfo) -> Any:
@@ -387,12 +387,12 @@ class ErrorHandler:
 
     def _handle_file_system_error(self, error_info: ErrorInfo) -> Any:
         """处理文件系统错误"""
-        self.logger.error(f"File system error: {error_info.error}")
+        self.logger.error("File system error: %s", error_info.error)
         return None
 
     def _handle_generic_error(self, error_info: ErrorInfo) -> Any:
         """处理通用错误"""
-        self.logger.error(f"Generic error: {error_info.error}")
+        self.logger.error("Generic error: %s", error_info.error)
         return None
 
     def get_error_history(

@@ -69,7 +69,7 @@ class CGImageOptimizer:
                         self.stats["cgimage_creates"] += 1
                         return cgimage
                 except Exception as e:
-                    logger.warning(f"Failed to create CGImage for {image_path}: {e}")
+                    logger.warning("Failed to create CGImage for %s: {e}", image_path)
 
             return None
 
@@ -488,7 +488,7 @@ class PerformanceOptimizer:
                     self.memory_optimizer.record_cleanup(freed_bytes)
                     return True
                 except Exception as e:
-                    logger.warning(f"Cleanup callback failed: {e}")
+                    logger.warning("Cleanup callback failed: %s", e)
 
             # 清理CGImage缓存
             self.cgimage_optimizer.clear_cache()

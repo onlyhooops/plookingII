@@ -63,7 +63,7 @@ class SmartMemoryManager:
             "last_cleanup_time": 0,
         }
 
-        logger.info(f"Smart memory manager initialized: limit={memory_limit_mb}MB, threshold={cleanup_threshold}")
+        logger.info("Smart memory manager initialized: limit=%sMB, threshold={cleanup_threshold}", memory_limit_mb)
 
     def get_memory_usage_mb(self) -> float:
         """获取当前内存使用量（MB）"""
@@ -72,7 +72,7 @@ class SmartMemoryManager:
             memory_info = process.memory_info()
             return memory_info.rss / (1024 * 1024)
         except Exception as e:
-            logger.warning(f"Failed to get memory usage: {e}")
+            logger.warning("Failed to get memory usage: %s", e)
             return 0.0
 
     def get_memory_pressure(self) -> float:
@@ -120,7 +120,7 @@ class SmartMemoryManager:
                 return result
 
             except Exception as e:
-                logger.error(f"Computation failed for key {key}: {e}")
+                logger.error("Computation failed for key %s: {e}", key)
                 raise
 
     def get_file_size_mb(self, file_path: str) -> float:
@@ -176,7 +176,7 @@ class SmartMemoryManager:
                 self.cleanup_strategies[strategy]()
                 self.stats["cleanups_performed"] += 1
                 self.stats["last_cleanup_time"] = time.time()
-                logger.info(f"Performed {strategy} memory cleanup")
+                logger.info("Performed %s memory cleanup", strategy)
                 return strategy
 
             return "none"
@@ -301,7 +301,7 @@ class SmartMemoryManager:
             return sys.getsizeof(image) / (1024 * 1024)
 
         except Exception as e:
-            logger.error(f"Failed to estimate image size: {e}")
+            logger.error("Failed to estimate image size: %s", e)
             return 1.0  # 默认返回1MB
 
     def force_cleanup(self):
@@ -324,7 +324,7 @@ class SmartMemoryManager:
         """
         with self.lock:
             self.memory_limit_mb = limit_mb
-            logger.info(f"Memory limit updated to {limit_mb}MB")
+            logger.info("Memory limit updated to %sMB", limit_mb)
 
     def set_cleanup_threshold(self, threshold: float):
         """设置清理阈值
@@ -334,7 +334,7 @@ class SmartMemoryManager:
         """
         with self.lock:
             self.cleanup_threshold = max(0.0, min(1.0, threshold))
-            logger.info(f"Cleanup threshold updated to {self.cleanup_threshold}")
+            logger.info("Cleanup threshold updated to %s", self.cleanup_threshold)
 
 
 class MemoryMonitor:
@@ -378,5 +378,5 @@ class MemoryMonitor:
                 self.memory_manager.monitor_memory()
                 time.sleep(self.interval)
             except Exception as e:
-                logger.error(f"Memory monitoring error: {e}")
+                logger.error("Memory monitoring error: %s", e)
                 time.sleep(self.interval)

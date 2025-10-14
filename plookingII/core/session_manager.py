@@ -123,7 +123,7 @@ class SessionManager:
         if self.session_start_time:
             session_duration = time.time() - self.session_start_time
             self.total_work_time += session_duration
-            logger.info(f"结束工作会话，本次时长: {session_duration / 60:.1f}分钟")
+            logger.info("结束工作会话，本次时长: %.1f分钟", session_duration / 60)
 
         self.session_start_time = None
         self.current_session_time = 0

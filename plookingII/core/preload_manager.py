@@ -188,7 +188,7 @@ class PreloadExecutor:
                 time.sleep(0.01)
 
             except Exception as e:
-                logger.warning(f"预加载任务执行失败: {e}")
+                logger.warning("预加载任务执行失败: %s", e)
                 stats["errors"] += 1
 
         stats["duration"] = time.time() - stats["start_time"]
@@ -225,7 +225,7 @@ class PreloadExecutor:
                 return True
             return False
         except Exception as e:
-            logger.debug(f"加载图像失败 {task.image_key}: {e}")
+            logger.debug("加载图像失败 %s: {e}", task.image_key)
             return False
 
     def shutdown(self):

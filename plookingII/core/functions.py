@@ -110,7 +110,7 @@ def build_menu(app, win):
         import logging
 
         logger = logging.getLogger("PlookingII")
-        logger.error(f"菜单构建失败: {e}")
+        logger.error("菜单构建失败: %s", e)
 
         # 创建一个最基本的菜单作为回退
         fallback_menu = NSMenu.alloc().init()

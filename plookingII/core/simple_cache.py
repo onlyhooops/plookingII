@@ -71,7 +71,7 @@ class SimpleImageCache:
         self._misses = 0
         self._evictions = 0
 
-        logger.info(f"SimpleImageCache '{name}' initialized: max_items={max_items}, max_memory={max_memory_mb}MB")
+        logger.info("SimpleImageCache '%s' initialized: max_items=%s, max_memory=%sMB", name, max_items, max_memory_mb)
 
     def get(self, key: str) -> Any | None:
         """获取缓存项
@@ -92,10 +92,10 @@ class SimpleImageCache:
                 self._cache.move_to_end(key)
 
                 self._hits += 1
-                logger.debug(f"Cache HIT [{self.name}]: {key}")
+                logger.debug("Cache HIT [%s]: %s", self.name, key)
                 return entry.value
             self._misses += 1
-            logger.debug(f"Cache MISS [{self.name}]: {key}")
+            logger.debug("Cache MISS [%s]: %s", self.name, key)
             return None
 
     def put(self, key: str, value: Any, size_mb: float = 1.0):
@@ -125,7 +125,7 @@ class SimpleImageCache:
             self._current_memory_mb += size_mb
 
             logger.debug(
-                f"Cache PUT [{self.name}]: {key} (size={size_mb:.2f}MB, total={self._current_memory_mb:.2f}MB)"
+                "Cache PUT [%s]: %s (size=%.2fMB, total=%.2fMB)", self.name, key, size_mb, self._current_memory_mb
             )
 
     def remove(self, key: str) -> bool:
@@ -142,7 +142,7 @@ class SimpleImageCache:
                 entry = self._cache[key]
                 self._current_memory_mb -= entry.size_mb
                 del self._cache[key]
-                logger.debug(f"Cache REMOVE [{self.name}]: {key}")
+                logger.debug("Cache REMOVE [%s]: %s", self.name, key)
                 return True
             return False
 
@@ -153,7 +153,7 @@ class SimpleImageCache:
             memory = self._current_memory_mb
             self._cache.clear()
             self._current_memory_mb = 0.0
-            logger.info(f"Cache CLEAR [{self.name}]: removed {count} items, freed {memory:.2f}MB")
+            logger.info("Cache CLEAR [%s]: removed %s items, freed %.2fMB", self.name, count, memory)
 
     def _evict_lru(self):
         """淘汰最久未使用的项（LRU）"""
@@ -165,7 +165,7 @@ class SimpleImageCache:
         self._current_memory_mb -= entry.size_mb
         self._evictions += 1
 
-        logger.debug(f"Cache EVICT [{self.name}]: {key} (freed {entry.size_mb:.2f}MB)")
+        logger.debug("Cache EVICT [%s]: %s (freed %.2fMB)", self.name, key, entry.size_mb)
 
     def get_stats(self) -> dict:
         """获取缓存统计信息
@@ -275,7 +275,7 @@ class AdvancedImageCache(SimpleImageCache):
             if not force_reload:
                 cached = self.get(image_path, target_size=target_size)
                 if cached is not None:
-                    logger.debug(f"Cache hit for {image_path}")
+                    logger.debug("Cache hit for %s", image_path)
                     return cached
 
             # 使用加载器加载图片
@@ -299,12 +299,12 @@ class AdvancedImageCache(SimpleImageCache):
 
                 # 存入缓存
                 self.put(image_path, image, size_mb=size_mb)
-                logger.debug(f"Loaded and cached {image_path} using {strategy}")
+                logger.debug("Loaded and cached %s using %s", image_path, strategy)
 
             return image
 
         except Exception as e:
-            logger.error(f"Failed to load image {image_path}: {e}")
+            logger.error("Failed to load image %s: %s", image_path, e)
             return None
 
     def get_file_size_mb(self, file_path: str) -> float:
@@ -323,7 +323,7 @@ class AdvancedImageCache(SimpleImageCache):
                 size_bytes = os.path.getsize(file_path)
                 return size_bytes / (1024 * 1024)
         except Exception as e:
-            logger.debug(f"Failed to get file size for {file_path}: {e}")
+            logger.debug("Failed to get file size for %s: %s", file_path, e)
         return 0.0
 
 

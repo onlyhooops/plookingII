@@ -37,34 +37,34 @@ macOS 原生图片浏览器 - 高性能、智能化的图片浏览体验
 
 ## 📚 文档导航
 
-### 👥 用户文档
+> **💡 提示**: 完整的文档体系请访问 [docs/README.md](docs/README.md)
 
-- **[用户指南](docs/user/guides/README.md)** - 详细使用说明
-- **[项目概览](docs/user/guides/PROJECT_OVERVIEW.md)** - 功能特性介绍
-- **[拖拽功能](docs/user/guides/DRAG_DROP_FEATURE.md)** - 拖拽文件夹使用指南
-- **[迁移指南](docs/user/guides/MIGRATION_GUIDE.md)** - 版本升级指南
-- **[未来规划](docs/user/guides/FUTURE_ROADMAP.md)** - 功能路线图
+### 🏗️ 架构文档
 
-### 👨‍💻 开发者文档
+- **[架构简化文档](docs/architecture/)** - 架构设计和优化方案
+  - [架构简化计划](docs/architecture/simplification/plan.md) - 详细优化方案
+  - [架构简化总结](docs/architecture/simplification/summary.md) - 成果展示（代码减少93.1%）
+  - [开发阶段记录](docs/architecture/phases/) - 各阶段详细记录
 
-- **[技术指南](docs/developer/TECHNICAL_GUIDE.md)** - 完整技术实现
-- **[开发者指南](docs/developer/DEVELOPER_GUIDE.md)** - 开发环境搭建
-- **[架构设计](docs/architecture/design/ARCHITECTURE.md)** - 系统架构文档
-- **[版本管理指南](docs/VERSION_MANAGEMENT.md)** - 版本号管理规范 ⭐
-- **[macOS 清理指南](MACOS_CLEANUP_GUIDE.md)** - 开发环境隐私保护 🔐 **NEW**
-- **[架构简化](QUICK_START_SIMPLIFIED.md)** - 架构优化成果 🚀 **NEW**
-- **[维护指南](docs/developer/MAINTENANCE_GUIDELINES.md)** - 项目维护规范
-- **[贡献指南](docs/developer/contributing/CONTRIBUTING.md)** - 如何参与贡献
+### 👨‍💻 开发文档
+
+- **[开发指南](docs/development/)** - 开发环境和工具使用
+  - [快速开始](docs/development/quick-start.md) - 架构快速了解
+  - [版本管理 V2](docs/development/version-management/guide-v2.md) - 智能版本管理系统 ⭐
+  - [macOS 清理指南](docs/development/macos-cleanup.md) - 开发环境隐私保护
 
 ### 📊 项目报告
 
-- **[架构简化报告](SIMPLIFICATION_COMPLETED.md)** - 代码简化93.1% 🚀 **NEW**
-- **[架构简化计划](ARCHITECTURE_SIMPLIFICATION_PLAN.md)** - 详细优化方案 **NEW**
-- **[版本历史](docs/reports/releases/UNIFIED_VERSION_HISTORY.md)** - 完整版本记录
-- **[版本管理报告](VERSION_MANAGEMENT_REPORT.md)** - 版本统一管理报告 ⭐
-- **[测试覆盖率](docs/reports/coverage/)** - 测试覆盖率报告
-- **[性能报告](docs/reports/performance/)** - 性能优化报告
-- **[项目报告](docs/reports/)** - 其他项目报告
+- **[评估报告](docs/reports/)** - 各类评估和审计报告
+  - [生产就绪报告](docs/reports/production-readiness.md) - 生产环境评估
+  - [安全审计报告](docs/reports/security-audit.md) - 完整安全审计
+
+### 🚀 发布记录
+
+- **[版本历史](docs/releases/)** - 发布说明和更新日志
+  - [v1.7.1 发布说明](docs/releases/v1.7.1.md) - 版本管理 V2.0
+  - [v1.7.0 发布说明](docs/releases/v1.7.0.md) - 架构优化版本
+  - [完整变更日志](CHANGELOG.md) - 所有版本的详细记录
 
 ## ✨ 核心特性
 
@@ -153,7 +153,7 @@ git commit -m "refactor: refactor code"   # 代码重构
 
 ## 🤝 贡献
 
-欢迎贡献代码！请查看 [贡献指南](docs/developer/contributing/CONTRIBUTING.md) 了解如何参与。
+欢迎贡献代码！提交问题或建议请访问 [GitHub Issues](https://github.com/onlyhooops/plookingII/issues)。
 
 ## 📞 支持
 
@@ -164,5 +164,5 @@ git commit -m "refactor: refactor code"   # 代码重构
 ______________________________________________________________________
 
 **PlookingII Team** © 2025
-**当前版本**: v1.4.0
-**最后更新**: 2025-09-30
+**当前版本**: v1.7.1
+**最后更新**: 2025-10-14

@@ -68,7 +68,7 @@ class ImageRotationProcessor:
         try:
             # 验证旋转方向
             if direction not in ["clockwise", "counterclockwise"]:
-                logger.warning(f"无效的旋转方向: {direction}")
+                logger.warning("无效的旋转方向: %s", direction)
                 return False
 
             # 验证文件
@@ -94,7 +94,7 @@ class ImageRotationProcessor:
             return success
 
         except Exception as e:
-            logger.error(f"图像旋转失败 {image_path}: {e}")
+            logger.error("图像旋转失败 %s: %s", image_path, e)
             self.rotation_stats["failed_rotations"] += 1
             return False
 
@@ -108,17 +108,17 @@ class ImageRotationProcessor:
             bool: 文件是否有效
         """
         if not os.path.exists(image_path):
-            logger.warning(f"图像文件不存在: {image_path}")
+            logger.warning("图像文件不存在: %s", image_path)
             return False
 
         if not os.path.isfile(image_path):
-            logger.warning(f"路径不是文件: {image_path}")
+            logger.warning("路径不是文件: %s", image_path)
             return False
 
         # 检查文件扩展名（测试要求支持 TIFF）
         ext = os.path.splitext(image_path)[1].lower()
         if ext not in [".jpg", ".jpeg", ".png", ".tif", ".tiff"]:
-            logger.warning(f"不支持的图像格式: {ext}")
+            logger.warning("不支持的图像格式: %s", ext)
             return False
 
         return True
@@ -136,7 +136,7 @@ class ImageRotationProcessor:
             size_bytes = os.path.getsize(image_path)
             return size_bytes / (1024 * 1024)
         except Exception as e:
-            logger.warning(f"获取文件大小失败 {image_path}: {e}")
+            logger.warning("获取文件大小失败 %s: %s", image_path, e)
             return 0.0
 
     def _select_rotation_strategy(self, file_size_mb):
@@ -298,13 +298,13 @@ class ImageRotationProcessor:
                         os.replace(backup_path, image_path)
                 except Exception:
                     pass
-                logger.error(f"无损旋转替换文件失败 {image_path}: {e}")
+                logger.error("无损旋转替换文件失败 %s: %s", image_path, e)
                 return False
 
             return True
 
         except Exception as e:
-            logger.error(f"JPEG 无损旋转发生异常 {image_path}: {e}")
+            logger.error("JPEG 无损旋转发生异常 %s: %s", image_path, e)
             return False
 
     def _rotate_with_pil(self, image_path, direction):
@@ -338,7 +338,7 @@ class ImageRotationProcessor:
             return True
 
         except Exception as e:
-            logger.error(f"PIL旋转失败 {image_path}: {e}")
+            logger.error("PIL旋转失败 %s: %s", image_path, e)
             return False
 
     def _rotate_with_quartz(self, image_path, direction):
@@ -357,7 +357,7 @@ class ImageRotationProcessor:
             return self._rotate_with_pil_optimized(image_path, direction)
 
         except Exception as e:
-            logger.error(f"Quartz旋转失败 {image_path}: {e}")
+            logger.error("Quartz旋转失败 %s: %s", image_path, e)
             return False
 
     def _rotate_with_pil_optimized(self, image_path, direction):
@@ -389,7 +389,7 @@ class ImageRotationProcessor:
             return True
 
         except Exception as e:
-            logger.error(f"优化PIL旋转失败 {image_path}: {e}")
+            logger.error("优化PIL旋转失败 %s: %s", image_path, e)
             return False
 
     def _update_exif_orientation(self, img, direction, original_exif):
@@ -445,7 +445,7 @@ class ImageRotationProcessor:
             return img
 
         except Exception as e:
-            logger.warning(f"EXIF方向更新失败: {e}")
+            logger.warning("EXIF方向更新失败: %s", e)
             return img
 
     def _reset_exif_orientation_to_1(self, image_path: str) -> None:
@@ -563,7 +563,7 @@ class ImageRotationProcessor:
             img.save(image_path, **save_kwargs)
 
         except Exception as e:
-            logger.error(f"保存旋转图像失败 {image_path}: {e}")
+            logger.error("保存旋转图像失败 %s: %s", image_path, e)
             raise
 
     def _save_rotated_image_optimized(self, img, image_path, exif_data):
@@ -601,7 +601,7 @@ class ImageRotationProcessor:
             img.save(image_path, **save_kwargs)
 
         except Exception as e:
-            logger.error(f"优化保存旋转图像失败 {image_path}: {e}")
+            logger.error("优化保存旋转图像失败 %s: %s", image_path, e)
             raise
 
     def _update_rotation_stats(self, direction, strategy, processing_time, success):
@@ -630,7 +630,7 @@ class ImageRotationProcessor:
                 self.rotation_stats["failed_rotations"] += 1
 
         except Exception as e:
-            logger.warning(f"更新旋转统计失败: {e}")
+            logger.warning("更新旋转统计失败: %s", e)
 
     def get_rotation_stats(self):
         """获取旋转统计信息

@@ -36,9 +36,9 @@ def safe_call(func: Callable, *args, default_return=None, error_msg: str | None 
         return func(*args, **kwargs)
     except Exception as e:
         if error_msg:
-            logger.warning(f"{error_msg}: {e}")
+            logger.warning("%s: %s", error_msg, e)
         else:
-            logger.warning(f"调用 {func.__name__} 失败: {e}")
+            logger.warning("调用 %s 失败: %s", func.__name__, e)
         return default_return
 
 
@@ -62,7 +62,7 @@ def safe_method_call(obj: Any, method_name: str, *args, default_return=None, **k
                 return method(*args, **kwargs)
         return default_return
     except Exception as e:
-        logger.warning(f"调用 {obj.__class__.__name__}.{method_name} 失败: {e}")
+        logger.warning("调用 %s.%s 失败: %s", obj.__class__.__name__, method_name, e)
         return default_return
 
 
@@ -80,12 +80,12 @@ def logged_operation(operation_name: str):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             try:
-                logger.debug(f"开始 {operation_name}")
+                logger.debug("开始 %s", operation_name)
                 result = func(*args, **kwargs)
-                logger.debug(f"完成 {operation_name}")
+                logger.debug("完成 %s", operation_name)
                 return result
             except Exception as e:
-                logger.error(f"{operation_name} 失败: {e}")
+                logger.error("%s 失败: %s", operation_name, e)
                 raise
 
         return wrapper
@@ -105,11 +105,11 @@ def error_context(operation_name: str, reraise: bool = True):
         None
     """
     try:
-        logger.debug(f"开始 {operation_name}")
+        logger.debug("开始 %s", operation_name)
         yield
-        logger.debug(f"完成 {operation_name}")
+        logger.debug("完成 %s", operation_name)
     except Exception as e:
-        logger.error(f"{operation_name} 失败: {e}")
+        logger.error("%s 失败: %s", operation_name, e)
         if reraise:
             raise
 
@@ -133,12 +133,12 @@ def validate_and_get(obj: Any, attr_name: str, validator: Callable | None = None
         value = getattr(obj, attr_name)
 
         if validator and not validator(value):
-            logger.warning(f"属性 {attr_name} 验证失败")
+            logger.warning("属性 %s 验证失败", attr_name)
             return default
 
         return value
     except Exception as e:
-        logger.warning(f"获取属性 {attr_name} 失败: {e}")
+        logger.warning("获取属性 %s 失败: %s", attr_name, e)
         return default
 
 
@@ -166,16 +166,16 @@ def batch_clear_cache(cache_objects: dict[str, Any]) -> dict[str, bool]:
                 cache_obj.cleanup()
                 results[name] = True
             else:
-                logger.warning(f"缓存对象 {name} 没有清理方法")
+                logger.warning("缓存对象 %s 没有清理方法", name)
                 results[name] = False
 
         except Exception as e:
-            logger.warning(f"清理缓存 {name} 失败: {e}")
+            logger.warning("清理缓存 %s 失败: %s", name, e)
             results[name] = False
 
     success_count = sum(results.values())
     total_count = len(results)
-    logger.info(f"批量缓存清理完成: {success_count}/{total_count}")
+    logger.info("批量缓存清理完成: %s/%s", success_count, total_count)
 
     return results
 
@@ -206,11 +206,11 @@ def unified_status_update(status_controllers: dict[str, Any], message: str, **kw
                 controller.set_message(message)
                 results[name] = True
             else:
-                logger.warning(f"状态控制器 {name} 没有状态更新方法")
+                logger.warning("状态控制器 %s 没有状态更新方法", name)
                 results[name] = False
 
         except Exception as e:
-            logger.warning(f"更新状态 {name} 失败: {e}")
+            logger.warning("更新状态 %s 失败: %s", name, e)
             results[name] = False
 
     return results
@@ -232,9 +232,9 @@ def create_fallback_chain(*functions):
                 return func(*args, **kwargs)
             except Exception as e:
                 if i == len(functions) - 1:  # 最后一个函数
-                    logger.error(f"所有回退函数都失败，最后错误: {e}")
+                    logger.error("所有回退函数都失败，最后错误: %s", e)
                     raise
-                logger.debug(f"函数 {func.__name__} 失败，尝试回退: {e}")
+                logger.debug("函数 %s 失败，尝试回退: %s", func.__name__, e)
         return None
 
     return fallback_caller
@@ -282,12 +282,12 @@ def log_performance(func):
             end_time = time.time()
             duration = end_time - start_time
             if duration > 0.1:  # 只记录超过100ms的操作
-                logger.debug(f"{func.__name__} 执行时间: {duration:.3f}s")
+                logger.debug("%s 执行时间: %.3fs", func.__name__, duration)
             return result
         except Exception as e:
             end_time = time.time()
             duration = end_time - start_time
-            logger.warning(f"{func.__name__} 执行失败 (耗时: {duration:.3f}s): {e}")
+            logger.warning("%s 执行失败 (耗时: %.3fs): %s", func.__name__, duration, e)
             raise
 
     return wrapper

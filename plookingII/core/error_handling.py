@@ -382,7 +382,7 @@ class ErrorHandler:
 
     def _handle_memory_error(self, error_info: ErrorInfo) -> Any:
         """处理内存错误"""
-        self.logger.critical(f"Memory error: {error_info.error}")
+        self.logger.critical("Memory error: %s", error_info.error)
         return None
 
     def _handle_file_system_error(self, error_info: ErrorInfo) -> Any:

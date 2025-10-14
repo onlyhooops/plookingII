@@ -81,10 +81,10 @@ class ErrorRecoveryStrategy:
             attempt: 当前尝试次数
             context: 错误上下文信息
         """
-          logger.warning(
-              "Retrying %s (attempt %s/%s) due to: %s",
-              context.get('function', 'unknown'), attempt, self.max_retries, exception
-          )
+        logger.warning(
+            "Retrying %s (attempt %s/%s) due to: %s",
+            context.get('function', 'unknown'), attempt, self.max_retries, exception
+        )
 
     def on_failure(self, exception: Exception, context: dict):
         """最终失败回调

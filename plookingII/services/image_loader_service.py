@@ -84,7 +84,7 @@ class ImageLoaderService:
             return images
 
         except Exception as e:
-            logger.warning(f"加载文件夹图片失败: {e}")
+            logger.warning("加载文件夹图片失败: %s", e)
             return []
 
     def load_and_display_progressive(self, image_path: str, target_size: tuple[int, int] | None = None):
@@ -110,7 +110,7 @@ class ImageLoaderService:
                 self.image_manager._load_and_display_progressive(image_path, target_size)
 
         except Exception as e:
-            logger.warning(f"渐进式加载失败: {e}")
+            logger.warning("渐进式加载失败: %s", e)
 
     def display_image_immediate(self, image: Any):
         """
@@ -124,7 +124,7 @@ class ImageLoaderService:
                 self.main_window.image_view.setImage_(image)
                 self.main_window.image_view.setNeedsDisplay_(True)
         except Exception as e:
-            logger.warning(f"立即显示图片失败: {e}")
+            logger.warning("立即显示图片失败: %s", e)
 
     def request_high_quality_image(self):
         """
@@ -174,7 +174,7 @@ class ImageLoaderService:
                         update_image()
 
             except Exception as e:
-                logger.warning(f"加载高质量图像失败: {e}")
+                logger.warning("加载高质量图像失败: %s", e)
 
         # 在后台线程加载高质量图像
         threading.Thread(target=load_high_quality, daemon=True).start()
@@ -214,7 +214,7 @@ class ImageLoaderService:
             return None
 
         except Exception as e:
-            logger.warning(f"优化图像加载失败: {e}")
+            logger.warning("优化图像加载失败: %s", e)
             return None
 
     def load_standard_image(self, img_path: str) -> Any | None:
@@ -232,7 +232,7 @@ class ImageLoaderService:
             return self.load_image_optimized(img_path, prefer_preview=False, target_size=None)
 
         except Exception as e:
-            logger.warning(f"标准图像加载失败: {e}")
+            logger.warning("标准图像加载失败: %s", e)
             return None
 
     def load_with_pil_fallback(self, img_path: str) -> Any | None:
@@ -248,7 +248,7 @@ class ImageLoaderService:
         try:
             return self.load_standard_image(img_path)
         except Exception as e:
-            logger.warning(f"PIL备用加载失败: {e}")
+            logger.warning("PIL备用加载失败: %s", e)
             return None
 
     def load_preview_image(self, img_path: str, file_size_mb: float | None = None) -> Any | None:
@@ -267,7 +267,7 @@ class ImageLoaderService:
             return self.load_image_optimized(img_path, prefer_preview=True, target_size=None)
 
         except Exception as e:
-            logger.warning(f"预览图像加载失败: {e}")
+            logger.warning("预览图像加载失败: %s", e)
             return None
 
     def load_large_image_progressive(self, img_path: str) -> Any | None:
@@ -299,7 +299,7 @@ class ImageLoaderService:
             return None
 
         except Exception as e:
-            logger.warning(f"渐进式图像加载失败: {e}")
+            logger.warning("渐进式图像加载失败: %s", e)
             return None
 
     def load_scaled_image_with_pil(self, img_path: str, max_dimension: int = 3000) -> Any | None:
@@ -321,7 +321,7 @@ class ImageLoaderService:
             return self.load_image_optimized(img_path, prefer_preview=True, target_size=target_size)
 
         except Exception as e:
-            logger.warning(f"缩放图像加载失败: {e}")
+            logger.warning("缩放图像加载失败: %s", e)
             return None
 
     def load_large_image_with_pil(self, img_path: str) -> Any | None:
@@ -339,7 +339,7 @@ class ImageLoaderService:
             return self.load_image_optimized(img_path, prefer_preview=False, target_size=None)
 
         except Exception as e:
-            logger.warning(f"大图像加载失败: {e}")
+            logger.warning("大图像加载失败: %s", e)
             return None
 
     def schedule_background_tasks(self):
@@ -371,7 +371,7 @@ class ImageLoaderService:
                     self.main_window.session_manager.save_progress()
 
             except Exception as e:
-                logger.warning(f"后台任务执行失败: {e}")
+                logger.warning("后台任务执行失败: %s", e)
             finally:
                 self._background_tasks_running = False
 
@@ -399,7 +399,7 @@ class ImageLoaderService:
             logger.debug("后台任务已关闭")
 
         except Exception as e:
-            logger.warning(f"关闭后台任务失败: {e}")
+            logger.warning("关闭后台任务失败: %s", e)
 
     def get_loading_strategy_info(self, img_path: str) -> dict:
         """
@@ -440,7 +440,7 @@ class ImageLoaderService:
             return info
 
         except Exception as e:
-            logger.warning(f"获取加载策略信息失败: {e}")
+            logger.warning("获取加载策略信息失败: %s", e)
             return {"error": str(e)}
 
     def __del__(self):

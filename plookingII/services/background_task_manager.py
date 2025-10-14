@@ -61,9 +61,9 @@ class BackgroundTaskManager:
             self._executor = concurrent.futures.ThreadPoolExecutor(
                 max_workers=self._max_workers, thread_name_prefix="BackgroundTask"
             )
-            logger.debug(f"后台任务线程池初始化完成，最大工作线程数: {self._max_workers}")
+            logger.debug("后台任务线程池初始化完成，最大工作线程数: %s", self._max_workers)
         except Exception as e:
-            logger.error(f"初始化后台任务线程池失败: {e}")
+            logger.error("初始化后台任务线程池失败: %s", e)
 
     # ==================== 任务调度管理 ====================
 
@@ -85,7 +85,7 @@ class BackgroundTaskManager:
             self._schedule_maintenance_tasks()
 
         except Exception as e:
-            logger.warning(f"调度后台任务失败: {e}")
+            logger.warning("调度后台任务失败: %s", e)
 
     def _schedule_maintenance_tasks(self):
         """调度维护性后台任务"""
@@ -94,7 +94,7 @@ class BackgroundTaskManager:
             delay = 0.1 if hasattr(self.window, "_is_testing") else 30.0
             self.submit_task("cleanup_expired_tasks", self._cleanup_expired_tasks, delay=delay)
         except Exception as e:
-            logger.debug(f"调度维护任务失败: {e}")
+            logger.debug("调度维护任务失败: %s", e)
 
     def submit_task(
         self, task_id: str, task_func: Callable, *args, delay: float = 0.0, callback: Callable | None = None, **kwargs
@@ -149,11 +149,11 @@ class BackgroundTaskManager:
             # 在锁外添加完成回调，避免死锁
             future.add_done_callback(lambda f: self._on_task_completed(task_id, f))
 
-            logger.debug(f"后台任务已提交: {task_id}")
+            logger.debug("后台任务已提交: %s", task_id)
             return future
 
         except Exception as e:
-            logger.warning(f"提交后台任务失败 [{task_id}]: {e}")
+            logger.warning("提交后台任务失败 [%s]: {e}", task_id)
             return None
 
     def _on_task_completed(self, task_id: str, future: concurrent.futures.Future):
@@ -171,12 +171,12 @@ class BackgroundTaskManager:
                     # 让用户回调自己决定是否需要获取结果
                     callback(future)
                 except Exception as e:
-                    logger.debug(f"任务回调执行失败 [{task_id}]: {e}")
+                    logger.debug("任务回调执行失败 [%s]: {e}", task_id)
 
-            logger.debug(f"后台任务完成: {task_id}")
+            logger.debug("后台任务完成: %s", task_id)
 
         except Exception as e:
-            logger.debug(f"任务完成处理失败 [{task_id}]: {e}")
+            logger.debug("任务完成处理失败 [%s]: {e}", task_id)
 
     # ==================== 异步验证任务 ====================
 
@@ -211,7 +211,7 @@ class BackgroundTaskManager:
 
             return validator(data)
         except Exception as e:
-            logger.debug(f"异步验证失败: {e}")
+            logger.debug("异步验证失败: %s", e)
             return False
 
     def cancel_async_validation(self):
@@ -223,7 +223,7 @@ class BackgroundTaskManager:
                     validation_future.cancel()
                     logger.debug("异步验证任务已取消")
         except Exception as e:
-            logger.debug(f"取消异步验证失败: {e}")
+            logger.debug("取消异步验证失败: %s", e)
 
     # ==================== 任务管理 ====================
 
@@ -245,10 +245,10 @@ class BackgroundTaskManager:
                     if result:
                         self._active_tasks.pop(task_id, None)
                         self._task_callbacks.pop(task_id, None)
-                        logger.debug(f"任务已取消: {task_id}")
+                        logger.debug("任务已取消: %s", task_id)
                     return result
         except Exception as e:
-            logger.debug(f"取消任务失败 [{task_id}]: {e}")
+            logger.debug("取消任务失败 [%s]: {e}", task_id)
         return False
 
     def get_active_task_count(self) -> int:
@@ -303,10 +303,10 @@ class BackgroundTaskManager:
                     self._task_callbacks.pop(task_id, None)
 
                 if completed_tasks:
-                    logger.debug(f"清理了 {len(completed_tasks)} 个已完成的任务记录")
+                    logger.debug("清理了 %s 个已完成的任务记录", len(completed_tasks))
 
         except Exception as e:
-            logger.debug(f"清理过期任务失败: {e}")
+            logger.debug("清理过期任务失败: %s", e)
 
     # ==================== 生命周期管理 ====================
 
@@ -332,7 +332,7 @@ class BackgroundTaskManager:
             # 在锁外取消任务，避免死锁
             for task_id, future in tasks_to_cancel:
                 future.cancel()
-                logger.debug(f"取消任务: {task_id}")
+                logger.debug("取消任务: %s", task_id)
 
             # 关闭线程池 (注意: shutdown不接受timeout参数)
             if self._executor:
@@ -347,7 +347,7 @@ class BackgroundTaskManager:
             logger.debug("后台任务管理器关闭完成")
 
         except Exception as e:
-            logger.warning(f"关闭后台任务失败: {e}")
+            logger.warning("关闭后台任务失败: %s", e)
 
     def cleanup(self):
         """清理后台任务管理器资源"""
@@ -383,5 +383,5 @@ class BackgroundTaskManager:
                     "executor_alive": self._executor is not None and not self._executor._shutdown,
                 }
         except Exception as e:
-            logger.debug(f"获取状态信息失败: {e}")
+            logger.debug("获取状态信息失败: %s", e)
             return {"error": str(e)}

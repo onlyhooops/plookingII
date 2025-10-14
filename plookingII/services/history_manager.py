@@ -71,7 +71,7 @@ class HistoryManager:
 
             return False
         except Exception as e:
-            logger.warning(f"校验历史记录失败: {e}")
+            logger.warning("校验历史记录失败: %s", e)
             return False
 
     def validate_task_history(self, history_data: dict[str, Any]) -> bool:
@@ -109,7 +109,7 @@ class HistoryManager:
             ):
                 self.window.folder_manager._show_task_history_restore_dialog(history_data)
         except Exception as e:
-            logger.warning(f"显示历史恢复对话框失败: {e}")
+            logger.warning("显示历史恢复对话框失败: %s", e)
 
     def show_task_history_restore_dialog(self, history_data: dict[str, Any]) -> None:
         """
@@ -149,7 +149,7 @@ class HistoryManager:
                         self._last_save_time = current_time
 
         except Exception as e:
-            logger.warning(f"保存任务进度失败: {e}")
+            logger.warning("保存任务进度失败: %s", e)
 
     def save_task_progress_immediate(self) -> None:
         """
@@ -165,7 +165,7 @@ class HistoryManager:
             ):
                 self.window.folder_manager._save_task_progress_immediate()
         except Exception as e:
-            logger.warning(f"立即保存任务进度失败: {e}")
+            logger.warning("立即保存任务进度失败: %s", e)
 
     def async_save_progress(self) -> None:
         """
@@ -181,7 +181,7 @@ class HistoryManager:
             ):
                 self.window.folder_manager._async_save_progress()
         except Exception as e:
-            logger.warning(f"异步保存进度失败: {e}")
+            logger.warning("异步保存进度失败: %s", e)
 
     def _async_save_progress(self) -> None:
         """
@@ -216,7 +216,7 @@ class HistoryManager:
                     self._pending_save_data = None
 
             except Exception as e:
-                logger.warning(f"异步保存进度工作线程失败: {e}")
+                logger.warning("异步保存进度工作线程失败: %s", e)
 
         # 在后台线程中执行保存
         threading.Thread(target=save_worker, daemon=True).start()
@@ -238,7 +238,7 @@ class HistoryManager:
             ):
                 return self.window.folder_manager.task_history_manager
         except Exception as e:
-            logger.debug(f"获取任务历史管理器失败: {e}")
+            logger.debug("获取任务历史管理器失败: %s", e)
         return None
 
     def is_history_available(self) -> bool:
@@ -263,4 +263,4 @@ class HistoryManager:
 
             logger.debug("历史管理器清理完成")
         except Exception as e:
-            logger.warning(f"历史管理器清理失败: {e}")
+            logger.warning("历史管理器清理失败: %s", e)

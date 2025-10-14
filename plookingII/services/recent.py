@@ -123,7 +123,7 @@ class RecentFoldersManager:
                 from ..config.constants import APP_NAME
 
                 logger = logging.getLogger(APP_NAME)
-                logger.info(f"清理了 {len(invalid_paths)} 个无效的最近文件夹记录")
+                logger.info("清理了 %s 个无效的最近文件夹记录", len(invalid_paths))
 
             conn.close()
             return len(invalid_paths)
@@ -136,7 +136,7 @@ class RecentFoldersManager:
                 from ..config.constants import APP_NAME
 
                 logger = logging.getLogger(APP_NAME)
-                logger.warning(f"清理无效最近文件夹记录失败: {e}")
+                logger.warning("清理无效最近文件夹记录失败: %s", e)
             except Exception:
                 pass
             return 0

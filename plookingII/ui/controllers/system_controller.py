@@ -61,7 +61,7 @@ class SystemController:
                 self.window, "systemThemeChanged:", "AppleInterfaceThemeChangedNotification", None
             )
         except Exception as e:
-            logger.debug(f"设置系统通知失败: {e}")
+            logger.debug("设置系统通知失败: %s", e)
 
     # ==================== 主题和外观管理 ====================
 
@@ -86,7 +86,7 @@ class SystemController:
             if self.window.contentView():
                 self.window.contentView().setNeedsDisplay_(True)
         except Exception as e:
-            logger.warning(f"系统主题变化处理失败: {e}")
+            logger.warning("系统主题变化处理失败: %s", e)
 
     def toggle_theme(self, sender):
         """
@@ -105,7 +105,7 @@ class SystemController:
             else:
                 app.setAppearance_(NSAppearance.appearanceNamed_(NSAppearanceNameDarkAqua))
         except Exception as e:
-            logger.warning(f"主题切换失败: {e}")
+            logger.warning("主题切换失败: %s", e)
 
     # ==================== 历史记录和状态管理 ====================
     # 注意：历史记录相关方法已迁移到 HistoryManager 服务
@@ -132,7 +132,7 @@ class SystemController:
                     )
                 )
         except Exception as e:
-            logger.error(f"切换文件夹浏览顺序失败: {e}")
+            logger.error("切换文件夹浏览顺序失败: %s", e)
 
     def update_reverse_folder_order_menu(self, sender=None):
         """
@@ -146,7 +146,7 @@ class SystemController:
                     1 if self.window.folder_manager.reverse_folder_order else 0
                 )
         except Exception as e:
-            logger.warning(f"更新倒序菜单状态失败: {e}")
+            logger.warning("更新倒序菜单状态失败: %s", e)
 
     # ==================== 应用程序生命周期管理 ====================
     # 注意：后台任务管理已迁移到 BackgroundTaskManager 服务
@@ -167,4 +167,4 @@ class SystemController:
                 self.window.image_update_manager.cleanup()
 
         except Exception as e:
-            logger.debug(f"清理系统控制器失败: {e}")
+            logger.debug("清理系统控制器失败: %s", e)

@@ -54,7 +54,7 @@ def _configure_sqlite_pragmas(conn):
 
     except Exception as e:
         # PRAGMA设置失败不应阻止连接使用，记录警告继续执行
-        logger.warning(f"Failed to set SQLite PRAGMAs: {e}")
+        logger.warning("Failed to set SQLite PRAGMAs: %s", e)
     finally:
         # 安全关闭游标，避免资源泄漏
         if cur is not None:
@@ -62,7 +62,7 @@ def _configure_sqlite_pragmas(conn):
                 cur.close()
             except Exception as close_err:
                 # 游标关闭失败通常不影响连接使用，记录警告即可
-                logger.warning(f"sqlite cursor close failed: {close_err}")
+                logger.warning("sqlite cursor close failed: %s", close_err)
 
 
 def connect_db(database, timeout=30.0, detect_types=0, isolation_level=None, check_same_thread=False, **kwargs):

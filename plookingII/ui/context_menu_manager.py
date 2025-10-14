@@ -119,7 +119,7 @@ class AppDiscovery:
             return apps
 
         except Exception as e:
-            logger.warning(f"获取应用程序列表失败: {e}")
+            logger.warning("获取应用程序列表失败: %s", e)
             return []
 
 
@@ -186,7 +186,7 @@ class MenuItemBuilder:
                 app_icon.setSize_((16, 16))
                 menu_item.setImage_(app_icon)
         except Exception as e:
-            logger.debug(f"{app_info.name} 图标设置失败: {e}")
+            logger.debug("%s 图标设置失败: {e}", app_info.name)
 
         return menu_item
 
@@ -264,7 +264,7 @@ class ContextMenuManager:
             return True
 
         except Exception as e:
-            logger.error(f"显示右键菜单失败: {e}")
+            logger.error("显示右键菜单失败: %s", e)
             return False
 
     def _create_menu(self, apps: list[AppInfo], file_path: str) -> NSMenu | None:

@@ -108,7 +108,7 @@ class UserFeedbackManager:
                 self._show_help_dialog(error)
 
         except Exception as e:
-            logger.error(f"显示错误对话框失败: {e}")
+            logger.error("显示错误对话框失败: %s", e)
             # 回退到简单的错误提示
             self._show_simple_error(str(error))
 
@@ -206,7 +206,7 @@ class UserFeedbackManager:
             alert.runModal()
 
         except Exception as e:
-            logger.error(f"显示帮助对话框失败: {e}")
+            logger.error("显示帮助对话框失败: %s", e)
 
     def _get_detailed_help(self, error: Exception) -> str:
         """获取详细帮助信息
@@ -259,7 +259,7 @@ class UserFeedbackManager:
             alert.runModal()
         except Exception:
             # 最后的回退：只记录日志
-            logger.error(f"无法显示错误对话框: {message}")
+            logger.error("无法显示错误对话框: %s", message)
 
     def show_info_message(self, title: str, message: str):
         """显示信息提示
@@ -276,7 +276,7 @@ class UserFeedbackManager:
             alert.addButtonWithTitle_("确定")
             alert.runModal()
         except Exception as e:
-            logger.error(f"显示信息对话框失败: {e}")
+            logger.error("显示信息对话框失败: %s", e)
 
     def show_warning_message(self, title: str, message: str) -> bool:
         """显示警告提示
@@ -300,7 +300,7 @@ class UserFeedbackManager:
             return response == 1000  # 第一个按钮 (继续)
 
         except Exception as e:
-            logger.error(f"显示警告对话框失败: {e}")
+            logger.error("显示警告对话框失败: %s", e)
             return False
 
 

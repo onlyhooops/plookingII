@@ -145,7 +145,7 @@ class UnifiedMonitor:
         if enable_auto_monitoring and HAS_PSUTIL:
             self.start_monitoring()
 
-        logger.info(f"统一监控器已初始化 - 级别: {level.value}, 历史: {self.max_history}")
+        logger.info("统一监控器已初始化 - 级别: %s, 历史: {self.max_history}", level.value)
 
     def record_operation(
         self,
@@ -241,7 +241,7 @@ class UnifiedMonitor:
             return status
 
         except Exception as e:
-            logger.error(f"获取内存状态失败: {e}")
+            logger.error("获取内存状态失败: %s", e)
             return MemoryStatus(
                 used_mb=0.0,
                 available_mb=0.0,
@@ -297,17 +297,20 @@ class UnifiedMonitor:
                     status = self.get_memory_status()
                     if status.percent > self.memory_thresholds["cleanup"] * 100:
                         self.stats["memory_cleanups"] += 1
-                        logger.warning(f"内存压力: {status.pressure_level} ({status.percent:.1f}%), 建议清理缓存")
+                        logger.warning(
+                "内存压力: {status.pressure_level} (%.1f%), 建议清理缓存",
+                status.percent
+            )
 
                 except Exception as e:
-                    logger.error(f"监控循环错误: {e}")
+                    logger.error("监控循环错误: %s", e)
 
                 # 等待间隔
                 self.stop_event.wait(interval)
 
         self.monitor_thread = threading.Thread(target=monitor_loop, daemon=True)
         self.monitor_thread.start()
-        logger.info(f"后台监控已启动，间隔: {interval}秒")
+        logger.info("后台监控已启动，间隔: %s秒", interval)
 
     def stop_monitoring(self) -> None:
         """停止后台监控"""
@@ -390,7 +393,7 @@ def get_unified_monitor(level: MonitoringLevel = MonitoringLevel.STANDARD, **kwa
     with _monitor_lock:
         if _global_monitor is None:
             _global_monitor = UnifiedMonitor(level=level, **kwargs)
-            logger.info(f"全局监控器已创建 - 级别: {level.value}")
+            logger.info("全局监控器已创建 - 级别: %s", level.value)
 
         return _global_monitor
 

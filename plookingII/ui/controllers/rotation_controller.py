@@ -57,15 +57,15 @@ class RotationController:
                 return
 
             if self.window.current_index >= len(self.window.images):
-                logger.debug(f"当前索引{self.window.current_index}超出图像列表长度{len(self.window.images)}")
+                logger.debug("当前索引%s超出图像列表长度{len(self.window.images)}", self.window.current_index)
                 self._set_status_message("没有可旋转的图像")
                 return
 
-            logger.debug(f"准备旋转图像: {self.window.images[self.window.current_index]}")
+            logger.debug("准备旋转图像: %s", self.window.images[self.window.current_index])
             self.window.operation_manager.rotate_current_image("clockwise")
             logger.debug("向右旋转操作已启动")
         except Exception as e:
-            logger.error(f"向右旋转失败: {e}")
+            logger.error("向右旋转失败: %s", e)
             self._set_status_message("旋转操作失败")
 
     def rotate_counterclockwise(self):
@@ -88,15 +88,15 @@ class RotationController:
                 return
 
             if self.window.current_index >= len(self.window.images):
-                logger.debug(f"当前索引{self.window.current_index}超出图像列表长度{len(self.window.images)}")
+                logger.debug("当前索引%s超出图像列表长度{len(self.window.images)}", self.window.current_index)
                 self._set_status_message("没有可旋转的图像")
                 return
 
-            logger.debug(f"准备旋转图像: {self.window.images[self.window.current_index]}")
+            logger.debug("准备旋转图像: %s", self.window.images[self.window.current_index])
             self.window.operation_manager.rotate_current_image("counterclockwise")
             logger.debug("向左旋转操作已启动")
         except Exception as e:
-            logger.error(f"向左旋转失败: {e}")
+            logger.error("向左旋转失败: %s", e)
             self._set_status_message("旋转操作失败")
 
     def _set_status_message(self, message: str):
@@ -110,4 +110,4 @@ class RotationController:
             if hasattr(self.window, "status_bar_controller") and self.window.status_bar_controller:
                 self.window.status_bar_controller.set_status_message(message)
         except Exception as e:
-            logger.debug(f"设置状态消息失败: {e}")
+            logger.debug("设置状态消息失败: %s", e)

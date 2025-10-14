@@ -40,7 +40,7 @@ class MacOSCleanupManager:
                 defaults.synchronize()
                 logger.info("已清除 NSRecentDocumentRecords")
             except Exception as e:
-                logger.debug(f"清除 NSRecentDocumentRecords 失败: {e}")
+                logger.debug("清除 NSRecentDocumentRecords 失败: %s", e)
 
             # 方法2: 使用 AppleScript 清除最近项目
             applescript = """
@@ -65,7 +65,7 @@ class MacOSCleanupManager:
                 subprocess.run(["osascript", "-e", applescript], check=False, capture_output=True, timeout=5)
                 logger.info("已通过 AppleScript 重置最近项目")
             except Exception as e:
-                logger.debug(f"AppleScript 清理失败: {e}")
+                logger.debug("AppleScript 清理失败: %s", e)
 
             # 方法3: 清除 Dock 持久化数据
             try:
@@ -84,16 +84,16 @@ class MacOSCleanupManager:
                                 capture_output=True,
                                 timeout=5,
                             )
-                            logger.info(f"已清除 {recent_file.name}")
+                            logger.info("已清除 %s", recent_file.name)
                         except Exception:
                             pass
             except Exception as e:
-                logger.debug(f"清除持久化数据失败: {e}")
+                logger.debug("清除持久化数据失败: %s", e)
 
             return True
 
         except Exception as e:
-            logger.warning(f"清除 macOS 最近文档失败: {e}")
+            logger.warning("清除 macOS 最近文档失败: %s", e)
             return False
 
     @staticmethod
@@ -110,11 +110,11 @@ class MacOSCleanupManager:
             doc_controller = NSDocumentController.sharedDocumentController()
             doc_controller.clearRecentDocuments_(None)
 
-            logger.info(f"已清除 {APP_NAME} 的最近文档记录")
+            logger.info("已清除 %s 的最近文档记录", APP_NAME)
             return True
 
         except Exception as e:
-            logger.debug(f"清除应用最近文档失败: {e}")
+            logger.debug("清除应用最近文档失败: %s", e)
             return False
 
     @staticmethod

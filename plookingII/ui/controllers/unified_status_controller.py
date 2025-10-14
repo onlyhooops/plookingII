@@ -80,7 +80,7 @@ class UnifiedStatusController:
             self._start_session_updates()
             logger.info("UnifiedStatusController UI setup completed")
         except Exception as e:
-            logger.error(f"Failed to setup UI: {e}")
+            logger.error("Failed to setup UI: %s", e)
 
     def _setup_status_bar(self, content_view, frame):
         """设置状态栏 - 与原始StatusBarController保持一致"""
@@ -106,7 +106,7 @@ class UnifiedStatusController:
             logger.debug("Status bar setup completed")
 
         except Exception as e:
-            logger.error(f"Failed to setup status bar: {e}")
+            logger.error("Failed to setup status bar: %s", e)
 
     def _create_status_labels_original_layout(self, w, status_bar_height):
         """创建状态标签 - 完全按照原版StatusBarController的布局"""
@@ -165,7 +165,7 @@ class UnifiedStatusController:
             self.image_seq_label = self.folder_seq_label  # 指向同一个标签
 
         except Exception as e:
-            logger.error(f"Failed to create status labels: {e}")
+            logger.error("Failed to create status labels: %s", e)
 
     def _create_status_labels(self, frame):
         """创建状态标签 - 废弃方法，保留以防兼容性问题"""
@@ -191,7 +191,7 @@ class UnifiedStatusController:
             self._setup_titlebar_views()
             logger.debug("Titlebar setup completed")
         except Exception as e:
-            logger.error(f"Failed to setup titlebar: {e}")
+            logger.error("Failed to setup titlebar: %s", e)
 
     def _create_titlebar_accessory(self):
         """创建标题栏附件"""
@@ -219,7 +219,7 @@ class UnifiedStatusController:
                 self.window.addTitlebarAccessoryViewController_(self.titlebar_accessory)
 
         except Exception as e:
-            logger.error(f"Failed to create titlebar accessory: {e}")
+            logger.error("Failed to create titlebar accessory: %s", e)
 
     def _setup_titlebar_views(self):
         """设置标题栏视图"""
@@ -246,7 +246,7 @@ class UnifiedStatusController:
             self._setup_titlebar_constraints()
 
         except Exception as e:
-            logger.error(f"Failed to setup titlebar views: {e}")
+            logger.error("Failed to setup titlebar views: %s", e)
 
     def _setup_titlebar_constraints(self):
         """设置标题栏约束"""
@@ -299,7 +299,7 @@ class UnifiedStatusController:
             self.titlebar_container.addConstraints_([center_x, center_y, height])
 
         except Exception as e:
-            logger.error(f"Failed to setup titlebar constraints: {e}")
+            logger.error("Failed to setup titlebar constraints: %s", e)
 
     def _start_session_updates(self):
         """启动会话更新定时器"""
@@ -325,7 +325,7 @@ class UnifiedStatusController:
             logger.debug("Session update timer started")
 
         except Exception as e:
-            logger.error(f"Failed to start session updates: {e}")
+            logger.error("Failed to start session updates: %s", e)
 
     def updateSessionStatus_(self, timer):
         """更新会话状态"""
@@ -339,7 +339,7 @@ class UnifiedStatusController:
                 self.center_status_label.setStringValue_(session_info["display_message"])
 
         except Exception as e:
-            logger.error(f"Failed to update session status: {e}")
+            logger.error("Failed to update session status: %s", e)
 
     def update_image_sequence(self, current, total):
         """更新图像序列信息
@@ -353,7 +353,7 @@ class UnifiedStatusController:
                 text = f"图像: {current}/{total}"
                 self.image_seq_label.setStringValue_(text)
         except Exception as e:
-            logger.error(f"Failed to update image sequence: {e}")
+            logger.error("Failed to update image sequence: %s", e)
 
     def update_folder_sequence(self, current, total):
         """更新文件夹序列信息
@@ -367,7 +367,7 @@ class UnifiedStatusController:
                 text = f"文件夹: {current}/{total}"
                 self.folder_seq_label.setStringValue_(text)
         except Exception as e:
-            logger.error(f"Failed to update folder sequence: {e}")
+            logger.error("Failed to update folder sequence: %s", e)
 
     def update_status_message(self, message):
         """更新状态消息
@@ -379,7 +379,7 @@ class UnifiedStatusController:
             if self.center_status_label:
                 self.center_status_label.setStringValue_(str(message))
         except Exception as e:
-            logger.error(f"Failed to update status message: {e}")
+            logger.error("Failed to update status message: %s", e)
 
     def update_titlebar_text(self, text):
         """更新标题栏文本
@@ -391,7 +391,7 @@ class UnifiedStatusController:
             if self.titlebar_info_label:
                 self.titlebar_info_label.setStringValue_(str(text))
         except Exception as e:
-            logger.error(f"Failed to update titlebar text: {e}")
+            logger.error("Failed to update titlebar text: %s", e)
 
     def show_temporary_message(self, message, duration=3.0):
         """显示临时消息
@@ -414,14 +414,14 @@ class UnifiedStatusController:
             self._status_timer.start()
 
         except Exception as e:
-            logger.error(f"Failed to show temporary message: {e}")
+            logger.error("Failed to show temporary message: %s", e)
 
     def restoreStatusMessage_(self, timer):
         """恢复状态消息"""
         try:
             self.update_status_message("就绪")
         except Exception as e:
-            logger.error(f"Failed to restore status message: {e}")
+            logger.error("Failed to restore status message: %s", e)
 
     def get_session_stats(self):
         """获取会话统计信息
@@ -434,7 +434,7 @@ class UnifiedStatusController:
                 return self.session_manager.get_session_summary()
             return {}
         except Exception as e:
-            logger.error(f"Failed to get session stats: {e}")
+            logger.error("Failed to get session stats: %s", e)
             return {}
 
     def update_session_data(self, images, subfolders, current_index, current_subfolder_index):
@@ -475,7 +475,7 @@ class UnifiedStatusController:
             self._last_folder_index = current_subfolder_index
 
         except Exception as e:
-            logger.error(f"Failed to update session data: {e}")
+            logger.error("Failed to update session data: %s", e)
 
     def set_status_message(self, message):
         """设置状态消息 - 兼容原版StatusBarController"""
@@ -519,7 +519,7 @@ class UnifiedStatusController:
                     self.center_status_label.setFrame_(center_frame)
 
         except Exception as e:
-            logger.error(f"Failed to update frame: {e}")
+            logger.error("Failed to update frame: %s", e)
 
     def start_work_session(self):
         """启动工作会话 - 兼容原版StatusBarController"""
@@ -528,7 +528,7 @@ class UnifiedStatusController:
                 self.session_manager.start_session()
                 logger.debug("Work session started")
         except Exception as e:
-            logger.error(f"Failed to start work session: {e}")
+            logger.error("Failed to start work session: %s", e)
 
     def stop_work_session(self):
         """停止工作会话 - 兼容原版StatusBarController"""
@@ -537,7 +537,7 @@ class UnifiedStatusController:
                 self.session_manager.stop_session()
                 logger.debug("Work session stopped")
         except Exception as e:
-            logger.error(f"Failed to stop work session: {e}")
+            logger.error("Failed to stop work session: %s", e)
 
     def update_current_image_path(self, image_path):
         """更新当前图片路径显示
@@ -556,7 +556,7 @@ class UnifiedStatusController:
                 else:
                     self.center_status_label.setStringValue_("当前目录")
         except Exception as e:
-            logger.error(f"Failed to update current image path: {e}")
+            logger.error("Failed to update current image path: %s", e)
 
     def update_zoom_slider(self, scale):
         """更新缩放滑块 - 兼容性方法
@@ -568,9 +568,9 @@ class UnifiedStatusController:
             if self.zoom_slider:
                 # 更新缩放滑块的值
                 self.zoom_slider.setFloatValue_(scale)
-                logger.debug(f"Updated zoom slider to scale: {scale}")
+                logger.debug("Updated zoom slider to scale: %s", scale)
         except Exception as e:
-            logger.error(f"Failed to update zoom slider: {e}")
+            logger.error("Failed to update zoom slider: %s", e)
 
     def cleanup(self):
         """清理资源"""
@@ -595,7 +595,7 @@ class UnifiedStatusController:
             logger.info("UnifiedStatusController cleanup completed")
 
         except Exception as e:
-            logger.error(f"Failed to cleanup: {e}")
+            logger.error("Failed to cleanup: %s", e)
 
     def __del__(self):
         """析构函数"""

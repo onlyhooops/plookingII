@@ -80,7 +80,7 @@ class MenuController:
             except Exception:
                 alert.runModal()
         except Exception as e:
-            logger.warning(f"显示关于对话框失败: {e}")
+            logger.warning("显示关于对话框失败: %s", e)
 
     def show_shortcuts(self, sender):
         """
@@ -110,7 +110,7 @@ class MenuController:
             except Exception:
                 alert.runModal()
         except Exception as e:
-            logger.warning(f"显示快捷键说明失败: {e}")
+            logger.warning("显示快捷键说明失败: %s", e)
 
     # ==================== 最近文件菜单构建 ====================
 
@@ -136,20 +136,20 @@ class MenuController:
             # 文件项
             current_path = self.window.root_folder if hasattr(self.window, "root_folder") else None
             recent_list = self.window.folder_manager.get_recent_folders()
-            logger.debug(f"构建最近文件菜单，获取到 {len(recent_list)} 个路径")
+            logger.debug("构建最近文件菜单，获取到 %s 个路径", len(recent_list))
 
             for path in recent_list:
-                logger.debug(f"处理最近文件夹路径: {path}")
+                logger.debug("处理最近文件夹路径: %s", path)
 
                 # 双重验证：确保路径有效且是文件夹
                 if not os.path.exists(path) or not os.path.isdir(path):
-                    logger.debug(f"跳过无效路径: {path}")
+                    logger.debug("跳过无效路径: %s", path)
                     continue
 
                 # 排除精选文件夹
                 folder_name = os.path.basename(path.rstrip(os.sep))
                 if folder_name.endswith(" 精选") or folder_name == "精选":
-                    logger.debug(f"跳过精选文件夹: {path}")
+                    logger.debug("跳过精选文件夹: %s", path)
                     continue
 
                 name = os.path.basename(path)
@@ -171,7 +171,7 @@ class MenuController:
                 menu.addItem_(item)
             return menu
         except Exception as e:
-            logger.warning(f"构建最近文件菜单失败: {e}")
+            logger.warning("构建最近文件菜单失败: %s", e)
             return NSMenu.alloc().initWithTitle_("最近打开文件")
 
     def update_recent_menu(self, sender=None):
@@ -189,7 +189,7 @@ class MenuController:
                 new_menu = self.build_recent_menu(None)
                 self.window.recent_menu_item.setSubmenu_(new_menu)
         except Exception as e:
-            logger.warning(f"更新最近文件菜单失败: {e}")
+            logger.warning("更新最近文件菜单失败: %s", e)
 
     def initialize_recent_menu(self, timer):
         """
@@ -210,7 +210,7 @@ class MenuController:
                     0.1, self.window, "initializeRecentMenu:", None, False
                 )
         except Exception as e:
-            logger.warning(f"初始化最近文件菜单失败: {e}")
+            logger.warning("初始化最近文件菜单失败: %s", e)
 
     # ==================== 最近文件操作 ====================
 
@@ -229,7 +229,7 @@ class MenuController:
             if hasattr(sender, "title") and sender.title() == "清空最近记录":
                 self.clear_recent_files(sender)
         except Exception as e:
-            logger.warning(f"显示最近文件菜单失败: {e}")
+            logger.warning("显示最近文件菜单失败: %s", e)
 
     def open_recent_file(self, sender):
         """
@@ -245,18 +245,18 @@ class MenuController:
             if path:
                 # 验证路径是否为有效的文件夹
                 if not os.path.exists(path):
-                    logger.warning(f"最近文件夹路径不存在: {path}")
+                    logger.warning("最近文件夹路径不存在: %s", path)
                     self.window.status_bar_controller.set_status_message(f"文件夹不存在: {os.path.basename(path)}")
                     return
 
                 if not os.path.isdir(path):
-                    logger.warning(f"最近路径不是文件夹: {path}")
+                    logger.warning("最近路径不是文件夹: %s", path)
                     self.window.status_bar_controller.set_status_message(f"路径不是文件夹: {os.path.basename(path)}")
                     return
 
                 # 验证文件夹是否包含图片（使用拖拽控制器的方法）
                 if not self._folder_contains_images(path):
-                    logger.warning(f"最近文件夹不包含支持的图片: {path}")
+                    logger.warning("最近文件夹不包含支持的图片: %s", path)
                     self.window.status_bar_controller.set_status_message(f"文件夹不包含图片: {os.path.basename(path)}")
                     return
 
@@ -266,7 +266,7 @@ class MenuController:
                 self.update_recent_menu()
                 self.window.folder_manager.load_images_from_root(path)
         except Exception as e:
-            logger.warning(f"打开最近文件失败: {e}")
+            logger.warning("打开最近文件失败: %s", e)
             self.window.status_bar_controller.set_status_message(f"打开文件夹失败: {e!s}")
 
     def clear_recent_files(self, sender):
@@ -283,7 +283,7 @@ class MenuController:
             self.update_recent_menu()
             self.window.status_bar_controller.set_status_message("已清空最近打开记录")
         except Exception as e:
-            logger.warning(f"清空最近文件记录失败: {e}")
+            logger.warning("清空最近文件记录失败: %s", e)
 
     # ==================== 辅助方法 ====================
 

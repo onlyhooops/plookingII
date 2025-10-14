@@ -38,7 +38,7 @@ logger = logging.getLogger("PlookingII")
 try:
     from .status_bar_controller import StatusBarController
 except ImportError as e:
-    logger.warning(f"Failed to import StatusBarController: {e}")
+    logger.warning("Failed to import StatusBarController: %s", e)
     from .unified_status_controller import UnifiedStatusController as StatusBarController
 
 # TitlebarController已合并到UnifiedStatusController

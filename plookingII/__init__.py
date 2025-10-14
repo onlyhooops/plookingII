@@ -68,7 +68,7 @@ def _safe_imports_for_env():
         try:
             __import__(__name__ + mod, fromlist=["*"])
         except Exception:
-            logger.exception(f"Failed to import {mod}")
+            logger.exception("Failed to import %s", mod)
 
     # mac-only modules
     if mac_env:
@@ -76,7 +76,7 @@ def _safe_imports_for_env():
             try:
                 __import__(__name__ + mod, fromlist=["*"])
             except Exception:
-                logger.exception(f"Failed to import {mod}")
+                logger.exception("Failed to import %s", mod)
 
 
 _safe_imports_for_env()

@@ -439,14 +439,14 @@ class OperationManager:
                             self.main_window.current_subfolder_index,
                         )
 
-                    logger.info(f"跳转到文件: {target_index + 1}/{len(self.main_window.images)}")
+                    logger.info("跳转到文件: %s/{len(self.main_window.images)}", target_index + 1)
                 else:
                     self._show_info_(f"序号超出范围，请输入 1-{len(self.main_window.images)} 之间的数字。")
 
             except ValueError:
                 self._show_info_("请输入有效的数字。")
             except Exception as e:
-                logger.error(f"跳转到文件失败: {e}")
+                logger.error("跳转到文件失败: %s", e)
                 self._show_info_(f"跳转失败: {e!s}")
 
     def show_in_finder(self):
@@ -574,7 +574,7 @@ class OperationManager:
                         self.main_window.onRotationCompleted_({"success": False, "direction": direction})
 
             except Exception as e:
-                logger.error(f"旋转操作失败: {e}")
+                logger.error("旋转操作失败: %s", e)
                 try:
                     from Foundation import NSOperationQueue
 
@@ -634,7 +634,7 @@ class OperationManager:
             return processor.rotate_image(image_path, direction, self._on_rotation_callback)
 
         except Exception as e:
-            logger.error(f"执行旋转失败 {image_path}: {e}")
+            logger.error("执行旋转失败 %s: {e}", image_path)
             return False
 
     def _on_rotation_callback(self, image_path, direction):
@@ -667,7 +667,7 @@ class OperationManager:
             self.main_window.image_manager.show_current_image()
 
         except Exception as e:
-            logger.warning(f"旋转回调处理失败: {e}")
+            logger.warning("旋转回调处理失败: %s", e)
 
     def undo_rotation_action(self):
         """撤销旋转操作"""

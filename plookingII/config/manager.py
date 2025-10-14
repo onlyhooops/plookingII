@@ -187,7 +187,7 @@ class ConfigManager:
                         try:
                             return self._convert_value(env_value, schema.config_type)
                         except Exception as e:
-                            logger.warning(f"环境变量{schema.env_var}转换失败: {e}")
+                            logger.warning("环境变量%s转换失败: {e}", schema.env_var)
 
             # 2. 检查用户配置
             if key in self._configs:
@@ -226,7 +226,7 @@ class ConfigManager:
             if persist:
                 self._save_user_config()
 
-            logger.debug(f"配置已更新: {key} = {value}")
+            logger.debug("配置已更新: %s = {value}", key)
             return True
 
     def get_all_configs(self) -> dict[str, Any]:
@@ -257,7 +257,7 @@ class ConfigManager:
                     self._configs[key] = default_value
                     self._notify_observers(key, old_value, default_value)
 
-            logger.info(f"已重置{len(keys_to_reset)}个配置项为默认值")
+            logger.info("已重置%s个配置项为默认值", len(keys_to_reset))
 
     def add_observer(self, callback: callable):
         """添加配置变更观察者
@@ -289,9 +289,9 @@ class ConfigManager:
                 with open(config_file, encoding="utf-8") as f:
                     user_config = json.load(f)
                     self._configs.update(user_config)
-                logger.info(f"已加载用户配置: {config_file}")
+                logger.info("已加载用户配置: %s", config_file)
         except Exception as e:
-            logger.warning(f"加载用户配置失败: {e}")
+            logger.warning("加载用户配置失败: %s", e)
 
     def _save_user_config(self):
         """保存用户配置到文件"""
@@ -308,9 +308,9 @@ class ConfigManager:
             with open(config_file, "w", encoding="utf-8") as f:
                 json.dump(user_config, f, indent=2, ensure_ascii=False)
 
-            logger.info(f"用户配置已保存: {config_file}")
+            logger.info("用户配置已保存: %s", config_file)
         except Exception as e:
-            logger.error(f"保存用户配置失败: {e}")
+            logger.error("保存用户配置失败: %s", e)
 
     def _apply_env_overrides(self):
         """应用环境变量覆盖"""
@@ -321,9 +321,9 @@ class ConfigManager:
                     try:
                         converted_value = self._convert_value(env_value, schema.config_type)
                         self._configs[key] = converted_value
-                        logger.debug(f"环境变量覆盖: {key} = {converted_value}")
+                        logger.debug("环境变量覆盖: %s = {converted_value}", key)
                     except Exception as e:
-                        logger.warning(f"环境变量{schema.env_var}转换失败: {e}")
+                        logger.warning("环境变量%s转换失败: {e}", schema.env_var)
 
     def _get_config_file_path(self) -> str:
         """获取配置文件路径"""
@@ -350,7 +350,7 @@ class ConfigManager:
     def _validate_config(self, key: str, value: Any) -> bool:
         """验证配置值"""
         if key not in self._schemas:
-            logger.warning(f"未知配置项: {key}")
+            logger.warning("未知配置项: %s", key)
             return False
 
         schema = self._schemas[key]
@@ -366,17 +366,17 @@ class ConfigManager:
                 if isinstance(value, str):
                     value.lower() in ("true", "false", "1", "0", "yes", "no")
         except (ValueError, TypeError):
-            logger.error(f"配置值类型错误: {key} = {value}")
+            logger.error("配置值类型错误: %s = {value}", key)
             return False
 
         # 自定义验证
         if schema.validator:
             try:
                 if not schema.validator(value):
-                    logger.error(f"配置值验证失败: {key} = {value}")
+                    logger.error("配置值验证失败: %s = {value}", key)
                     return False
             except Exception as e:
-                logger.error(f"配置验证器执行失败: {e}")
+                logger.error("配置验证器执行失败: %s", e)
                 return False
 
         return True
@@ -387,7 +387,7 @@ class ConfigManager:
             try:
                 observer(key, old_value, new_value)
             except Exception as e:
-                logger.error(f"配置观察者通知失败: {e}")
+                logger.error("配置观察者通知失败: %s", e)
 
     # 配置验证器
     @staticmethod

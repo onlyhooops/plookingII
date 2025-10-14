@@ -61,7 +61,7 @@ class NavigationController:
             self._perf_optimizer = get_performance_optimizer()
             logger.debug("NavigationController integrated with PerformanceOptimizer")
         except Exception as e:
-            logger.warning(f"Failed to initialize PerformanceOptimizer: {e}")
+            logger.warning("Failed to initialize PerformanceOptimizer: %s", e)
             self._perf_optimizer = None
 
         # 导航历史记录（用于性能优化）
@@ -80,10 +80,10 @@ class NavigationController:
         if self._processing_key_event:
             self._recursion_depth += 1
             if self._recursion_depth > self._max_recursion_depth:
-                logger.warning(f"键盘事件递归深度超过限制({self._max_recursion_depth})，强制停止处理")
+                logger.warning("键盘事件递归深度超过限制(%s)，强制停止处理", self._max_recursion_depth)
                 self._recursion_depth = 0
                 return False
-            logger.debug(f"正在处理键盘事件，递归深度: {self._recursion_depth}")
+            logger.debug("正在处理键盘事件，递归深度: %s", self._recursion_depth)
             return False
 
         try:
@@ -167,7 +167,7 @@ class NavigationController:
             return False
 
         except Exception as e:
-            logger.warning(f"导航控制器键盘事件处理失败: {e}")
+            logger.warning("导航控制器键盘事件处理失败: %s", e)
             return False
         finally:
             self._processing_key_event = False
@@ -187,7 +187,7 @@ class NavigationController:
                     else:
                         self.main_window.rotate_image_counterclockwise()
                 except Exception as e:
-                    logger.error(f"后台旋转操作失败: {e}")
+                    logger.error("后台旋转操作失败: %s", e)
 
             # 启动后台线程
             import threading
@@ -196,7 +196,7 @@ class NavigationController:
             thread.start()
 
         except Exception as e:
-            logger.error(f"启动旋转线程失败: {e}")
+            logger.error("启动旋转线程失败: %s", e)
 
     def _handle_navigation_key(self, direction):
         """处理导航按键的防抖动逻辑（性能优化版）
@@ -247,10 +247,11 @@ class NavigationController:
                     adaptive_delay = optimization.get("optimal_debounce_sec", self._key_debounce_delay)
 
                     logger.debug(
-                        f"Adaptive debounce: {adaptive_delay * 1000:.1f}ms, velocity: {optimization.get('navigation_velocity', 0):.2f} img/s"
-                    )
+                "Adaptive debounce: %.1fms, velocity: {optimization.get('navigation_velocity', 0):.2f} img/s",
+                adaptive_delay * 1000
+            )
                 except Exception as e:
-                    logger.debug(f"Failed to calculate optimal debounce: {e}")
+                    logger.debug("Failed to calculate optimal debounce: %s", e)
                     # 回退到原有的自适应逻辑
                     adaptive_delay = (
                         0.005 if (prev_time and (current_time - prev_time) < 0.12) else self._key_debounce_delay

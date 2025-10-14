@@ -268,7 +268,7 @@ class MainWindow(NSWindow):
             self.orderOut_(None)
             return False  # 不允许销毁窗口
         except Exception as e:
-            logger.warning(f"窗口关闭处理失败: {e}")
+            logger.warning("窗口关闭处理失败: %s", e)
             self.orderOut_(None)
             return False
 
@@ -299,7 +299,7 @@ class MainWindow(NSWindow):
             # 侧边栏已移除，无需更新
             # 无导航工具栏更新
         except Exception as e:
-            logger.warning(f"窗口尺寸更新失败: {e}")
+            logger.warning("窗口尺寸更新失败: %s", e)
 
     # 侧边栏已移除，无切换回调
 
@@ -329,7 +329,7 @@ class MainWindow(NSWindow):
 
             NSWindow.keyDown_(self, event)
         except Exception as e:
-            logger.warning(f"键盘事件处理失败: {e}")
+            logger.warning("键盘事件处理失败: %s", e)
             # 出错时传递给系统处理
             try:
                 from AppKit import NSWindow
@@ -391,7 +391,7 @@ class MainWindow(NSWindow):
             self.image_view.setNeedsDisplay_(True)
 
         except Exception as e:
-            logger.warning(f"缩放滑块处理失败: {e}")
+            logger.warning("缩放滑块处理失败: %s", e)
 
     def updateZoomSlider_(self, scale):
         """
@@ -406,7 +406,7 @@ class MainWindow(NSWindow):
         try:
             self.image_view_controller.update_zoom_slider(scale)
         except Exception as e:
-            logger.warning(f"缩放滑块更新失败: {e}")
+            logger.warning("缩放滑块更新失败: %s", e)
 
     def executePendingNavigation_(self, timer):
         """
@@ -418,7 +418,7 @@ class MainWindow(NSWindow):
         try:
             self.navigation_controller.execute_pending_navigation()
         except Exception as e:
-            logger.warning(f"导航操作执行失败: {e}")
+            logger.warning("导航操作执行失败: %s", e)
 
     def clearStatusMessage_(self, timer=None):
         """
@@ -427,7 +427,7 @@ class MainWindow(NSWindow):
         try:
             self.status_bar_controller.clear_status_message()
         except Exception as e:
-            logger.warning(f"状态消息清除失败: {e}")
+            logger.warning("状态消息清除失败: %s", e)
 
     # 兼容旧接口（无参数调用）
     def clearStatusMessage(self):
@@ -442,7 +442,7 @@ class MainWindow(NSWindow):
         try:
             self.operation_manager._navigate_after_removal()
         except Exception as e:
-            logger.warning(f"UI更新失败: {e}")
+            logger.warning("UI更新失败: %s", e)
 
     def rotate_image_clockwise(self):
         """委托给 RotationController"""
@@ -556,42 +556,42 @@ class MainWindow(NSWindow):
         try:
             self.operation_manager.open_folder()
         except Exception as e:
-            logger.error(f"打开文件夹失败: {e}")
+            logger.error("打开文件夹失败: %s", e)
 
     def gotoKeepFolder_(self, sender):
         """跳转到保留文件夹"""
         try:
             self.operation_manager.goto_keep_folder()
         except Exception as e:
-            logger.error(f"跳转到保留文件夹失败: {e}")
+            logger.error("跳转到保留文件夹失败: %s", e)
 
     def jumpToFolder_(self, sender):
         """跳转到指定文件夹"""
         try:
             self.operation_manager.jump_to_folder()
         except Exception as e:
-            logger.error(f"跳转到指定文件夹失败: {e}")
+            logger.error("跳转到指定文件夹失败: %s", e)
 
     def gotoFile_(self, sender):
         """跳转到指定文件"""
         try:
             self.operation_manager.goto_file()
         except Exception as e:
-            logger.error(f"跳转到文件失败: {e}")
+            logger.error("跳转到文件失败: %s", e)
 
     def rotateImageClockwise_(self, sender):
         """菜单项：向右旋转90°"""
         try:
             self.rotate_image_clockwise()
         except Exception as e:
-            logger.error(f"菜单旋转失败: {e}")
+            logger.error("菜单旋转失败: %s", e)
 
     def rotateImageCounterclockwise_(self, sender):
         """菜单项：向左旋转90°"""
         try:
             self.rotate_image_counterclockwise()
         except Exception as e:
-            logger.error(f"菜单旋转失败: {e}")
+            logger.error("菜单旋转失败: %s", e)
 
     def onRotationCompleted_(self, result):
         """旋转完成回调
@@ -615,7 +615,7 @@ class MainWindow(NSWindow):
                 self.status_bar_controller.set_status_message(error_msg)
 
         except Exception as e:
-            logger.error(f"旋转完成回调处理失败: {e}")
+            logger.error("旋转完成回调处理失败: %s", e)
             self.status_bar_controller.set_status_message("旋转操作异常")
 
     def showInFinder_(self, sender):
@@ -623,14 +623,14 @@ class MainWindow(NSWindow):
         try:
             self.operation_manager.show_in_finder()
         except Exception as e:
-            logger.error(f"在Finder中显示当前图片失败: {e}")
+            logger.error("在Finder中显示当前图片失败: %s", e)
 
     def clearCache_(self, sender):
         """清除任务历史记录与缓存"""
         try:
             self.operation_manager.clear_cache()
         except Exception as e:
-            logger.error(f"清除缓存失败: {e}")
+            logger.error("清除缓存失败: %s", e)
 
     def set_status_message(self, msg):
         """设置状态消息 - 使用统一接口重构版本
@@ -702,7 +702,7 @@ class MainWindow(NSWindow):
             if hasattr(self, "operation_manager") and self.operation_manager:
                 self.operation_manager.undo_keep_action()
         except Exception as e:
-            logger.warning(f"撤销保留失败: {e}")
+            logger.warning("撤销保留失败: %s", e)
 
     def undoSelection_(self, sender):
         """撤销精选（自定义 action，避免系统覆盖菜单标题）"""
@@ -727,7 +727,7 @@ class MainWindow(NSWindow):
             if hasattr(self, "status_bar_controller") and self.status_bar_controller:
                 self.status_bar_controller.set_status_message("已复制图片路径")
         except Exception as e:
-            logger.warning(f"复制图片路径失败: {e}")
+            logger.warning("复制图片路径失败: %s", e)
 
     # ==================== 最近文件管理 ====================
 
@@ -768,7 +768,7 @@ class MainWindow(NSWindow):
                 self.current_folder, self.images, self.current_index, self.subfolders, self.current_subfolder_index
             )
         except Exception as e:
-            logger.warning(f"更新状态栏显示失败: {e}")
+            logger.warning("更新状态栏显示失败: %s", e)
 
     def _show_current_image_optimized(self):
         """
@@ -779,7 +779,7 @@ class MainWindow(NSWindow):
         try:
             self.image_manager.show_current_image()
         except Exception as e:
-            logger.warning(f"显示当前图片失败: {e}")
+            logger.warning("显示当前图片失败: %s", e)
 
     def _on_image_update_status_changed(self, image_path: str, has_update: bool):
         """图片更新状态变化回调
@@ -792,7 +792,7 @@ class MainWindow(NSWindow):
             if hasattr(self, "status_bar_controller"):
                 self.status_bar_controller.set_update_indicator(has_update)
         except Exception as e:
-            logger.error(f"更新状态指示器失败: {e}")
+            logger.error("更新状态指示器失败: %s", e)
 
     def _save_task_progress(self):
         """委托给 HistoryManager"""

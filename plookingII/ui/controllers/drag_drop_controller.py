@@ -62,7 +62,7 @@ class DragDropController:
             self.window.registerForDraggedTypes_([NSFilenamesPboardType])
             logger.debug("拖拽接收功能已启用")
         except Exception as e:
-            logger.warning(f"设置拖拽接收功能失败: {e}")
+            logger.warning("设置拖拽接收功能失败: %s", e)
 
     def dragging_entered(self, sender):
         """
@@ -112,10 +112,10 @@ class DragDropController:
             return NSDragOperationNone
 
         except DragDropError as e:
-            logger.warning(f"拖拽验证失败: {e}")
+            logger.warning("拖拽验证失败: %s", e)
             return NSDragOperationNone
         except Exception as e:
-            logger.error(f"拖拽进入处理异常: {e}")
+            logger.error("拖拽进入处理异常: %s", e)
             return NSDragOperationNone
 
     def dragging_updated(self, sender):
@@ -155,7 +155,7 @@ class DragDropController:
             return NSDragOperationNone
 
         except Exception as e:
-            logger.warning(f"拖拽更新处理失败: {e}")
+            logger.warning("拖拽更新处理失败: %s", e)
             return NSDragOperationNone
 
     def dragging_exited(self, sender):
@@ -184,7 +184,7 @@ class DragDropController:
             self._last_drag_path = None
 
         except Exception as e:
-            logger.warning(f"拖拽退出处理失败: {e}")
+            logger.warning("拖拽退出处理失败: %s", e)
 
     def perform_drag_operation(self, sender):
         """
@@ -222,7 +222,7 @@ class DragDropController:
                 show_error(error, "拖拽文件夹验证")
                 return False
 
-            logger.info(f"通过拖拽打开文件夹: {valid_folder}")
+            logger.info("通过拖拽打开文件夹: %s", valid_folder)
 
             # 保存当前任务进度
             self.window.folder_manager._save_task_progress_immediate()
@@ -258,7 +258,7 @@ class DragDropController:
                 error = DragDropError(f"拖拽操作失败: {e!s}")
                 show_error(error, "拖拽操作")
 
-            logger.error(f"拖拽操作执行失败: {e}")
+            logger.error("拖拽操作执行失败: %s", e)
             return False
 
     def _clear_drag_highlight(self):
@@ -306,7 +306,7 @@ class DragDropController:
             return False
 
         except Exception as e:
-            logger.debug(f"快速文件夹检查失败: {e}")
+            logger.debug("快速文件夹检查失败: %s", e)
             return False
 
     def _show_drag_feedback(self, folder_path: str):
@@ -328,7 +328,7 @@ class DragDropController:
                 self.window.status_bar_controller.set_status_message(f"准备打开: {folder_name}")
 
         except Exception as e:
-            logger.debug(f"显示拖拽反馈失败: {e}")
+            logger.debug("显示拖拽反馈失败: %s", e)
 
     def _start_async_validation(self, folder_path: str):
         """
@@ -347,10 +347,10 @@ class DragDropController:
                 self._drag_validation_cache[folder_path] = result
 
                 if not result:
-                    logger.debug(f"异步验证失败: {folder_path}")
+                    logger.debug("异步验证失败: %s", folder_path)
 
             except Exception as e:
-                logger.debug(f"异步验证异常: {e}")
+                logger.debug("异步验证异常: %s", e)
                 self._drag_validation_cache[folder_path] = False
 
         # 启动异步验证

@@ -272,7 +272,7 @@ class ImageManager:
         try:
             self.bidi_pool.set_current_image_sync(image_path, image_path)
         except Exception as e:
-            logger.debug(f"bidi_pool.set_current_image_sync failed: {e}")
+            logger.debug("bidi_pool.set_current_image_sync failed: %s", e)
 
     def _try_display_cached_image(self, image_path: str, target_size: tuple) -> bool:
         """尝试显示缓存的图像
@@ -288,7 +288,7 @@ class ImageManager:
             cached_image = self.image_cache.get(image_path, target_size=target_size)
         except Exception as e:
             cached_image = None
-            logger.debug(f"image_cache.get failed: {e}")
+            logger.debug("image_cache.get failed: %s", e)
 
         if cached_image:
             # 缓存命中，立即显示
@@ -335,7 +335,7 @@ class ImageManager:
         try:
             return self.image_cache.get_file_size_mb(image_path)
         except Exception as e:
-            logger.debug(f"get_file_size_mb failed, fallback to 0: {e}")
+            logger.debug("get_file_size_mb failed, fallback to 0: %s", e)
             return 0
 
     def _should_use_fast_loading(self, file_size_mb: float) -> bool:
@@ -368,7 +368,7 @@ class ImageManager:
                 self._schedule_adaptive_prefetch(image_path, target_size)
                 self._ensure_hot3_residency(image_path, target_size)
         except Exception as e:
-            logger.debug(f"Fast sync load failed, fallback to background: {e}")
+            logger.debug("Fast sync load failed, fallback to background: %s", e)
             # 快速加载失败，回退到后台加载（传递图像路径用于自适应优化）
             target_size = self._get_target_size_for_view(scale_factor=2, image_path=image_path)
             self._start_background_load(image_path, target_size)
@@ -398,7 +398,7 @@ class ImageManager:
                     if self._is_portrait_image(image_path):
                         # 竖向图片降低缩放因子，减少解码负载
                         adaptive_scale = max(1.2, scale_factor * 0.75)
-                        logger.debug(f"竖向图片优化：缩放因子 {scale_factor} -> {adaptive_scale}")
+                        logger.debug("竖向图片优化：缩放因子 %s -> {adaptive_scale}", scale_factor)
                 except Exception:
                     pass
 
@@ -484,7 +484,7 @@ class ImageManager:
             threshold = IMAGE_PROCESSING_CONFIG.get("progressive_load_threshold")
             return bool(self.progressive_loading_enabled and file_size_mb >= threshold)
         except Exception as e:
-            logger.debug(f"_should_use_progressive failed: {e}")
+            logger.debug("_should_use_progressive failed: %s", e)
             return False
 
     def _display_image_immediate(self, image):
@@ -653,7 +653,7 @@ class ImageManager:
             # 竖向图片优化：减少预取窗口，优先保证当前图片流畅性
             if current_image_path and self._is_portrait_image(current_image_path):
                 window = max(1, int(window * 0.7))  # 竖向图片预取窗口减小30%
-                logger.debug(f"竖向图片预取优化：窗口大小 {window}")
+                logger.debug("竖向图片预取优化：窗口大小 %s", window)
 
             # 受内存与系统策略影响，可进一步收缩（与现有水位策略协同，此处先保守返回）
             return window
@@ -821,7 +821,7 @@ class ImageManager:
             if is_portrait and target_size:
                 multiplier = self._portrait_cache_config["memory_multiplier"]
                 adjusted_target_size = (int(target_size[0] * multiplier), int(target_size[1] * multiplier))
-                logger.debug(f"竖向图片目标尺寸优化: {target_size} -> {adjusted_target_size}")
+                logger.debug("竖向图片目标尺寸优化: %s -> {adjusted_target_size}", target_size)
 
             file_size_mb = self.image_cache.get_file_size_mb(img_path)
             strategy, eff_target = self._select_load_strategy(file_size_mb, prefer_preview, adjusted_target_size)
@@ -961,8 +961,9 @@ class ImageManager:
 
         # 记录内存使用情况
         logger.debug(
-            f"Memory usage - Available: {memory_info.get('available_mb', 0):.1f}MB, Cache: {total_cache_memory:.1f}MB"
-        )
+                "Memory usage - Available: %.1fMB, Cache: {total_cache_memory:.1f}MB",
+                memory_info.get('available_mb', 0)
+            )
 
         # 获取可用内存
         available_mb = memory_info.get("available_mb", 0)
@@ -1251,13 +1252,13 @@ class ImageManager:
             # 记录同步时间，用于后续预加载优化
             self._last_sequence_sync = time.time()
 
-            logger.debug(f"双向缓存池已同步，图像数量: {len(images)}")
+            logger.debug("双向缓存池已同步，图像数量: %s", len(images))
 
             # 立即触发预加载重建，确保后续导航流畅
             self._trigger_immediate_preload_rebuild()
 
         except Exception as e:
-            logger.warning(f"同步双向缓存池失败: {e}")
+            logger.warning("同步双向缓存池失败: %s", e)
 
     def _trigger_immediate_preload_rebuild(self):
         """立即触发预加载重建
@@ -1286,7 +1287,7 @@ class ImageManager:
                     logger.debug("预加载重建已启动")
 
                 except Exception as e:
-                    logger.debug(f"预加载重建失败: {e}")
+                    logger.debug("预加载重建失败: %s", e)
 
             # 使用定时器延迟执行
             try:
@@ -1301,7 +1302,7 @@ class ImageManager:
                 delayed_preload_rebuild()
 
         except Exception as e:
-            logger.debug(f"触发预加载重建失败: {e}")
+            logger.debug("触发预加载重建失败: %s", e)
 
     def _execute_delayed_preload_rebuild_(self, timer):
         """执行延迟的预加载重建（NSTimer回调）"""
@@ -1310,7 +1311,7 @@ class ImageManager:
                 self._delayed_preload_func()
                 delattr(self, "_delayed_preload_func")
         except Exception as e:
-            logger.debug(f"执行延迟预加载重建失败: {e}")
+            logger.debug("执行延迟预加载重建失败: %s", e)
 
     def request_high_quality_image(self):
         """请求加载当前图像的高质量版本"""

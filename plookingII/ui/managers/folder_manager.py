@@ -43,7 +43,7 @@ class FolderManager:
         try:
             cleaned_count = self.recent_folders_manager.cleanup_invalid_entries()
             if cleaned_count > 0:
-                logger.info(f"启动时清理了 {cleaned_count} 个无效的最近文件夹记录")
+                logger.info("启动时清理了 %s 个无效的最近文件夹记录", cleaned_count)
         except Exception:
             logger.debug("启动时清理最近文件夹记录失败", exc_info=True)
 
@@ -840,7 +840,7 @@ class FolderManager:
                 result = alert.runModal()
                 self._handle_task_history_dialog_result(result, history_data)
             except Exception as e:
-                logger.error(f"Failed to show history dialog: {e}")
+                logger.error("Failed to show history dialog: %s", e)
                 # 出错时默认重新开始
                 self.main_window.current_subfolder_index = 0
                 self.main_window.current_index = 0

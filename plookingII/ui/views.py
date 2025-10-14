@@ -196,7 +196,7 @@ class AdaptiveImageView(NSImageView):
         # 确保视图可以接收鼠标事件（NSView没有setAcceptsFirstResponder_方法）
         # self.setAcceptsFirstResponder_(True)  # 这个方法不存在，移除
 
-        logger.debug(f"AdaptiveImageView 初始化完成，视图ID: {id(self)}")
+        logger.debug("AdaptiveImageView 初始化完成，视图ID: %s", id(self))
 
         # 性能优化相关属性
         self._last_scroll_time = 0  # 上次滚轮事件时间
@@ -412,10 +412,10 @@ class AdaptiveImageView(NSImageView):
         Args:
             event: 鼠标事件对象
         """
-        logger.debug(f"右键事件触发: current_image_path={self._current_image_path}")
+        logger.debug("右键事件触发: current_image_path=%s", self._current_image_path)
 
         if self._current_image_path and os.path.exists(self._current_image_path):
-            logger.debug(f"显示右键菜单: {self._current_image_path}")
+            logger.debug("显示右键菜单: %s", self._current_image_path)
             self._show_open_with_menu(event)
         else:
             logger.debug("没有当前图片或文件不存在，调用父类处理")
@@ -532,7 +532,7 @@ class AdaptiveImageView(NSImageView):
             image_path: 图片文件路径
         """
         self._current_image_path = image_path
-        logger.debug(f"设置当前图片路径: {image_path}")
+        logger.debug("设置当前图片路径: %s", image_path)
 
     def _is_browser_app(self, app_path):
         """检查是否为浏览器应用程序
@@ -590,7 +590,7 @@ class AdaptiveImageView(NSImageView):
                 logger.warning("显示右键菜单失败")
 
         except Exception as e:
-            logger.error(f"显示右键菜单失败: {e}")
+            logger.error("显示右键菜单失败: %s", e)
 
     def openWithDefaultApp_(self, sender):
         """使用默认应用程序打开文件
@@ -613,12 +613,12 @@ class AdaptiveImageView(NSImageView):
             )
 
             if error:
-                logger.warning(f"默认应用程序打开失败: {error}")
+                logger.warning("默认应用程序打开失败: %s", error)
             else:
                 # result是NSRunningApplication对象，表示成功启动的应用
                 logger.info("成功使用默认应用程序打开文件")
         except Exception as e:
-            logger.error(f"使用默认应用程序打开文件失败: {e}")
+            logger.error("使用默认应用程序打开文件失败: %s", e)
 
     def openWithApp_(self, sender):
         """使用指定应用程序打开文件
@@ -645,12 +645,12 @@ class AdaptiveImageView(NSImageView):
             app_name = os.path.basename(app_url.path()).replace(".app", "")
 
             if error:
-                logger.warning(f"{app_name} 打开失败: {error}")
+                logger.warning("%s 打开失败: {error}", app_name)
             else:
                 # result是NSRunningApplication对象，表示成功启动的应用
-                logger.info(f"成功使用 {app_name} 打开文件")
+                logger.info("成功使用 %s 打开文件", app_name)
         except Exception as e:
-            logger.error(f"使用指定应用程序打开文件失败: {e}")
+            logger.error("使用指定应用程序打开文件失败: %s", e)
 
     def openWithOtherApp_(self, sender):
         """使用其他应用程序打开文件（显示文件选择对话框）
@@ -668,7 +668,7 @@ class AdaptiveImageView(NSImageView):
             else:
                 logger.warning("应用程序选择对话框显示失败")
         except Exception as e:
-            logger.error(f"显示应用程序选择对话框失败: {e}")
+            logger.error("显示应用程序选择对话框失败: %s", e)
 
     def drawRect_(self, rect):
         NSColor.clearColor().set()
@@ -867,4 +867,4 @@ class AdaptiveImageView(NSImageView):
             border_path.stroke()
 
         except Exception as e:
-            logger.warning(f"绘制拖拽高亮效果失败: {e}")
+            logger.warning("绘制拖拽高亮效果失败: %s", e)

@@ -71,7 +71,7 @@ class ErrorRecoveryStrategy:
             exception: 捕获的异常
             context: 错误上下文信息
         """
-        logger.error(f"Error in {context.get('function', 'unknown')}: {exception!s}", exc_info=True)
+        logger.error("Error in %s: %s", context.get('function', 'unknown'), exception, exc_info=True)
 
     def on_retry(self, exception: Exception, attempt: int, context: dict):
         """重试回调
@@ -81,10 +81,10 @@ class ErrorRecoveryStrategy:
             attempt: 当前尝试次数
             context: 错误上下文信息
         """
-        logger.warning(
-            f"Retrying {context.get('function', 'unknown')} (attempt {attempt}/{self.max_retries}) "
-            f"due to: {exception!s}"
-        )
+          logger.warning(
+              "Retrying %s (attempt %s/%s) due to: %s",
+              context.get('function', 'unknown'), attempt, self.max_retries, exception
+          )
 
     def on_failure(self, exception: Exception, context: dict):
         """最终失败回调
@@ -93,7 +93,7 @@ class ErrorRecoveryStrategy:
             exception: 捕获的异常
             context: 错误上下文信息
         """
-        logger.error(f"All retries failed for {context.get('function', 'unknown')}: {exception!s}", exc_info=True)
+        logger.error("All retries failed for %s: %s", context.get('function', 'unknown'), exception, exc_info=True)
 
 
 class RobustErrorHandler:
@@ -212,7 +212,7 @@ class RobustErrorHandler:
             return func(*args, **kwargs)
         except Exception as e:
             if log_error:
-                logger.error(f"Error in safe_call to {func.__name__}: {e}", exc_info=True)
+                logger.error("Error in safe_call to %s: %s", func.__name__, e, exc_info=True)
 
             # 更新错误统计
             error_key = f"{func.__name__}:{type(e).__name__}"
@@ -264,10 +264,10 @@ def auto_retry(
                 except exceptions as e:
                     attempt += 1
                     if attempt >= max_retries:
-                        logger.error(f"All {max_retries} retries failed for {func.__name__}: {e}", exc_info=True)
+                        logger.error("All %s retries failed for %s: %s", max_retries, func.__name__, e, exc_info=True)
                         return fallback
 
-                    logger.warning(f"Retry {attempt}/{max_retries} for {func.__name__} due to: {e}")
+                    logger.warning("Retry %s/{max_retries} for {func.__name__} due to: {e}", attempt)
                     time.sleep(retry_delay * (2 ** (attempt - 1)))  # 指数退避
 
             return fallback
@@ -293,7 +293,7 @@ def safe_call(fallback: Any = None, log_error: bool = True):
                 return func(*args, **kwargs)
             except Exception as e:
                 if log_error:
-                    logger.error(f"Error in {func.__name__}: {e}", exc_info=True)
+                    logger.error("Error in %s: %s", func.__name__, e, exc_info=True)
                 return fallback
 
         return wrapper
@@ -317,10 +317,10 @@ def boundary_check(check_func: Callable[[Any], bool], fallback: Any = None, erro
             # 检查参数边界
             try:
                 if not check_func(*args, **kwargs):
-                    logger.warning(f"{error_msg} for {func.__name__}")
+                    logger.warning("%s for {func.__name__}", error_msg)
                     return fallback
             except Exception as e:
-                logger.error(f"Boundary check error in {func.__name__}: {e}")
+                logger.error("Boundary check error in %s: {e}", func.__name__)
                 return fallback
 
             # 执行函数

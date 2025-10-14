@@ -463,7 +463,7 @@ class StatusBarController:
                 self.update_indicator.setStringValue_("")
 
         except Exception as e:
-            logger.error(f"设置更新指示器失败: {e}")
+            logger.error("设置更新指示器失败: %s", e)
 
     def cleanup(self):
         """清理资源"""

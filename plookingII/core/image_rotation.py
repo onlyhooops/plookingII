@@ -264,10 +264,10 @@ class ImageRotationProcessor:
                         os.unlink(tmp_path)
                     except Exception:
                         pass
-                      logger.exception(
-                          "jpegtran 无损旋转失败: %s",
-                          (result.stderr.decode(errors="ignore") or "unknown error"),
-                      )
+                    logger.exception(
+                        "jpegtran 无损旋转失败: %s",
+                        (result.stderr.decode(errors="ignore") or "unknown error"),
+                    )
                     return False
 
             # 原子替换：先备份，再替换，尽量保证安全

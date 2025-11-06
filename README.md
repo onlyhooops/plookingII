@@ -22,7 +22,11 @@ macOS 原生图片浏览器 - 高性能、智能化的图片浏览体验
 
 ### 系统要求
 
-- **macOS**: 10.15 (Catalina) 或更高版本
+> **⚠️ 平台限制**: 本应用专为 **macOS x86 (Intel)** 架构设计开发，使用了 PyObjC、AppKit、Quartz 等 macOS 原生框架，**不支持跨平台**运行。
+
+- **操作系统**: macOS 10.15 (Catalina) 或更高版本
+- **架构**: Intel x86_64（不支持 Apple Silicon M1/M2，不支持 Linux/Windows）
+- **Python**: 3.11 或 3.12
 - **内存**: 建议 4GB 以上
 - **存储**: 至少 100MB 可用空间
 - **网络**: 支持 SMB 远程存储访问

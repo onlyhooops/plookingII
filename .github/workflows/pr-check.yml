@@ -12,7 +12,7 @@ concurrency:
 jobs:
   quick-check:
     name: 快速代码检查
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # 静态代码检查可以在任何平台上运行
 
     steps:
     - name: 检出代码
@@ -44,45 +44,6 @@ jobs:
       run: |
         echo "✅ PR 快速检查完成"
 
-  basic-test:
-    name: 基础测试
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: 检出代码
-      uses: actions/checkout@v4
-
-    - name: 设置 Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-        cache: 'pip'
-
-    - name: 安装依赖
-      run: |
-        sudo apt-get update -qq
-        sudo apt-get install -y -qq libgl1-mesa-glx libglib2.0-0
-        python -m pip install --upgrade pip
-        pip install psutil pillow opencv-python pytest pytest-timeout pytest-cov
-
-    - name: 🧪 运行单元测试
-      run: |
-        echo "运行快速单元测试..."
-        pytest tests/unit/ \
-          -v \
-          -m "not slow and not ui and not skip_ci" \
-          --tb=line \
-          --maxfail=3 \
-          --timeout=30 \
-          -p no:warnings \
-          || echo "部分测试失败"
-      continue-on-error: true
-
-    - name: 📝 测试结果
-      if: always()
-      run: |
-        echo "✅ 基础测试完成"
-
   pr-info:
     name: PR 信息
     runs-on: ubuntu-latest
@@ -90,9 +51,14 @@ jobs:
     - name: 显示 PR 信息
       run: |
         echo "================================================"
+        echo "🍎 PlookingII PR 快速检查 (macOS x86 专用应用)"
+        echo "================================================"
         echo "PR #${{ github.event.pull_request.number }}"
         echo "标题: ${{ github.event.pull_request.title }}"
         echo "作者: ${{ github.event.pull_request.user.login }}"
         echo "分支: ${{ github.event.pull_request.head.ref }}"
         echo "目标: ${{ github.event.pull_request.base.ref }}"
+        echo "================================================"
+        echo "注意: 完整测试需要在 macOS x86 环境中进行"
+        echo "      PR 合并后会触发完整的 CI 流程"
         echo "================================================"

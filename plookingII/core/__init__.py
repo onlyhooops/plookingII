@@ -51,21 +51,21 @@ except (ImportError, SyntaxError):
 from .lazy_initialization import lazy_init, profile_startup, startup_profiler
 
 __all__ = [
-    # 图像处理核心
-    "HybridImageProcessor",
     "AdvancedImageCache",
     "BidirectionalCachePool",
+    "ErrorHandler",
+    # 图像处理核心
+    "HybridImageProcessor",
     "OptimizedLoadingStrategyFactory",
     # 远程文件支持 (v1.4.0) - 按模块可用性导出
     # 性能和监控
     "PreloadManager",
-    "ErrorHandler",
-    "error_handler",
     "error_context",
+    "error_handler",
     # 延迟初始化
     "lazy_init",
-    "startup_profiler",
     "profile_startup",
+    "startup_profiler",
 ]
 
 # 动态添加远程模块到__all__

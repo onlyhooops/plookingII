@@ -55,7 +55,7 @@ class NetworkCache:
     5. 缓存一致性检查
     """
 
-    def __init__(self, cache_size_mb: int = None):
+    def __init__(self, cache_size_mb: int | None = None):
         self.logger = get_enhanced_logger()
         self.remote_detector = get_remote_detector()
 
@@ -528,7 +528,7 @@ _network_cache_lock = threading.Lock()
 
 def get_network_cache() -> NetworkCache:
     """获取全局NetworkCache实例"""
-    global _network_cache_instance
+    global _network_cache_instance  # noqa: PLW0603  # 单例模式的合理使用
     if _network_cache_instance is None:
         with _network_cache_lock:
             if _network_cache_instance is None:

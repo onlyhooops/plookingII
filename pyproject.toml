@@ -24,7 +24,7 @@ line-length = 120
 extend-exclude = ["build", "dist", "archive"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "B", "W", "PL", "TRY", "N", "C90"]
+select = ["E", "F", "I", "B", "W", "PL", "TRY", "N", "C90", "RUF", "SIM", "ARG", "PTH", "RET", "TID", "SLF", "G"]
 ignore = [
     # Unicode 字符 - 中文项目特性，合理使用
     "RUF001",  # ambiguous-unicode-character-string
@@ -32,8 +32,11 @@ ignore = [
     "RUF003",  # ambiguous-unicode-character-comment
 
     # 路径操作 - 计划后续重构为 pathlib
+    "PTH100",  # os-path-abspath
     "PTH103",  # os-makedirs
+    "PTH105",  # os-replace
     "PTH107",  # os-remove
+    "PTH108",  # os-unlink
     "PTH110",  # os-path-exists
     "PTH111",  # os-path-expanduser
     "PTH112",  # os-path-isdir
@@ -50,6 +53,8 @@ ignore = [
     # 其他低优先级
     "ERA001",  # commented-out-code - 保留注释代码用于参考
     "EXE001",  # shebang-not-executable
+    "N999",    # invalid-module-name - 模块命名约定
+    "TID252",  # relative-imports - 相对导入，后续统一处理
 ]
 
 [tool.ruff.lint.per-file-ignores]

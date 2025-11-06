@@ -4,6 +4,7 @@
 负责处理图像加载、缓存、处理策略和内存管理。
 """
 
+import contextlib
 import logging
 import threading
 import time
@@ -48,10 +49,8 @@ class ImageManager:
         self.hybrid_processor = HybridImageProcessor()
         self.image_processor = self.hybrid_processor
         # 注入处理器到缓存，避免缓存内部再次创建处理器导致重复策略初始化
-        try:
+        with contextlib.suppress(Exception):
             self.image_cache.image_processor = self.hybrid_processor
-        except Exception:
-            pass
         self.processing_mode = "auto"
 
         # 渐进式加载控制（已收敛为默认禁用，兼容旧逻辑保留开关）
@@ -212,10 +211,8 @@ class ImageManager:
 
     def _record_cache_hit(self):
         """记录缓存命中"""
-        try:
+        with contextlib.suppress(Exception):
             self.monitor.record_operation("cache_hit", 0, cache_hit=True)
-        except Exception:
-            pass
 
     def _post_display_tasks(self, image_path: str, target_size, t_start: float, method: str):
         """图像显示后的后台任务
@@ -437,10 +434,9 @@ class ImageManager:
         """
         try:
             # 优先使用缓存的图像尺寸信息
-            if hasattr(self, "_image_dimensions_cache"):
-                if image_path in self._image_dimensions_cache:
-                    w, h = self._image_dimensions_cache[image_path]
-                    return h > w
+            if hasattr(self, "_image_dimensions_cache") and image_path in self._image_dimensions_cache:
+                w, h = self._image_dimensions_cache[image_path]
+                return h > w
 
             # 快速检测：使用Quartz获取图像尺寸（不解码完整图像）
             try:
@@ -636,10 +632,7 @@ class ImageManager:
             # 统计最近导航的速度（时间间隔）与一致方向性
             timestamps = [t for (t, d) in self._nav_history]
             dirs = [d for (t, d) in self._nav_history if d != 0]
-            if len(timestamps) >= 2:
-                dt = max(0.01, timestamps[-1] - timestamps[-2])
-            else:
-                dt = 0.5
+            dt = max(0.01, timestamps[-1] - timestamps[-2]) if len(timestamps) >= 2 else 0.5
             same_dir_ratio = 0.0
             if dirs:
                 last_dir = dirs[-1]
@@ -708,10 +701,8 @@ class ImageManager:
             # 放入预加载缓存层
             if expected_gen != self._load_generation:
                 return
-            try:
+            with contextlib.suppress(Exception):
                 self.image_cache.put_new(path, img, layer="preload")
-            except Exception:
-                pass
         except Exception:
             logger.debug("_prefetch_worker failed", exc_info=True)
 
@@ -914,10 +905,8 @@ class ImageManager:
                     if expected_gen != self._load_generation:
                         return
                     # 放入主缓存层
-                    try:
+                    with contextlib.suppress(Exception):
                         self.image_cache.put_new(path, img, layer="main")
-                    except Exception:
-                        pass
                 except Exception:
                     logger.debug("promote hot3 failed", exc_info=True)
 
@@ -961,9 +950,8 @@ class ImageManager:
 
         # 记录内存使用情况
         logger.debug(
-                "Memory usage - Available: %.1fMB, Cache: {total_cache_memory:.1f}MB",
-                memory_info.get('available_mb', 0)
-            )
+            "Memory usage - Available: %.1fMB, Cache: {total_cache_memory:.1f}MB", memory_info.get("available_mb", 0)
+        )
 
         # 获取可用内存
         available_mb = memory_info.get("available_mb", 0)
@@ -1014,10 +1002,8 @@ class ImageManager:
         self.image_cache.estimated_memory_mb = 0
 
         if current_path and current_img:
-            try:
+            with contextlib.suppress(Exception):
                 self.image_cache.put_new(current_path, current_img, layer="main")
-            except Exception:
-                pass
 
         # 强制垃圾回收
         import gc
@@ -1219,20 +1205,17 @@ class ImageManager:
                     desired_preload = max(2, min(desired_preload, 4))
 
                 # 应用并发
-                if desired_conc in (1, 2):
-                    if (
-                        not hasattr(self, "_decode_semaphore")
-                        or getattr(self._decode_semaphore, "_value", None) != desired_conc
-                    ):
-                        self._decode_semaphore = threading.BoundedSemaphore(value=desired_conc)
+                if desired_conc in (1, 2) and (
+                    not hasattr(self, "_decode_semaphore")
+                    or getattr(self._decode_semaphore, "_value", None) != desired_conc
+                ):
+                    self._decode_semaphore = threading.BoundedSemaphore(value=desired_conc)
 
                 # 应用预取窗口
                 if hasattr(self, "bidi_pool") and self.bidi_pool:
                     if isinstance(desired_preload, int) and 1 <= desired_preload <= 8:
-                        try:
+                        with contextlib.suppress(Exception):
                             self.bidi_pool.set_preload_window(preload_count=desired_preload)
-                        except Exception:
-                            pass
         except Exception:
             pass
 

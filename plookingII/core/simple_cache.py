@@ -12,6 +12,7 @@
 Author: PlookingII Team
 """
 
+import contextlib
 import logging
 import threading
 import time
@@ -219,7 +220,7 @@ def get_global_cache() -> SimpleImageCache:
     Returns:
         全局缓存实例
     """
-    global _global_cache
+    global _global_cache  # noqa: PLW0603  # 单例模式的合理使用
 
     if _global_cache is None:
         with _global_cache_lock:
@@ -231,7 +232,7 @@ def get_global_cache() -> SimpleImageCache:
 
 def reset_global_cache():
     """重置全局缓存（主要用于测试）"""
-    global _global_cache
+    global _global_cache  # noqa: PLW0603  # 单例模式的合理使用
 
     with _global_cache_lock:
         if _global_cache is not None:
@@ -257,7 +258,7 @@ class AdvancedImageCache(SimpleImageCache):
         logger.debug("Using AdvancedImageCache (compatibility mode)")
 
     def load_image_with_strategy(
-        self, image_path: str, strategy: str = "auto", target_size: tuple = None, force_reload: bool = False
+        self, image_path: str, strategy: str = "auto", target_size: tuple | None = None, force_reload: bool = False
     ) -> Any:
         """使用指定策略加载图片（兼容方法）
 
@@ -379,19 +380,17 @@ class BidirectionalCachePool(SimpleImageCache):
 
     def shutdown(self) -> None:
         """关闭缓存池（兼容方法）"""
-        try:
+        with contextlib.suppress(Exception):
             self.clear()
-        except Exception:
-            pass
 
 
 __all__ = [
-    "SimpleImageCache",
-    "CacheEntry",
-    "get_global_cache",
-    "reset_global_cache",
     # 向后兼容
     "AdvancedImageCache",
-    "UnifiedCacheManager",
     "BidirectionalCachePool",
+    "CacheEntry",
+    "SimpleImageCache",
+    "UnifiedCacheManager",
+    "get_global_cache",
+    "reset_global_cache",
 ]

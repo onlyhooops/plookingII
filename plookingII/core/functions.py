@@ -162,9 +162,9 @@ def get_image_dimensions_safe(path: str):
                     kCGImagePropertyPixelWidth,
                 )
             except Exception:
-                from Quartz import CGImageSourceCopyPropertiesAtIndex  # type: ignore
-                from Quartz import CGImageSourceCreateWithURL  # type: ignore
                 from Quartz import (  # type: ignore
+                    CGImageSourceCopyPropertiesAtIndex,  # type: ignore
+                    CGImageSourceCreateWithURL,  # type: ignore
                     kCGImagePropertyPixelHeight,
                     kCGImagePropertyPixelWidth,
                 )

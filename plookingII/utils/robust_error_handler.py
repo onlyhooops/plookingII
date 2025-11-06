@@ -71,7 +71,7 @@ class ErrorRecoveryStrategy:
             exception: 捕获的异常
             context: 错误上下文信息
         """
-        logger.error("Error in %s: %s", context.get('function', 'unknown'), exception, exc_info=True)
+        logger.error("Error in %s: %s", context.get("function", "unknown"), exception, exc_info=True)
 
     def on_retry(self, exception: Exception, attempt: int, context: dict):
         """重试回调
@@ -83,7 +83,10 @@ class ErrorRecoveryStrategy:
         """
         logger.warning(
             "Retrying %s (attempt %s/%s) due to: %s",
-            context.get('function', 'unknown'), attempt, self.max_retries, exception
+            context.get("function", "unknown"),
+            attempt,
+            self.max_retries,
+            exception,
         )
 
     def on_failure(self, exception: Exception, context: dict):
@@ -93,7 +96,7 @@ class ErrorRecoveryStrategy:
             exception: 捕获的异常
             context: 错误上下文信息
         """
-        logger.error("All retries failed for %s: %s", context.get('function', 'unknown'), exception, exc_info=True)
+        logger.error("All retries failed for %s: %s", context.get("function", "unknown"), exception, exc_info=True)
 
 
 class RobustErrorHandler:
@@ -149,13 +152,9 @@ class RobustErrorHandler:
         Returns:
             函数执行结果或回退值
         """
-        if context is None:
-            context = {"function": func.__name__}
-        else:
-            context = {**context, "function": func.__name__}
+        context = {"function": func.__name__} if context is None else {**context, "function": func.__name__}
 
         attempt = 0
-        last_exception = None
 
         while True:
             try:
@@ -319,7 +318,7 @@ def boundary_check(check_func: Callable[[Any], bool], fallback: Any = None, erro
                 if not check_func(*args, **kwargs):
                     logger.warning("%s for {func.__name__}", error_msg)
                     return fallback
-            except Exception as e:
+            except Exception:
                 logger.exception("Boundary check error in %s: {e}", func.__name__)
                 return fallback
 
@@ -341,7 +340,7 @@ def get_error_handler() -> RobustErrorHandler:
     Returns:
         错误处理器实例
     """
-    global _global_error_handler
+    global _global_error_handler  # noqa: PLW0603  # 单例模式的合理使用
 
     if _global_error_handler is None:
         _global_error_handler = RobustErrorHandler()

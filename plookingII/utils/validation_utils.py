@@ -48,11 +48,7 @@ class ValidationUtils:
                 return False
 
             # 检查权限
-            if check_permissions:
-                if not os.access(folder_path, os.R_OK):
-                    return False
-
-            return True
+            return not (check_permissions and not os.access(folder_path, os.R_OK))
 
         except Exception:
             return False
@@ -110,18 +106,16 @@ class ValidationUtils:
                 return False
 
             # 检查类型
-            if expected_type is not None:
-                if not isinstance(param, expected_type):
-                    logger.debug(
-                        "参数 %s 类型错误，期望 %s，实际 %s", param_name, expected_type.__name__, type(param).__name__
-                    )
-                    return False
+            if expected_type is not None and not isinstance(param, expected_type):
+                logger.debug(
+                    "参数 %s 类型错误，期望 %s，实际 %s", param_name, expected_type.__name__, type(param).__name__
+                )
+                return False
 
             # 字符串特殊检查
-            if isinstance(param, str):
-                if not param.strip():  # 空字符串或只有空白字符
-                    logger.debug("参数 %s 不能为空字符串", param_name)
-                    return False
+            if isinstance(param, str) and not param.strip():  # 空字符串或只有空白字符
+                logger.debug("参数 %s 不能为空字符串", param_name)
+                return False
 
             return True
 
@@ -218,10 +212,9 @@ class ValidationUtils:
                 return False
 
             # 检查是否在有效值列表中
-            if valid_values is not None:
-                if value not in valid_values:
-                    logger.debug("配置值 %s 无效，有效值: %s", config_name, valid_values)
-                    return False
+            if valid_values is not None and value not in valid_values:
+                logger.debug("配置值 %s 无效，有效值: %s", config_name, valid_values)
+                return False
 
             return True
 

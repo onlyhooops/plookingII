@@ -43,7 +43,7 @@ class CGImageOptimizer:
         # 性能统计
         self.stats = {"cgimage_hits": 0, "cgimage_creates": 0, "zero_copy_renders": 0, "total_render_time": 0.0}
 
-    def get_cgimage(self, image_path: str, create_func: Callable = None) -> Any | None:
+    def get_cgimage(self, image_path: str, create_func: Callable | None = None) -> Any | None:
         """获取CGImage对象，优先从缓存获取
 
         Args:
@@ -68,7 +68,7 @@ class CGImageOptimizer:
                         self._cache_cgimage(image_path, cgimage)
                         self.stats["cgimage_creates"] += 1
                         return cgimage
-                except Exception as e:
+                except Exception:
                     logger.warning("Failed to create CGImage for %s: {e}", image_path)
 
             return None
@@ -81,10 +81,9 @@ class CGImageOptimizer:
             cgimage: CGImage对象
         """
         # 如果缓存已满，移除最旧的项
-        if len(self._cgimage_cache) >= self._max_cache_size:
-            if self._access_order:
-                oldest = self._access_order.popleft()
-                self._cgimage_cache.pop(oldest, None)
+        if len(self._cgimage_cache) >= self._max_cache_size and self._access_order:
+            oldest = self._access_order.popleft()
+            self._cgimage_cache.pop(oldest, None)
 
         self._cgimage_cache[image_path] = cgimage
         self._access_order.append(image_path)
@@ -521,7 +520,7 @@ def get_performance_optimizer() -> PerformanceOptimizer:
     Returns:
         性能优化器实例
     """
-    global _global_optimizer
+    global _global_optimizer  # noqa: PLW0603  # 单例模式的合理使用
 
     with _optimizer_lock:
         if _global_optimizer is None:
@@ -531,7 +530,7 @@ def get_performance_optimizer() -> PerformanceOptimizer:
 
 def reset_performance_optimizer():
     """重置全局性能优化器（主要用于测试）"""
-    global _global_optimizer
+    global _global_optimizer  # noqa: PLW0603  # 单例模式的合理使用
 
     with _optimizer_lock:
         _global_optimizer = None

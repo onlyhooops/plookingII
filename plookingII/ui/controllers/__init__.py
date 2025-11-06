@@ -45,14 +45,14 @@ except ImportError as e:
 from .unified_status_controller import UnifiedStatusController as TitlebarController
 
 __all__ = [
-    "ImageViewController",
-    "UnifiedStatusController",
-    "NavigationController",
     "DragDropController",
+    "ImageViewController",
     "MenuController",
-    "SystemController",
+    "NavigationController",
     "RotationController",
     # 向后兼容
     "StatusBarController",
+    "SystemController",
     "TitlebarController",
+    "UnifiedStatusController",
 ]

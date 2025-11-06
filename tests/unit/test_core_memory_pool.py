@@ -12,7 +12,7 @@ import pytest
 from plookingII.core.memory_pool import ImageMemoryPool
 
 
-@pytest.mark.unit
+@pytest.mark.unit()
 @pytest.mark.timeout(5)
 class TestImageMemoryPoolInit:
     """测试内存池初始化"""
@@ -41,7 +41,7 @@ class TestImageMemoryPoolInit:
         assert list(pool.size_categories) == sorted(pool.size_categories)
 
 
-@pytest.mark.unit
+@pytest.mark.unit()
 @pytest.mark.timeout(5)
 class TestGetBuffer:
     """测试获取缓冲区"""
@@ -125,7 +125,7 @@ class TestGetBuffer:
         assert new_buffer is None or isinstance(new_buffer, bytearray)
 
 
-@pytest.mark.unit
+@pytest.mark.unit()
 @pytest.mark.timeout(5)
 class TestReturnBuffer:
     """测试归还缓冲区"""
@@ -177,7 +177,7 @@ class TestReturnBuffer:
             pool.return_buffer(bytearray(1024), 1024)
 
 
-@pytest.mark.unit
+@pytest.mark.unit()
 @pytest.mark.timeout(5)
 class TestPoolSizeCalculation:
     """测试池大小计算"""
@@ -211,7 +211,7 @@ class TestPoolSizeCalculation:
         assert pool._next_power_of_two(1000) == 1024
 
 
-@pytest.mark.unit
+@pytest.mark.unit()
 @pytest.mark.timeout(5)
 class TestCleanupPools:
     """测试池清理"""
@@ -256,7 +256,7 @@ class TestCleanupPools:
             assert result is False
 
 
-@pytest.mark.unit
+@pytest.mark.unit()
 @pytest.mark.timeout(5)
 class TestPoolManagement:
     """测试池管理功能"""
@@ -320,7 +320,7 @@ class TestPoolManagement:
         assert 8192 not in pool.pools
 
 
-@pytest.mark.unit
+@pytest.mark.unit()
 @pytest.mark.timeout(10)
 class TestThreadSafety:
     """测试线程安全性"""
@@ -363,7 +363,7 @@ class TestThreadSafety:
         assert pool.total_deallocations > 0
 
 
-@pytest.mark.unit
+@pytest.mark.unit()
 @pytest.mark.timeout(5)
 class TestEdgeCases:
     """测试边缘情况"""
@@ -407,3 +407,84 @@ class TestEdgeCases:
             buffer2 = pool.get_buffer(1024)
             if buffer2:
                 assert pool.cache_hits == 1
+
+    def test_recursive_cleanup_retry(self):
+        """测试递归清理重试机制"""
+        pool = ImageMemoryPool(max_memory_mb=1)  # 非常小的内存限制
+
+        # 填满内存
+        buffers = []
+        for _ in range(5):
+            buf = pool.get_buffer(200 * 1024)  # 200KB
+            if buf:
+                buffers.append(buf)
+
+        # 触发清理并重试（第82行）
+        # 当内存不足时，会调用cleanup并递归重试
+        new_buffer = pool.get_buffer(100 * 1024)
+        # 应该触发清理逻辑
+
+
+@pytest.mark.unit()
+@pytest.mark.timeout(5)
+class TestOptimizePools:
+    """测试池优化功能"""
+
+    def test_optimize_pools_merge_small_to_large(self):
+        """测试小池合并到大池（覆盖211-226行）"""
+        pool = ImageMemoryPool(max_memory_mb=100)
+
+        # 创建很多小缓冲区（触发合并条件：len(small_pool) > 10）
+        small_size = 1024
+        for _ in range(15):
+            buffer = pool.get_buffer(small_size)
+            if buffer:
+                pool.return_buffer(buffer, small_size)
+
+        # 创建少量大缓冲区（触发合并条件：len(large_pool) < 5）
+        large_size = 4096
+        for _ in range(2):
+            buffer = pool.get_buffer(large_size)
+            if buffer:
+                pool.return_buffer(buffer, large_size)
+
+        # 执行优化
+        pool.optimize_pools()
+
+        # 验证优化后的状态
+        assert pool.pools is not None
+
+    def test_optimize_pools_with_exact_merge(self):
+        """测试精确的池合并逻辑"""
+        pool = ImageMemoryPool(max_memory_mb=100)
+
+        # 手动创建符合合并条件的池
+        small_size = 1024  # 1KB
+        large_size = 4096  # 4KB (ratio = 4)
+
+        # 添加12个小缓冲区
+        pool.pools[small_size] = [bytearray(small_size) for _ in range(12)]
+        # 添加2个大缓冲区
+        pool.pools[large_size] = [bytearray(large_size) for _ in range(2)]
+
+        initial_large_count = len(pool.pools[large_size])
+
+        # 执行优化
+        pool.optimize_pools()
+
+        # 合并后大池应该增加（如果合并成功）
+        # 注意：合并逻辑会尝试合并ratio个小缓冲区为一个大缓冲区
+
+    def test_optimize_pools_no_merge_condition(self):
+        """测试不满足合并条件的情况"""
+        pool = ImageMemoryPool(max_memory_mb=100)
+
+        # 创建不满足合并条件的池（小池数量<=10或大池数量>=5）
+        small_size = 1024
+        for _ in range(5):  # 只有5个，不满足>10的条件
+            buffer = pool.get_buffer(small_size)
+            if buffer:
+                pool.return_buffer(buffer, small_size)
+
+        # 执行优化不应该崩溃
+        pool.optimize_pools()

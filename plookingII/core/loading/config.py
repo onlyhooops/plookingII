@@ -108,7 +108,7 @@ _default_config: LoadingConfig | None = None
 
 def get_default_config() -> LoadingConfig:
     """获取全局默认配置"""
-    global _default_config
+    global _default_config  # noqa: PLW0603  # 单例模式的合理使用
     if _default_config is None:
         _default_config = LoadingConfig.from_global_config()
     return _default_config
@@ -116,5 +116,5 @@ def get_default_config() -> LoadingConfig:
 
 def set_default_config(config: LoadingConfig) -> None:
     """设置全局默认配置"""
-    global _default_config
+    global _default_config  # noqa: PLW0603  # 单例模式的合理使用
     _default_config = config

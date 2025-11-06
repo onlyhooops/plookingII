@@ -229,8 +229,7 @@ def profile_startup(component_name: str):
         def wrapper(*args, **kwargs):
             startup_profiler.start_timing(component_name)
             try:
-                result = func(*args, **kwargs)
-                return result
+                return func(*args, **kwargs)
             finally:
                 startup_profiler.end_timing(component_name)
 

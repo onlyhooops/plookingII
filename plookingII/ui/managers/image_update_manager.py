@@ -259,9 +259,10 @@ class ImageUpdateManager:
 
         except Exception as e:
             logger.exception("重新加载图片失败: %s", e)
+            error_msg = str(e)
 
             def show_reload_error():
-                show_info("重新加载失败", f"重新加载图片时发生错误: {e!s}")
+                show_info("重新加载失败", f"重新加载图片时发生错误: {error_msg}")
 
             self._schedule_main_thread(show_reload_error)
 

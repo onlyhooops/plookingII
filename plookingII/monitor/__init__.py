@@ -36,24 +36,24 @@ from .unified_monitor import (
 )
 
 __all__ = [
-    # 核心类
-    "UnifiedMonitor",
-    "PerformanceMetrics",
     "MemoryStatus",
     "MonitoringLevel",
+    "PerformanceMetrics",
+    # 核心类
+    "UnifiedMonitor",
+    "get_memory_status",
+    "get_recent_operations",
+    "get_stats",
     # 工厂函数
     "get_unified_monitor",
-    "reset_unified_monitor",
+    "is_telemetry_enabled",
     # 装饰器
     "monitor_performance",
     # 遥测
     "record_event",
-    "is_telemetry_enabled",
     # 便捷函数
     "record_operation",
-    "get_memory_status",
-    "get_stats",
-    "get_recent_operations",
+    "reset_unified_monitor",
 ]
 
 # === 便捷函数（向后兼容）===

@@ -224,7 +224,7 @@ class PreloadExecutor:
                     self.cache.image_cache.put_new(task.image_key, result, layer="preload")
                 return True
             return False
-        except Exception as e:
+        except Exception:
             logger.debug("加载图像失败 %s: {e}", task.image_key)
             return False
 

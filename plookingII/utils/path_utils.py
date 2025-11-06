@@ -41,8 +41,7 @@ class PathUtils:
         if not path:
             return path
         path = os.path.expanduser(path)
-        path = os.path.normpath(path)
-        return path
+        return os.path.normpath(path)
 
     @staticmethod
     def resolve_symlinks_safe(path: str) -> str:
@@ -81,8 +80,7 @@ class PathUtils:
 
         try:
             # 使用NFC规范化，确保相同字符的不同Unicode表示统一
-            normalized = _ud.normalize("NFC", path)
-            return normalized
+            return _ud.normalize("NFC", path)
         except Exception:
             logger.debug("Unicode路径规范化失败，使用原路径: %s", path, exc_info=True)
             return path
@@ -121,9 +119,8 @@ class PathUtils:
             path = os.path.abspath(path)
 
             # Unicode规范化
-            path = PathUtils.normalize_unicode_safe(path)
+            return PathUtils.normalize_unicode_safe(path)
 
-            return path
         except Exception:
             logger.debug("路径标准化失败，返回原始输入: %s", path, exc_info=True)
             return path
@@ -144,8 +141,7 @@ class PathUtils:
                 # 使用完整的路径规范化
                 return PathUtils.canonicalize_path(folder_path, resolve_symlinks=True)
             # 简化处理：只移除末尾斜杠，不解析符号链接避免路径变化
-            normalized = folder_path.rstrip(os.sep)
-            return normalized
+            return folder_path.rstrip(os.sep)
         except Exception:
             # 规范化失败时返回原路径
             logger.debug("文件夹路径规范化失败: %s", folder_path, exc_info=True)

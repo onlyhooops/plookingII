@@ -14,6 +14,7 @@
 Author: PlookingII Team
 """
 
+import contextlib
 import os
 import shutil
 import subprocess
@@ -171,16 +172,12 @@ class ImageRotationProcessor:
 
         if ext in [".jpg", ".jpeg"]:
             # 记录尝试无损旋转
-            try:
+            with contextlib.suppress(Exception):
                 self.rotation_stats["lossless_attempts"] += 1
-            except Exception:
-                pass
             lossless_ok = self._rotate_jpeg_lossless(image_path, direction)
             if lossless_ok:
-                try:
+                with contextlib.suppress(Exception):
                     self.rotation_stats["lossless_successes"] += 1
-                except Exception:
-                    pass
                 # 无论无损旋转结果如何，统一将 EXIF Orientation 重置为 1
                 try:
                     self._reset_exif_orientation_to_1(image_path)
@@ -188,10 +185,8 @@ class ImageRotationProcessor:
                     logger.debug("reset EXIF orientation failed after lossless rotation", exc_info=True)
                 return True
             # 无损失败：回退到 PIL 优化路径
-            try:
+            with contextlib.suppress(Exception):
                 self.rotation_stats["pil_fallbacks"] += 1
-            except Exception:
-                pass
             return self._rotate_with_pil_optimized(image_path, direction)
 
         # 非JPEG：按既有策略处理（PNG/TIFF 等）
@@ -253,17 +248,15 @@ class ImageRotationProcessor:
                 cmd = base_cmd[:]
                 # 尝试 perfect
                 cmd.insert(2, "-perfect")
-                result = subprocess.run(cmd, check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                result = subprocess.run(cmd, check=False, capture_output=True)
                 if result.returncode != 0:
                     raise RuntimeError(result.stderr.decode(errors="ignore") or "jpegtran perfect 失败")
             except Exception:
                 # 回退去掉 -perfect
-                result = subprocess.run(base_cmd, check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                result = subprocess.run(base_cmd, check=False, capture_output=True)
                 if result.returncode != 0:
-                    try:
+                    with contextlib.suppress(Exception):
                         os.unlink(tmp_path)
-                    except Exception:
-                        pass
                     logger.exception(
                         "jpegtran 无损旋转失败: %s",
                         (result.stderr.decode(errors="ignore") or "unknown error"),
@@ -275,17 +268,13 @@ class ImageRotationProcessor:
             try:
                 backup_path = image_path + ".bak"
                 if os.path.exists(backup_path):
-                    try:
+                    with contextlib.suppress(Exception):
                         os.remove(backup_path)
-                    except Exception:
-                        pass
                 os.replace(image_path, backup_path)
                 os.replace(tmp_path, image_path)
                 # 替换成功后删除备份
-                try:
+                with contextlib.suppress(Exception):
                     os.remove(backup_path)
-                except Exception:
-                    pass
             except Exception as e:
                 # 失败则回滚
                 try:

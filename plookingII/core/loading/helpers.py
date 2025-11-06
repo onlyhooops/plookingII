@@ -49,7 +49,7 @@ def get_file_size_mb(file_path: str, use_cache: bool = True) -> float:
             _file_size_cache[file_path] = (size_mb, now)
 
         return size_mb
-    except Exception as e:
+    except Exception:
         logger.warning("获取文件大小失败 %s: {e}", file_path)
         return 0.0
 
@@ -81,9 +81,8 @@ def load_with_nsimage(file_path: str) -> Any | None:
     try:
         from AppKit import NSImage
 
-        image = NSImage.alloc().initWithContentsOfFile_(file_path)
-        return image
-    except Exception as e:
+        return NSImage.alloc().initWithContentsOfFile_(file_path)
+    except Exception:
         logger.exception("NSImage加载失败 %s: {e}", file_path)
         return None
 
@@ -137,7 +136,7 @@ def load_with_quartz(file_path: str, target_size: tuple[int, int] | None = None,
         }
         return CGImageSourceCreateImageAtIndex(source, 0, options)
 
-    except Exception as e:
+    except Exception:
         logger.exception("Quartz加载失败 %s: {e}", file_path)
         return None
 
@@ -158,9 +157,8 @@ def load_with_memory_map(file_path: str, target_size: tuple[int, int] | None = N
         with open(file_path, "rb") as f, mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
             # 从内存映射创建NSData
             data = NSData.dataWithBytes_length_(mm, len(mm))
-            image = NSImage.alloc().initWithData_(data)
-            return image
-    except Exception as e:
+            return NSImage.alloc().initWithData_(data)
+    except Exception:
         logger.exception("内存映射加载失败 %s: {e}", file_path)
         return None
 
@@ -229,7 +227,7 @@ def get_image_dimensions(file_path: str) -> tuple[int, int] | None:
         height = props.get(kCGImagePropertyPixelHeight, 0)
 
         return (int(width), int(height))
-    except Exception as e:
+    except Exception:
         logger.exception("获取图片尺寸失败 %s: {e}", file_path)
         return None
 

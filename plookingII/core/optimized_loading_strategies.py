@@ -106,19 +106,19 @@ class OptimizedLoadingStrategyFactory:
 
 # 导出所有兼容接口
 __all__ = [
+    # 兼容性导出
+    "AutoLoadingStrategy",
     # 新模块导出
     "AutoStrategy",
     "LoadingConfig",
     "LoadingStats",
+    "OptimizedLoadingStrategy",
+    "OptimizedLoadingStrategyFactory",
     "OptimizedStrategy",
+    "PreviewLoadingStrategy",
     "PreviewStrategy",
     "create_loader",
     "get_loader",
-    # 兼容性导出
-    "AutoLoadingStrategy",
-    "OptimizedLoadingStrategy",
-    "OptimizedLoadingStrategyFactory",
-    "PreviewLoadingStrategy",
 ]
 
 # 模块初始化日志

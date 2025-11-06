@@ -1,3 +1,5 @@
+import contextlib
+
 from AppKit import (
     NSApplication,
     NSApplicationActivationPolicyRegular,
@@ -50,10 +52,8 @@ class AppDelegate(NSObject):
         # 确保窗口在最前面
         self.main_window.orderFrontRegardless()
 
-        try:
+        with contextlib.suppress(Exception):
             app.setActivationPolicy_(NSApplicationActivationPolicyRegular)
-        except Exception:
-            pass
         app.activateIgnoringOtherApps_(True)
 
         # 强制重绘窗口

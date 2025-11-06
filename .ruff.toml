@@ -51,32 +51,58 @@ select = [
 
 # 忽略特定规则
 ignore = [
+    # Unicode 字符 - 中文项目特性，合理使用
+    "RUF001",  # ambiguous-unicode-character-string
+    "RUF002",  # ambiguous-unicode-character-docstring
+    "RUF003",  # ambiguous-unicode-character-comment
+
+    # 路径操作 - 计划后续重构为 pathlib
+    "PTH100",  # os-path-abspath
+    "PTH103",  # os-makedirs
+    "PTH105",  # os-replace
+    "PTH107",  # os-remove
+    "PTH108",  # os-unlink
+    "PTH110",  # os-path-exists
+    "PTH111",  # os-path-expanduser
+    "PTH112",  # os-path-isdir
+    "PTH113",  # os-path-isfile
+    "PTH116",  # os-stat
+    "PTH118",  # os-path-join
+    "PTH119",  # os-path-basename
+    "PTH120",  # os-path-dirname
+    "PTH122",  # os-path-splitext
+    "PTH123",  # builtin-open
+    "PTH202",  # os-path-getsize
+
     # macOS Objective-C开发相关
     "N802",    # Objective-C方法命名（函数名应该小写）
     "N803",    # Objective-C参数命名（参数名应该小写）
     "N806",    # 变量名大写（用于常量）
-    
+    "N999",    # invalid-module-name - 模块命名约定
+
     # 日志相关
     "TRY401",  # logging.exception中的冗余异常对象（允许显示变量值）
-    
+
     # 导入相关
     "PLC0415", # 模块顶层导入（允许延迟导入避免循环依赖）
     "E402",    # 模块级导入不在文件顶部（某些模块需要先设置环境）
-    
+    "TID252",  # relative-imports - 相对导入，后续统一处理
+
     # 魔术数字（逐步改进）
     "PLR2004", # 比较中的魔术值
-    
+
     # 复杂度相关（逐步改进）
     "PLR0911", # 返回语句过多
     "PLR0912", # 分支过多
     "PLR0913", # 参数过多
     "PLR0915", # 语句过多
-    
-    # Objective-C self重新赋值模式
-    "PLW0642", # self变量重新赋值（Objective-C初始化模式）
-    
+
     # try-else块
     "TRY300",  # 考虑将语句移到else块（某些情况下不需要）
+
+    # 其他低优先级
+    "ERA001",  # commented-out-code - 保留注释代码用于参考
+    "EXE001",  # shebang-not-executable
 ]
 
 [lint.per-file-ignores]
@@ -87,7 +113,7 @@ ignore = [
 "**/__init__.py" = ["F401", "F403"]
 
 # UI相关文件（Objective-C桥接）
-"plookingII/ui/**/*.py" = ["N802", "N803", "PLW0642"]
+"plookingII/ui/**/*.py" = ["N802", "N803"]
 
 [lint.isort]
 known-first-party = ["plookingII"]
@@ -108,4 +134,3 @@ indent-style = "space"
 
 # 行尾处理
 line-ending = "auto"
-

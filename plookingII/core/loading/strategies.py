@@ -57,7 +57,7 @@ class OptimizedStrategy:
         self.quartz_available = check_quartz_availability()
         self.memory_mapping_available = True  # 内存映射总是可用
 
-        global _optimized_init_logged
+        global _optimized_init_logged  # noqa: PLW0603  # 日志标志的合理使用
         if not _optimized_init_logged:
             logger.info("OptimizedStrategy initialized - Quartz: %s, Config: {self.config}", self.quartz_available)
             _optimized_init_logged = True
@@ -75,9 +75,7 @@ class OptimizedStrategy:
         """
         # 检查文件格式
         ext = os.path.splitext(file_path)[1].lower()
-        if ext not in (".jpg", ".jpeg", ".png"):
-            return False
-        return True
+        return ext in (".jpg", ".jpeg", ".png")
 
     def load(self, file_path: str, target_size: tuple[int, int] | None = None) -> Any | None:
         """加载图片（智能选择方法）
@@ -121,7 +119,7 @@ class OptimizedStrategy:
 
             return image
 
-        except Exception as e:
+        except Exception:
             logger.exception("加载失败 %s: {e}", file_path)
             self.stats.record_failure()
             return None
@@ -265,7 +263,7 @@ class PreviewStrategy:
             self.stats.record_failure()
             return None
 
-        except Exception as e:
+        except Exception:
             logger.exception("预览加载失败 %s: {e}", file_path)
             self.stats.record_failure()
             return None

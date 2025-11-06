@@ -5,6 +5,7 @@
 这个服务作为高级抽象层，协调ImageManager、缓存系统和各种加载策略。
 """
 
+import contextlib
 import logging
 import os
 import threading
@@ -99,10 +100,8 @@ class ImageLoaderService:
             # 检查是否禁用渐进式加载
             if get_config("feature.disable_progressive_layer", True):
                 if hasattr(self.main_window, "status_bar_controller") and self.main_window.status_bar_controller:
-                    try:
+                    with contextlib.suppress(Exception):
                         self.main_window.status_bar_controller.set_status_message("渐进式已禁用")
-                    except Exception:
-                        pass
                 return
 
             # 委托给ImageManager处理
@@ -445,7 +444,5 @@ class ImageLoaderService:
 
     def __del__(self):
         """析构函数，确保资源清理"""
-        try:
+        with contextlib.suppress(Exception):
             self.shutdown_background_tasks()
-        except Exception:
-            pass

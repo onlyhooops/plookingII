@@ -18,13 +18,13 @@ PlookingII 共享导入模块
 Author: PlookingII Team
 """
 
-import hashlib as hashlib  # 公开 hashlib
-import logging as logging  # 公开 logging 以供 "from ..imports import logging"
+import hashlib as hashlib  # 公开 hashlib  # noqa: PLC0414
+import logging as logging  # 公开 logging 以供 "from ..imports import logging"  # noqa: PLC0414
 import os
-import shutil as shutil  # 公开 shutil 以供历史代码引入
-import subprocess as subprocess  # 公开 subprocess
-import threading as threading  # 公开 threading
-import time as time  # 公开 time
+import shutil as shutil  # 公开 shutil 以供历史代码引入  # noqa: PLC0414
+import subprocess as subprocess  # 公开 subprocess  # noqa: PLC0414
+import threading as threading  # 公开 threading  # noqa: PLC0414
+import time as time  # 公开 time  # noqa: PLC0414
 
 # ==================== 第三方库导入 ====================
 try:
@@ -56,7 +56,7 @@ except Exception:
 
 # ==================== PyObjC 桥接 ====================
 try:
-    import objc as objc
+    import objc as objc  # noqa: PLC0414
 
     _objc = objc
 except Exception:

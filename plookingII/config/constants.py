@@ -30,7 +30,7 @@ APP_NAME = "PlookingII"
 # 应用版本：从版本管理模块动态导入（自动同步）
 # 🎯 版本号单一真源：plookingII/__version__.py
 # 发布新版本时只需修改 __version__.py 文件
-from ..__version__ import APP_VERSION, VERSION
+from ..__version__ import APP_VERSION, VERSION  # noqa: F401
 
 # 开发团队：用于关于对话框和版权声明
 AUTHOR = "PlookingII Team"

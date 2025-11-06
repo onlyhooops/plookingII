@@ -297,10 +297,7 @@ class UnifiedMonitor:
                     status = self.get_memory_status()
                     if status.percent > self.memory_thresholds["cleanup"] * 100:
                         self.stats["memory_cleanups"] += 1
-                        logger.warning(
-                "内存压力: {status.pressure_level} (%.1f%), 建议清理缓存",
-                status.percent
-            )
+                        logger.warning("内存压力: {status.pressure_level} (%.1f%), 建议清理缓存", status.percent)
 
                 except Exception as e:
                     logger.exception("监控循环错误: %s", e)
@@ -388,7 +385,7 @@ def get_unified_monitor(level: MonitoringLevel = MonitoringLevel.STANDARD, **kwa
     Returns:
         全局监控器实例
     """
-    global _global_monitor
+    global _global_monitor  # noqa: PLW0603  # 单例模式的合理使用
 
     with _monitor_lock:
         if _global_monitor is None:
@@ -400,7 +397,7 @@ def get_unified_monitor(level: MonitoringLevel = MonitoringLevel.STANDARD, **kwa
 
 def reset_unified_monitor() -> None:
     """重置全局监控器"""
-    global _global_monitor
+    global _global_monitor  # noqa: PLW0603  # 单例模式的合理使用
 
     with _monitor_lock:
         if _global_monitor is not None:
@@ -426,11 +423,9 @@ def monitor_performance(operation_name: str):
         def wrapper(*args, **kwargs):
             start_time = time.time()
             success = True
-            result = None
 
             try:
-                result = func(*args, **kwargs)
-                return result
+                return func(*args, **kwargs)
             except Exception:
                 success = False
                 raise

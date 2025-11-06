@@ -48,28 +48,28 @@ from .image_processing_config import (
 from .manager import Config, ConfigManager, ConfigSchema, ConfigType, get_config, get_config_manager, set_config
 
 __all__ = [
-    # 统一配置管理器（推荐）
-    "ConfigManager",
-    "ConfigType",
-    "ConfigSchema",
-    "get_config_manager",
-    "get_config",
-    "set_config",
-    "Config",
     # 从constants.py导出的常量
     "APP_NAME",
-    "VERSION",
     "AUTHOR",
+    "CACHE_CONFIG",
     "COPYRIGHT",
-    "SUPPORTED_IMAGE_EXTS",
-    "MAX_CACHE_SIZE",
-    "MEMORY_THRESHOLD_MB",
-    "IMAGE_PROCESSING_CONFIG",
     # 从image_processing_config.py导出的配置
     "EXIF_PROCESSING_CONFIG",
     "IMAGE_LOADING_OPTIMIZATIONS",
-    "QUARTZ_CONFIG",
-    "PIL_FALLBACK_CONFIG",
-    "CACHE_CONFIG",
+    "IMAGE_PROCESSING_CONFIG",
+    "MAX_CACHE_SIZE",
+    "MEMORY_THRESHOLD_MB",
     "PERFORMANCE_MONITORING",
+    "PIL_FALLBACK_CONFIG",
+    "QUARTZ_CONFIG",
+    "SUPPORTED_IMAGE_EXTS",
+    "VERSION",
+    "Config",
+    # 统一配置管理器（推荐）
+    "ConfigManager",
+    "ConfigSchema",
+    "ConfigType",
+    "get_config",
+    "get_config_manager",
+    "set_config",
 ]

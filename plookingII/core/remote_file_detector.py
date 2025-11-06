@@ -318,9 +318,7 @@ class RemoteFileDetector:
                 os.path.exists(file_path)
 
             test_end = time.perf_counter()
-            latency_ms = (test_end - test_start) * 1000
-
-            return latency_ms
+            return (test_end - test_start) * 1000
 
         except Exception as e:
             self.logger.log(LogLevel.DEBUG, LogCategory.NETWORK, f"Latency measurement failed: {e}")
@@ -372,7 +370,7 @@ _remote_detector_lock = threading.Lock()
 
 def get_remote_detector() -> RemoteFileDetector:
     """获取全局RemoteFileDetector实例"""
-    global _remote_detector_instance
+    global _remote_detector_instance  # noqa: PLW0603  # 单例模式的合理使用
     if _remote_detector_instance is None:
         with _remote_detector_lock:
             if _remote_detector_instance is None:

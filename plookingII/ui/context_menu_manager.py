@@ -9,6 +9,7 @@
 """
 
 import os
+from typing import ClassVar
 
 import objc
 from AppKit import NSMenu, NSMenuItem, NSWorkspace
@@ -35,7 +36,7 @@ class BrowserFilter:
     """浏览器应用程序过滤器"""
 
     # 浏览器关键词列表
-    BROWSER_KEYWORDS = [
+    BROWSER_KEYWORDS: ClassVar[list[str]] = [
         "浏览器",
         "Browser",
         "Safari",
@@ -65,11 +66,7 @@ class BrowserFilter:
         app_name = os.path.basename(app_path)
 
         # 检查应用名称是否包含浏览器关键词
-        for keyword in cls.BROWSER_KEYWORDS:
-            if keyword.lower() in app_name.lower():
-                return True
-
-        return False
+        return any(keyword.lower() in app_name.lower() for keyword in cls.BROWSER_KEYWORDS)
 
 
 class AppDiscovery:
@@ -110,11 +107,10 @@ class AppDiscovery:
             # 处理其他应用程序
             for app_url in apps_urls:
                 app_path = app_url.path()
-                if app_path not in added_paths:
-                    if not self.browser_filter.is_browser_app(app_path):
-                        app_name = os.path.basename(app_path).replace(".app", "")
-                        apps.append(AppInfo(app_url, app_name, app_path))
-                        added_paths.add(app_path)
+                if app_path not in added_paths and not self.browser_filter.is_browser_app(app_path):
+                    app_name = os.path.basename(app_path).replace(".app", "")
+                    apps.append(AppInfo(app_url, app_name, app_path))
+                    added_paths.add(app_path)
 
             return apps
 
@@ -185,7 +181,7 @@ class MenuItemBuilder:
             if app_icon:
                 app_icon.setSize_((16, 16))
                 menu_item.setImage_(app_icon)
-        except Exception as e:
+        except Exception:
             logger.debug("%s 图标设置失败: {e}", app_info.name)
 
         return menu_item

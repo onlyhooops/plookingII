@@ -147,7 +147,7 @@ def retry_on_failure(
             for attempt in range(max_retries + 1):
                 try:
                     return func(*args, **kwargs)
-                except exceptions as e:
+                except exceptions:
                     if attempt == max_retries:
                         logger.exception("函数 %s 重试 {max_retries} 次后仍然失败: {e}", func.__name__)
                         raise
@@ -158,6 +158,7 @@ def retry_on_failure(
 
                     time.sleep(current_delay)
                     current_delay *= backoff_factor
+            return None
 
         return wrapper
 
@@ -212,7 +213,11 @@ class ErrorCollector:
 
 
 def validate_parameter(
-    param: Any, param_name: str, expected_type: type = None, allow_none: bool = False, custom_validator: Callable = None
+    param: Any,
+    param_name: str,
+    expected_type: type | None = None,
+    allow_none: bool = False,
+    custom_validator: Callable | None = None,
 ) -> bool:
     """参数验证辅助函数
 
@@ -236,13 +241,11 @@ def validate_parameter(
         raise ValueError(f"参数 {param_name} 不能为None")
 
     # 检查类型
-    if expected_type is not None:
-        if not isinstance(param, expected_type):
-            raise ValueError(f"参数 {param_name} 类型错误，期望 {expected_type.__name__}，实际 {type(param).__name__}")
+    if expected_type is not None and not isinstance(param, expected_type):
+        raise ValueError(f"参数 {param_name} 类型错误，期望 {expected_type.__name__}，实际 {type(param).__name__}")
 
     # 自定义验证
-    if custom_validator is not None:
-        if not custom_validator(param):
-            raise ValueError(f"参数 {param_name} 未通过自定义验证")
+    if custom_validator is not None and not custom_validator(param):
+        raise ValueError(f"参数 {param_name} 未通过自定义验证")
 
     return True

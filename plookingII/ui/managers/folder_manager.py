@@ -7,6 +7,7 @@ import os
 """
 
 import concurrent.futures
+import contextlib
 import logging
 import shutil
 import threading
@@ -263,10 +264,7 @@ class FolderManager:
             bool: 是否包含图片
         """
         try:
-            for f in os.listdir(dirpath):
-                if f.lower().endswith(exts):
-                    return True
-            return False
+            return any(f.lower().endswith(exts) for f in os.listdir(dirpath))
         except (OSError, PermissionError):
             return False
 
@@ -762,10 +760,8 @@ class FolderManager:
                             counter += 1
                     shutil.move(src, final_dst)
             # 尝试删除空的旧目录
-            try:
+            with contextlib.suppress(Exception):
                 os.rmdir(src_dir)
-            except Exception:
-                pass
         except Exception:
             logger.debug("合并旧‘保留’目录到‘精选’目录失败", exc_info=True)
 
@@ -802,10 +798,7 @@ class FolderManager:
             current_subfolder_index = history_data["current_subfolder_index"]
             subfolders = history_data["subfolders"]
 
-            if current_subfolder_index < 0 or current_subfolder_index >= len(subfolders):
-                return False
-
-            return True
+            return not (current_subfolder_index < 0 or current_subfolder_index >= len(subfolders))
 
         except Exception:
             return False

@@ -112,7 +112,7 @@ class OptimizedAlgorithms:
         return dict(groups)
 
     @staticmethod
-    def optimized_priority_queue(items: list[Any], priority_func=None, max_size: int = None) -> list[Any]:
+    def optimized_priority_queue(items: list[Any], priority_func=None, max_size: int | None = None) -> list[Any]:
         """优化的优先级队列算法
 
         Args:

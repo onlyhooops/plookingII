@@ -252,7 +252,7 @@ class DragDropController:
             self._clear_drag_highlight()
 
             # 使用友好的错误提示
-            if isinstance(e, (DragDropError, FolderValidationError)):
+            if isinstance(e, DragDropError | FolderValidationError):
                 show_error(e, "拖拽操作")
             else:
                 error = DragDropError(f"拖拽操作失败: {e!s}")

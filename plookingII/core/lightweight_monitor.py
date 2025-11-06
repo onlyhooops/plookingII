@@ -192,7 +192,7 @@ class LightweightMonitor:
         """
         summary = self.get_summary()
 
-        report = f"""
+        return f"""
 PlookingII Performance Report
 ============================
 Cache Hit Rate: {summary["cache_hit_rate"]:.2%}
@@ -204,8 +204,6 @@ Error Count: {summary["error_count"]}
 Total Loads: {summary["total_loads"]}
 Last Update: {time.ctime(summary["last_update_time"])}
         """.strip()
-
-        return report
 
     def is_performance_good(self) -> bool:
         """检查性能是否良好
@@ -297,7 +295,7 @@ def get_monitor() -> LightweightMonitor:
     return lightweight_monitor
 
 
-def track_performance(operation_name: str = None):
+def track_performance(operation_name: str | None = None):
     """性能跟踪装饰器
 
     Args:

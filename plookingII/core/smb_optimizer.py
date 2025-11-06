@@ -254,7 +254,7 @@ class SMBOptimizer:
             self.logging.getLogger(__name__).log_error(e, "directory_listing_cache")
             return []
 
-    def preload_file_data(self, file_path: str, size: int = None) -> bool:
+    def preload_file_data(self, file_path: str, size: int | None = None) -> bool:
         """
         预加载文件数据到缓存
 
@@ -279,10 +279,7 @@ class SMBOptimizer:
                 start_time = time.perf_counter()
                 try:
                     with open(file_path, "rb") as f:
-                        if size is None:
-                            data = f.read()
-                        else:
-                            data = f.read(size)
+                        data = f.read() if size is None else f.read(size)
                 except (OSError, PermissionError) as e:
                     self.logging.getLogger(__name__).log_error(e, f"file_preload_{file_path}")
                     return False
@@ -367,7 +364,7 @@ _smb_optimizer_lock = threading.Lock()
 
 def get_smb_optimizer() -> SMBOptimizer:
     """获取全局SMBOptimizer实例"""
-    global _smb_optimizer_instance
+    global _smb_optimizer_instance  # noqa: PLW0603  # 单例模式的合理使用
     if _smb_optimizer_instance is None:
         with _smb_optimizer_lock:
             if _smb_optimizer_instance is None:

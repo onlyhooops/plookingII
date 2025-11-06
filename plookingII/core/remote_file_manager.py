@@ -642,7 +642,7 @@ _remote_file_manager_lock = threading.Lock()
 
 def get_remote_file_manager() -> RemoteFileManager:
     """获取全局RemoteFileManager实例"""
-    global _remote_file_manager_instance
+    global _remote_file_manager_instance  # noqa: PLW0603  # 单例模式的合理使用
     if _remote_file_manager_instance is None:
         with _remote_file_manager_lock:
             if _remote_file_manager_instance is None:

@@ -180,7 +180,7 @@ class UnifiedCacheManager(CacheInterface):
                     try:
                         if provider.clear_cache():
                             success_count += 1
-                    except Exception as e:
+                    except Exception:
                         logger.warning("清理缓存失败 %s: {e}", name)
 
             # 更新统计
@@ -247,7 +247,7 @@ class UnifiedStatusManager(StatusInterface):
             for name, provider in self._status_providers.items():
                 try:
                     provider.set_status_message(message, timeout)
-                except Exception as e:
+                except Exception:
                     logger.warning("设置状态消息失败 %s: {e}", name)
 
         except Exception as e:
@@ -266,7 +266,7 @@ class UnifiedStatusManager(StatusInterface):
             for name, provider in self._status_providers.items():
                 try:
                     provider.update_status_display(**kwargs)
-                except Exception as e:
+                except Exception:
                     logger.warning("更新状态显示失败 %s: {e}", name)
 
         except Exception as e:
@@ -296,7 +296,7 @@ def get_unified_cache_manager() -> UnifiedCacheManager:
     Returns:
         UnifiedCacheManager: 统一缓存管理器
     """
-    global _unified_cache_manager
+    global _unified_cache_manager  # noqa: PLW0603  # 单例模式的合理使用
     if _unified_cache_manager is None:
         _unified_cache_manager = UnifiedCacheManager()
     return _unified_cache_manager
@@ -308,7 +308,7 @@ def get_unified_status_manager() -> UnifiedStatusManager:
     Returns:
         UnifiedStatusManager: 统一状态管理器
     """
-    global _unified_status_manager
+    global _unified_status_manager  # noqa: PLW0603  # 单例模式的合理使用
     if _unified_status_manager is None:
         _unified_status_manager = UnifiedStatusManager()
     return _unified_status_manager

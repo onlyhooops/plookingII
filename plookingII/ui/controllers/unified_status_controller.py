@@ -468,9 +468,8 @@ class UnifiedStatusController:
             self._last_image_index = current_index
 
             # 标记文件夹已处理
-            if hasattr(self, "_last_folder_index"):
-                if current_subfolder_index > self._last_folder_index:
-                    self.session_manager.folder_processed()
+            if hasattr(self, "_last_folder_index") and current_subfolder_index > self._last_folder_index:
+                self.session_manager.folder_processed()
 
             self._last_folder_index = current_subfolder_index
 

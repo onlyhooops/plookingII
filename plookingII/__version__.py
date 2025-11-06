@@ -40,7 +40,7 @@ RELEASE_DATE = "2025-10-06"
 
 def get_version() -> str:
     """获取版本号字符串
-    
+
     Returns:
         str: 版本号，例如 "1.7.0"
     """
@@ -49,7 +49,7 @@ def get_version() -> str:
 
 def get_version_info() -> tuple[int, int, int]:
     """获取版本号元组
-    
+
     Returns:
         tuple: (major, minor, patch)
     """
@@ -58,7 +58,7 @@ def get_version_info() -> tuple[int, int, int]:
 
 def get_full_version() -> str:
     """获取完整版本信息
-    
+
     Returns:
         str: 完整版本描述，例如 "PlookingII v1.7.0 (Architecture Refinement)"
     """
@@ -67,17 +67,16 @@ def get_full_version() -> str:
 
 # 导出符号
 __all__ = [
-    "__version__",
-    "VERSION",
     "APP_VERSION",
-    "VERSION_INFO",
     "MAJOR",
     "MINOR",
     "PATCH",
-    "VERSION_DESCRIPTION",
     "RELEASE_DATE",
+    "VERSION",
+    "VERSION_DESCRIPTION",
+    "VERSION_INFO",
+    "__version__",
+    "get_full_version",
     "get_version",
     "get_version_info",
-    "get_full_version",
 ]
-

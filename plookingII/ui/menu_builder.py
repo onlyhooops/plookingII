@@ -11,6 +11,8 @@
 - 帮助菜单（帮助和快捷键）
 """
 
+import contextlib
+
 from AppKit import NSEventModifierFlagCommand, NSEventModifierFlagOption, NSMenu, NSMenuItem
 
 from ..config.constants import APP_NAME
@@ -123,10 +125,8 @@ class EditMenuBuilder:
         edit_menu = NSMenu.alloc().initWithTitle_("编辑")
 
         # 禁用菜单的自动验证，防止系统自动修改菜单项
-        try:
+        with contextlib.suppress(Exception):
             edit_menu.setAutoenablesItems_(False)
-        except Exception:
-            pass
 
         # 撤销菜单项（术语统一：精选）
         # 使用自定义 action 避免系统自动覆盖为 "Undo"
@@ -362,5 +362,4 @@ class MenuBuilder:
         except Exception as e:
             logger.exception("构建菜单失败: %s", e)
             # 返回一个基本菜单作为回退
-            fallback_menu = NSMenu.alloc().init()
-            return fallback_menu
+            return NSMenu.alloc().init()

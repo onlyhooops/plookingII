@@ -11,6 +11,7 @@ Recorded fields: timestamp, event, properties (dict)
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import time
@@ -37,10 +38,8 @@ def _default_dir() -> str:
         import tempfile
 
         base = os.path.join(tempfile.gettempdir(), "PlookingII-logs")
-        try:
+        with contextlib.suppress(Exception):
             os.makedirs(base, exist_ok=True)
-        except Exception:
-            pass
         return base
 
 

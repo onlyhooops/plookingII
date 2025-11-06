@@ -270,7 +270,7 @@ class BaseComponent(StatisticsMixin, ConfigurationMixin, ErrorHandlingMixin, Log
     所有主要组件都应该继承此类。
     """
 
-    def __init__(self, name: str = None, config: ComponentConfig = None):
+    def __init__(self, name: str | None = None, config: ComponentConfig = None):
         """初始化基础组件
 
         Args:
@@ -356,7 +356,7 @@ class ComponentRegistry:
         self._components: dict[str, BaseComponent] = {}
         self._lock = threading.RLock()
 
-    def register(self, component: BaseComponent, name: str = None):
+    def register(self, component: BaseComponent, name: str | None = None):
         """注册组件
 
         Args:
@@ -410,7 +410,7 @@ class ComponentRegistry:
                 try:
                     component.cleanup()
                     component.logger.info("Cleaned up component: %s", name)
-                except Exception as error:
+                except Exception:
                     component.logger.exception("Failed to cleanup component %s: {error}", name)
 
             self._components.clear()

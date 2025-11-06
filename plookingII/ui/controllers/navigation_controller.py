@@ -4,6 +4,7 @@
 负责处理键盘导航、防抖逻辑和导航状态管理。
 """
 
+import contextlib
 import logging
 import threading
 import time
@@ -247,9 +248,9 @@ class NavigationController:
                     adaptive_delay = optimization.get("optimal_debounce_sec", self._key_debounce_delay)
 
                     logger.debug(
-                "Adaptive debounce: %.1fms, velocity: {optimization.get('navigation_velocity', 0):.2f} img/s",
-                adaptive_delay * 1000
-            )
+                        "Adaptive debounce: %.1fms, velocity: {optimization.get('navigation_velocity', 0):.2f} img/s",
+                        adaptive_delay * 1000,
+                    )
                 except Exception as e:
                     logger.debug("Failed to calculate optimal debounce: %s", e)
                     # 回退到原有的自适应逻辑
@@ -311,10 +312,8 @@ class NavigationController:
         elif direction == "right":
             self._queued_steps += 1
         # 仅即时刷新状态显示（不更改索引，避免UI与数据竞态）
-        try:
+        with contextlib.suppress(Exception):
             self.main_window._update_status_display_immediate()
-        except Exception:
-            pass
 
     def execute_pending_navigation(self):
         """执行待处理的导航操作（合并队列步进，单次渲染，性能优化版）"""

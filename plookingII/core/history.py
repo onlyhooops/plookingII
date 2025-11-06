@@ -521,8 +521,7 @@ class TaskHistoryManager:
             """,
                 (max_count,),
             )
-            result = [row[0] for row in cursor.fetchall()]
-            return result
+            return [row[0] for row in cursor.fetchall()]
         except Exception:
             logger.exception("读取最近文件夹失败")
             return []

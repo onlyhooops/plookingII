@@ -15,6 +15,7 @@ from AppKit import (
 )
 from Foundation import NSURL
 
+from ..imports import _NSDefaultRunLoopMode, _NSRunLoop, _NSTimer, _objc
 from .context_menu_manager import ContextMenuManager
 
 # 导入常量，使用绝对导入
@@ -46,6 +47,8 @@ PlookingII UI视图组件模块
 
 Author: PlookingII Team
 """
+
+import contextlib
 
 from ..config.constants import APP_NAME
 from ..core.functions import _env_int
@@ -249,10 +252,8 @@ class AdaptiveImageView(NSImageView):
     def setImage_(self, image):
         objc.super(AdaptiveImageView, self).setImage_(image)
         # 清空CGImage直通缓存
-        try:
+        with contextlib.suppress(Exception):
             self._cgimage = None
-        except Exception:
-            pass
         # 切换图片时重置状态
         self.reset_view()
         # 记录图片唯一标识（可用id(image)或hash）
@@ -473,7 +474,7 @@ class AdaptiveImageView(NSImageView):
         self.discardCursorRects()
         if self.is_space_drag_mode and self.zoom_scale > 1.0:
             if not self._hand_cursor:
-                from AppKit import NSCursor
+                from AppKit import NSCursor, NSImage
 
                 self._hand_cursor = NSCursor.alloc().initWithImage_hotSpot_(
                     NSImage.imageNamed_("NSOpenHandCursor"), NSMakePoint(8, 8)
@@ -563,11 +564,7 @@ class AdaptiveImageView(NSImageView):
         ]
 
         # 检查应用程序名称是否包含浏览器关键词
-        for keyword in browser_keywords:
-            if keyword.lower() in app_name:
-                return True
-
-        return False
+        return any(keyword.lower() in app_name for keyword in browser_keywords)
 
     def _show_open_with_menu(self, event):
         """显示系统级"打开方式"菜单 - 使用ContextMenuManager重构版本

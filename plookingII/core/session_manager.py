@@ -217,10 +217,7 @@ class SessionManager:
             progress_text = "准备中..."
 
         # 时间信息（移除emoji）
-        if stats["session_minutes"] > 0:
-            time_text = f"时长: {stats['session_minutes']:.0f}分钟"
-        else:
-            time_text = "刚开始"
+        time_text = f"时长: {stats['session_minutes']:.0f}分钟" if stats["session_minutes"] > 0 else "刚开始"
 
         # 组合状态消息
         status_parts = [progress_text, time_text]

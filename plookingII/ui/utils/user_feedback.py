@@ -83,10 +83,9 @@ class UserFeedbackManager:
                 detail_info.append(f"建议: {recovery_suggestion}")
 
             # 如果是PlookingII自定义错误，添加详细信息
-            if isinstance(error, PlookingIIError):
-                if hasattr(error, "metadata") and error.metadata:
-                    if "folder_path" in error.metadata:
-                        detail_info.append(f"文件夹: {error.metadata['folder_path']}")
+            if isinstance(error, PlookingIIError) and hasattr(error, "metadata") and error.metadata:
+                if "folder_path" in error.metadata:
+                    detail_info.append(f"文件夹: {error.metadata['folder_path']}")
 
             if detail_info:
                 alert.setInformativeText_("\n".join(detail_info))
@@ -159,7 +158,7 @@ class UserFeedbackManager:
             return self._recovery_suggestions[error_type]
 
         # 系统错误的通用建议
-        if isinstance(error, (FileNotFoundError, PermissionError)):
+        if isinstance(error, FileNotFoundError | PermissionError):
             return "请检查文件路径和访问权限"
         if isinstance(error, OSError):
             return "请重试操作，或联系技术支持"

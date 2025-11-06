@@ -21,7 +21,7 @@ import sys
 import threading
 import traceback
 from collections.abc import Callable
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from dataclasses import dataclass, field
 from enum import Enum
 from logging.handlers import RotatingFileHandler
@@ -513,10 +513,8 @@ def _default_log_dir() -> str:
         import tempfile
 
         base = os.path.join(tempfile.gettempdir(), "PlookingII-logs")
-        try:
+        with suppress(Exception):
             os.makedirs(base, exist_ok=True)
-        except Exception:
-            pass
         return base
 
 
@@ -530,7 +528,7 @@ def setup_error_logging(max_bytes: int = 2 * 1024 * 1024, backup_count: int = 3)
     Returns:
         str: 日志文件路径
     """
-    global _ERROR_LOG_PATH
+    global _ERROR_LOG_PATH  # noqa: PLW0603  # 模块级配置的合理使用
 
     log_dir = _default_log_dir()
     log_path = os.path.join(log_dir, "error.log")
@@ -581,10 +579,8 @@ def install_global_exception_hook() -> None:
             # 避免异常导致递归崩溃
             pass
 
-    try:
+    with suppress(Exception):
         sys.excepthook = _hook
-    except Exception:
-        pass
 
 
 # 测试辅助：显式触发当前 excepthook（不抛出）

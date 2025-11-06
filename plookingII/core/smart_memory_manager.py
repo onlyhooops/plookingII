@@ -119,7 +119,7 @@ class SmartMemoryManager:
                 self.stats["cache_misses"] += 1
                 return result
 
-            except Exception as e:
+            except Exception:
                 logger.exception("Computation failed for key %s: {e}", key)
                 raise
 

@@ -152,7 +152,7 @@ class BackgroundTaskManager:
             logger.debug("后台任务已提交: %s", task_id)
             return future
 
-        except Exception as e:
+        except Exception:
             logger.warning("提交后台任务失败 [%s]: {e}", task_id)
             return None
 
@@ -170,12 +170,12 @@ class BackgroundTaskManager:
                     # 注意：这里不要调用future.result()，因为这可能导致死锁
                     # 让用户回调自己决定是否需要获取结果
                     callback(future)
-                except Exception as e:
+                except Exception:
                     logger.debug("任务回调执行失败 [%s]: {e}", task_id)
 
             logger.debug("后台任务完成: %s", task_id)
 
-        except Exception as e:
+        except Exception:
             logger.debug("任务完成处理失败 [%s]: {e}", task_id)
 
     # ==================== 异步验证任务 ====================
@@ -247,7 +247,7 @@ class BackgroundTaskManager:
                         self._task_callbacks.pop(task_id, None)
                         logger.debug("任务已取消: %s", task_id)
                     return result
-        except Exception as e:
+        except Exception:
             logger.debug("取消任务失败 [%s]: {e}", task_id)
         return False
 

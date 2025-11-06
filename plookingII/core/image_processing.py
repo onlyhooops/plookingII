@@ -130,10 +130,7 @@ class HybridImageProcessor:
 
             # 执行加载
             # 原图优先：当开关启用时，不向策略层传递target_size以避免缩略图路径
-            if get_config("feature.full_res_browse", True):
-                effective_target = None
-            else:
-                effective_target = target_size
+            effective_target = None if get_config("feature.full_res_browse", True) else target_size
             result = self._execute_loading_strategy(selected_strategy, file_path, effective_target, file_size_mb)
 
             # 更新统计信息（兼容旧签名，仅传文件扩展名与耗时）
@@ -315,7 +312,12 @@ class HybridImageProcessor:
 
     # 兼容旧API
     def _load_auto_optimized(
-        self, file_path: str, file_size_mb=None, file_ext: str = None, target_size=None, progressive: bool = False
+        self,
+        file_path: str,
+        file_size_mb=None,
+        file_ext: str | None = None,
+        target_size=None,
+        progressive: bool = False,
     ):
         try:
             strategy = self.loading_strategies.get("auto") or self.loading_strategies.get("optimized")
@@ -405,7 +407,7 @@ class HybridImageProcessor:
 
     def _init_dual_thread_processing(self):
         """初始化双线程处理机制"""
-        global _dual_thread_start_logged
+        global _dual_thread_start_logged  # noqa: PLW0603  # 日志标志的合理使用
 
         with _dual_thread_log_lock:
             if not _dual_thread_start_logged:

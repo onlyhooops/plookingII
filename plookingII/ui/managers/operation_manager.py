@@ -6,6 +6,7 @@ import os
 负责处理文件操作、撤销、保留等业务逻辑。
 """
 
+import contextlib
 import logging
 import shutil
 import subprocess
@@ -60,9 +61,8 @@ class OperationManager:
 
         # 同步执行文件移动，避免测试环境中后台线程导致的资源占用与竞态
         success = self._move_with_retry(current_image_path, target_path)
-        if not success:
-            if self._keep_action_stack and (self._keep_action_stack[-1].get("dst") == target_path):
-                self._keep_action_stack.pop()
+        if not success and self._keep_action_stack and (self._keep_action_stack[-1].get("dst") == target_path):
+            self._keep_action_stack.pop()
         # 刷新UI（在有主线程队列时尽量使用）
         try:
             from Foundation import NSOperationQueue
@@ -132,10 +132,8 @@ class OperationManager:
         if self.main_window.images and (0 <= self.main_window.current_index < len(self.main_window.images)):
             self.main_window.images.pop(self.main_window.current_index)
         if hasattr(self.main_window, "image_manager") and self.main_window.image_manager:
-            try:
+            with contextlib.suppress(Exception):
                 self.main_window.image_manager.sync_bidi_sequence(self.main_window.images)
-            except Exception:
-                pass
 
     def _move_with_retry(self, src, dst, max_retries=3, initial_delay=1):
         """带重试的文件移动操作
@@ -160,6 +158,7 @@ class OperationManager:
                     delay *= 2
                 else:
                     return False
+        return None
 
     def _navigate_after_removal(self):
         """移除图像后的导航逻辑（优化版本）"""
@@ -182,10 +181,8 @@ class OperationManager:
             )
         except Exception:
             # 备选方案：直接启动预加载
-            try:
+            with contextlib.suppress(Exception):
                 self.main_window.image_manager.start_preload()
-            except Exception:
-                pass
 
     def undo_keep_action(self):
         """撤销保留操作"""
@@ -209,10 +206,8 @@ class OperationManager:
 
                 # 同步双向缓存池序列（撤回插回后更新序列）
                 if hasattr(self.main_window, "image_manager") and self.main_window.image_manager:
-                    try:
+                    with contextlib.suppress(Exception):
                         self.main_window.image_manager.sync_bidi_sequence(self.main_window.images)
-                    except Exception:
-                        pass
 
                     # 显示撤回的图像
                     self.main_window.image_manager.show_current_image()
@@ -226,10 +221,8 @@ class OperationManager:
                         )
                     except Exception:
                         # 备选方案：直接启动预加载
-                        try:
+                        with contextlib.suppress(Exception):
                             self.main_window.image_manager.start_preload()
-                        except Exception:
-                            pass
 
             self.main_window.status_bar_controller.set_status_message(self.main_window.ui_strings["selection_undone"])
         except Exception as e:
@@ -575,16 +568,19 @@ class OperationManager:
 
             except Exception as e:
                 logger.exception("旋转操作失败: %s", e)
+                error_msg = str(e)
                 try:
                     from Foundation import NSOperationQueue
 
                     NSOperationQueue.mainQueue().addOperationWithBlock_(
                         lambda: self.main_window.onRotationCompleted_(
-                            {"success": False, "direction": direction, "error": str(e)}
+                            {"success": False, "direction": direction, "error": error_msg}
                         )
                     )
                 except Exception:
-                    self.main_window.onRotationCompleted_({"success": False, "direction": direction, "error": str(e)})
+                    self.main_window.onRotationCompleted_(
+                        {"success": False, "direction": direction, "error": error_msg}
+                    )
 
         # 启动旋转线程
         t = threading.Thread(target=rotation_thread, daemon=True)
@@ -633,7 +629,7 @@ class OperationManager:
             processor = ImageRotationProcessor()
             return processor.rotate_image(image_path, direction, self._on_rotation_callback)
 
-        except Exception as e:
+        except Exception:
             logger.exception("执行旋转失败 %s: {e}", image_path)
             return False
 

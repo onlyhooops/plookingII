@@ -1,37 +1,47 @@
+# Dependabot 配置 - 自动更新依赖
+# 文档: https://docs.github.com/en/code-security/dependabot
+
 version: 2
 updates:
-  # Python依赖更新
+  # Python 依赖更新
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
       time: "09:00"
-    open-pull-requests-limit: 10
+      timezone: "Asia/Shanghai"
+    open-pull-requests-limit: 5
     reviewers:
-      - "plookingII-team"
+      - "PlookingII-team"
     labels:
       - "dependencies"
       - "python"
     commit-message:
-      prefix: "chore"
-      prefix-development: "chore"
+      prefix: "deps"
       include: "scope"
+    # 版本更新策略
+    versioning-strategy: increase
+    # 忽略特定依赖的更新
+    ignore:
+      # 保持 Python 3.11 兼容性
+      - dependency-name: "python"
+        update-types: ["version-update:semver-major"]
 
-  # GitHub Actions更新
+  # GitHub Actions 更新
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
       day: "monday"
       time: "09:00"
-    open-pull-requests-limit: 5
+      timezone: "Asia/Shanghai"
+    open-pull-requests-limit: 3
     reviewers:
-      - "plookingII-team"
+      - "PlookingII-team"
     labels:
       - "dependencies"
       - "github-actions"
     commit-message:
       prefix: "ci"
       include: "scope"
-

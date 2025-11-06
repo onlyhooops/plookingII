@@ -444,5 +444,5 @@ def log_error(error: Exception, context: str = "", metadata: dict[str, Any] | No
 @contextmanager
 def performance_timer(operation: str, metadata: dict[str, Any] | None = None):
     """性能计时上下文管理器"""
-    with enhanced_self.logger.performance_timer(operation, metadata) as perf_data:
+    with enhanced_logger.logger.performance_timer(operation, metadata) as perf_data:
         yield perf_data

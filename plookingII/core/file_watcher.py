@@ -332,20 +332,19 @@ try:
 
         def on_moved(self, event):
             """文件移动事件"""
-            if not event.is_directory:
-                if event.src_path in self.watched_files:
-                    # 监听的文件被移动
-                    file_event = FileChangeEvent(
-                        file_path=event.dest_path,
-                        change_type=FileChangeType.MOVED,
-                        timestamp=time.time(),
-                        old_path=event.src_path,
-                    )
-                    self.notify_callbacks(file_event)
+            if not event.is_directory and event.src_path in self.watched_files:
+                # 监听的文件被移动
+                file_event = FileChangeEvent(
+                    file_path=event.dest_path,
+                    change_type=FileChangeType.MOVED,
+                    timestamp=time.time(),
+                    old_path=event.src_path,
+                )
+                self.notify_callbacks(file_event)
 
-                    # 更新监听文件列表
-                    self.watched_files.remove(event.src_path)
-                    self.watched_files.add(event.dest_path)
+                # 更新监听文件列表
+                self.watched_files.remove(event.src_path)
+                self.watched_files.add(event.dest_path)
 
 except ImportError:
     # watchdog不可用，使用None标记

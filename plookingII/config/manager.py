@@ -186,7 +186,7 @@ class ConfigManager:
                     if env_value is not None:
                         try:
                             return self._convert_value(env_value, schema.config_type)
-                        except Exception as e:
+                        except Exception:
                             logger.warning("环境变量%s转换失败: {e}", schema.env_var)
 
             # 2. 检查用户配置
@@ -322,7 +322,7 @@ class ConfigManager:
                         converted_value = self._convert_value(env_value, schema.config_type)
                         self._configs[key] = converted_value
                         logger.debug("环境变量覆盖: %s = {converted_value}", key)
-                    except Exception as e:
+                    except Exception:
                         logger.warning("环境变量%s转换失败: {e}", schema.env_var)
 
     def _get_config_file_path(self) -> str:
@@ -359,7 +359,7 @@ class ConfigManager:
         try:
             if schema.config_type == ConfigType.INTEGER and not isinstance(value, int):
                 int(value)  # 尝试转换
-            elif schema.config_type == ConfigType.FLOAT and not isinstance(value, (int, float)):
+            elif schema.config_type == ConfigType.FLOAT and not isinstance(value, int | float):
                 float(value)  # 尝试转换
             elif schema.config_type == ConfigType.BOOLEAN and not isinstance(value, bool):
                 # 允许字符串形式的布尔值
@@ -413,7 +413,7 @@ _config_lock = threading.Lock()
 
 def get_config_manager() -> ConfigManager:
     """获取全局配置管理器实例"""
-    global _config_manager
+    global _config_manager  # noqa: PLW0603  # 单例模式的合理使用
     with _config_lock:
         if _config_manager is None:
             _config_manager = ConfigManager()

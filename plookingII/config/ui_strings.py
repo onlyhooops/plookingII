@@ -8,12 +8,14 @@ UI文案管理模块
 Author: PlookingII Team
 """
 
+from typing import ClassVar
+
 
 class UIStrings:
     """UI文案管理器"""
 
     # 应用程序基础信息
-    APP_INFO = {
+    APP_INFO: ClassVar[dict[str, str]] = {
         "name": "PlookingII",
         "about": "关于",
         "version_label": "版本：",
@@ -22,7 +24,7 @@ class UIStrings:
     }
 
     # 菜单文案
-    MENU = {
+    MENU: ClassVar[dict[str, str]] = {
         # 应用程序菜单
         "app_menu_title": "PlookingII",
         "about": "关于",
@@ -57,7 +59,7 @@ class UIStrings:
     }
 
     # 对话框按钮
-    BUTTONS = {
+    BUTTONS: ClassVar[dict[str, str]] = {
         "ok": "确定",
         "cancel": "取消",
         "continue": "继续",
@@ -71,7 +73,7 @@ class UIStrings:
     }
 
     # 快捷键说明
-    SHORTCUTS_HELP = {
+    SHORTCUTS_HELP: ClassVar[dict[str, str]] = {
         "title": "快捷键",
         "left_right_arrows": "← / → 切换图片",
         "down_arrow": "↓ 移动到精选文件夹",
@@ -87,14 +89,14 @@ class UIStrings:
     }
 
     # 关于对话框内容
-    ABOUT_DIALOG = {
+    ABOUT_DIALOG: ClassVar[dict[str, str]] = {
         "description": "为macOS设计的原生图片浏览器",
         "subtitle": "快速浏览与筛选本地高分辨率照片",
         "privacy": "本地运行 不联网 不留缓存",
     }
 
     # 状态消息
-    STATUS_MESSAGES = {
+    STATUS_MESSAGES: ClassVar[dict[str, str]] = {
         "no_images": "无图片 0/0",
         "no_folders": "0/0",
         "task_completed": "任务完成",
@@ -135,7 +137,7 @@ class UIStrings:
     }
 
     # 错误消息
-    ERROR_MESSAGES = {
+    ERROR_MESSAGES: ClassVar[dict[str, str]] = {
         "open_folder_failed": "打开文件夹失败",
         "rotation_operation_failed": "旋转操作异常",
         "keyboard_event_failed": "键盘事件处理失败: {}",
@@ -158,7 +160,7 @@ class UIStrings:
     }
 
     # 历史记录对话框
-    HISTORY_DIALOG = {
+    HISTORY_DIALOG: ClassVar[dict[str, str]] = {
         "title": "发现历史记录",
         "info_template": (
             "发现上次浏览记录：\n• 文件夹进度：第 {} 个，共 {} 个\n• 图片进度：第 {} 张\n• 是否恢复上次的浏览位置？"
@@ -169,7 +171,7 @@ class UIStrings:
     }
 
     # 跳转文件夹对话框
-    JUMP_FOLDER_DIALOG = {
+    JUMP_FOLDER_DIALOG: ClassVar[dict[str, str]] = {
         "title": "跳转文件夹",
         "instruction": "请选择要跳转的图片文件夹：",
         "jump": "跳转",
@@ -177,7 +179,7 @@ class UIStrings:
     }
 
     # 最近文件对话框
-    RECENT_FILES_DIALOG = {
+    RECENT_FILES_DIALOG: ClassVar[dict[str, str]] = {
         "title": "最近打开文件",
         "open": "打开",
         "clear_records": "清空记录",
@@ -307,7 +309,7 @@ _ui_string_manager = None
 
 def get_ui_string_manager() -> UIStringManager:
     """获取全局UI文案管理器实例"""
-    global _ui_string_manager
+    global _ui_string_manager  # noqa: PLW0603  # 单例模式的合理使用
     if _ui_string_manager is None:
         _ui_string_manager = UIStringManager()
     return _ui_string_manager

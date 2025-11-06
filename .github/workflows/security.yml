@@ -1,5 +1,9 @@
 name: 安全扫描
 
+# 🍎 macOS x86 (Intel) 专用应用
+# 本应用使用 PyObjC、AppKit、Quartz 等 macOS 专用框架
+# 所有作业必须在 macOS x86 (macos-13) 环境中运行
+
 on:
   push:
     branches: [ main ]
@@ -16,31 +20,31 @@ jobs:
   # ============================================================================
   dependency-scan:
     name: 依赖安全扫描
-    runs-on: macos-latest
+    runs-on: macos-13  # macOS x86 (Intel)
     timeout-minutes: 15
-    
+
     steps:
     - name: 检出代码
       uses: actions/checkout@v4
       timeout-minutes: 2
-      
+
     - name: 设置Python
       uses: actions/setup-python@v5
       with:
         python-version: "3.11"
-        
+
     - name: 安装Safety
       timeout-minutes: 3
       run: |
         pip install safety
-        
+
     - name: 扫描依赖漏洞
       timeout-minutes: 5
       run: |
         safety check --file requirements.txt --json > safety-report.json || true
         safety check --file requirements.txt
       continue-on-error: true
-      
+
     - name: 上传报告
       uses: actions/upload-artifact@v4
       with:
@@ -52,24 +56,24 @@ jobs:
   # ============================================================================
   code-scan:
     name: 代码安全扫描
-    runs-on: macos-latest
+    runs-on: macos-13  # macOS x86 (Intel)
     timeout-minutes: 20
-    
+
     steps:
     - name: 检出代码
       uses: actions/checkout@v4
       timeout-minutes: 2
-      
+
     - name: 设置Python
       uses: actions/setup-python@v5
       with:
         python-version: "3.11"
-        
+
     - name: 安装Bandit
       timeout-minutes: 3
       run: |
         pip install bandit[toml]
-        
+
     - name: 运行Bandit扫描
       timeout-minutes: 10
       run: |
@@ -82,7 +86,7 @@ jobs:
           -f screen \
           --severity-level high
       continue-on-error: true
-      
+
     - name: 上传Bandit报告
       uses: actions/upload-artifact@v4
       with:
@@ -94,16 +98,16 @@ jobs:
   # ============================================================================
   secret-scan:
     name: 密钥泄露扫描
-    runs-on: macos-latest
+    runs-on: macos-13  # macOS x86 (Intel)
     timeout-minutes: 10
-    
+
     steps:
     - name: 检出代码
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
       timeout-minutes: 3
-      
+
     - name: TruffleHog扫描
       uses: trufflesecurity/trufflehog@main
       with:
@@ -112,4 +116,3 @@ jobs:
         head: HEAD
       timeout-minutes: 5
       continue-on-error: true
-

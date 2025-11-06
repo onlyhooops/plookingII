@@ -1,5 +1,9 @@
 name: PR 快速检查
 
+# 🍎 macOS x86 (Intel) 专用应用
+# 注意：PR 快速检查只进行静态代码分析（可以在 Ubuntu 上运行）
+#      完整测试会在合并后的 CI 流程中在 macOS x86 环境进行
+
 on:
   pull_request:
     types: [opened, synchronize, reopened]

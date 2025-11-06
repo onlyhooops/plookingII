@@ -1,5 +1,10 @@
 name: CI
 
+# 🍎 macOS x86 (Intel) 专用应用
+# 本应用使用 PyObjC、AppKit、Quartz 等 macOS 专用框架
+# 注意：代码质量检查和依赖安全检查可以在 Ubuntu 上运行（静态分析）
+#      但所有测试和构建必须在 macOS x86 (macos-13) 环境中运行
+
 on:
   push:
     branches: [ main, develop ]

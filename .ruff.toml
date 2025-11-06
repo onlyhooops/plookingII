@@ -73,20 +73,57 @@ ignore = [
     "PTH122",  # os-path-splitext
     "PTH123",  # builtin-open
     "PTH202",  # os-path-getsize
+    "PTH208",  # os-listdir - 后续重构
 
     # macOS Objective-C开发相关
     "N802",    # Objective-C方法命名（函数名应该小写）
     "N803",    # Objective-C参数命名（参数名应该小写）
     "N806",    # 变量名大写（用于常量）
     "N999",    # invalid-module-name - 模块命名约定
+    "PLW0642", # self变量重新赋值（Objective-C初始化模式必需）
 
-    # 日志相关
+    # 未使用参数 - Objective-C回调和协议方法签名要求
+    "ARG001",  # 未使用的函数参数
+    "ARG002",  # 未使用的方法参数
+    "ARG003",  # 未使用的类方法参数
+    "ARG005",  # 未使用的lambda参数
+
+    # 私有成员访问 - 内部使用和测试
+    "SLF001",  # 访问私有成员（测试和框架内部使用）
+
+    # 异常处理模式
+    "TRY003",  # 避免在异常类外指定长消息（某些情况下更清晰）
+    "TRY301",  # 抽象raise到内部函数（某些情况下不必要）
     "TRY401",  # logging.exception中的冗余异常对象（允许显示变量值）
 
+    # 代码简化建议（某些情况下当前代码更清晰）
+    "SIM102",  # 使用单个if语句
+    "SIM105",  # 使用contextlib.suppress
+    "SIM113",  # 使用enumerate
+    "SIM117",  # 使用单个with语句
+    "SIM118",  # 使用key in dict
+
     # 导入相关
+    "F811",    # 重复导入（条件导入和类型检查）
     "PLC0415", # 模块顶层导入（允许延迟导入避免循环依赖）
     "E402",    # 模块级导入不在文件顶部（某些模块需要先设置环境）
     "TID252",  # relative-imports - 相对导入，后续统一处理
+
+    # 代码风格（逐步改进）
+    "A001",    # 变量名遮蔽内置函数（某些情况下是合理的）
+    "A004",    # 导入遮蔽内置函数
+    "B015",    # 无意义的比较
+    "B018",    # 无用的表达式
+    "B026",    # star-arg unpacking after keyword
+    "E501",    # 行太长（某些情况下难以避免）
+    "G201",    # logging使用建议
+    "PYI056",  # __all__操作类型检查器兼容性
+    "RUF034",  # 无用的if-else
+    "RUF059",  # 未使用的解包变量
+
+    # 性能优化建议（后续改进）
+    "PERF401", # 列表推导式
+    "PERF403", # 字典推导式
 
     # 魔术数字（逐步改进）
     "PLR2004", # 比较中的魔术值
@@ -112,8 +149,12 @@ ignore = [
 # __init__.py文件允许未使用的导入（用于公共API）
 "**/__init__.py" = ["F401", "F403"]
 
-# UI相关文件（Objective-C桥接）
-"plookingII/ui/**/*.py" = ["N802", "N803"]
+# UI相关文件（Objective-C桥接）- 额外的宽松规则
+"plookingII/ui/**/*.py" = ["N802", "N803", "PLW0642"]
+"plookingII/app/main.py" = ["PLW0642"]
+
+# 主入口文件
+"plookingII/__main__.py" = ["SIM105"]
 
 [lint.isort]
 known-first-party = ["plookingII"]

@@ -5,7 +5,7 @@
 repos:
   # Ruff - 快速 Python linter 和 formatter
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.15
+    rev: v0.12.9  # 更新到最新版本以匹配本地 ruff
     hooks:
       # Linter (暂时禁用以完成提交，后续需修复代码质量问题)
       # - id: ruff

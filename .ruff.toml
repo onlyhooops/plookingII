@@ -73,7 +73,6 @@ ignore = [
     "PTH122",  # os-path-splitext
     "PTH123",  # builtin-open
     "PTH202",  # os-path-getsize
-    "PTH208",  # os-listdir - 后续重构
 
     # macOS Objective-C开发相关
     "N802",    # Objective-C方法命名（函数名应该小写）

@@ -33,19 +33,26 @@ jobs:
     - name: 安装依赖
       run: |
         python -m pip install --upgrade pip
-        pip install ruff flake8 mypy bandit
+        pip install ruff==0.12.9 flake8 mypy bandit
         pip install types-psutil types-Pillow
+
+    - name: 验证 Ruff 版本
+      run: |
+        echo "🔍 Ruff 版本："
+        ruff --version
+        echo "配置文件："
+        ls -la .ruff.toml
 
     - name: Ruff 检查
       run: |
         echo "🔍 运行 Ruff 代码检查..."
-        ruff check plookingII/ --output-format=github
+        ruff check plookingII/ --output-format=github --config .ruff.toml
       continue-on-error: false
 
     - name: Ruff 格式检查
       run: |
         echo "🔍 检查代码格式..."
-        ruff format --check plookingII/
+        ruff format --check plookingII/ --config .ruff.toml
       continue-on-error: false
 
     - name: Flake8 检查

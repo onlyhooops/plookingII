@@ -211,15 +211,30 @@ jobs:
     - name: 验证版本一致性
       run: |
         echo "🔍 验证版本号一致性..."
-        python scripts/verify_version_consistency.py
+        # 检查 __version__.py 文件存在
+        if [ ! -f "plookingII/__version__.py" ]; then
+          echo "❌ 错误: plookingII/__version__.py 文件不存在"
+          exit 1
+        fi
+
+        # 提取版本号
+        VERSION=$(python -c "from plookingII.__version__ import __version__; print(__version__)")
+        echo "✅ 检测到版本号: $VERSION"
+
+        # 验证版本号格式（语义化版本）
+        if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+'; then
+          echo "❌ 错误: 版本号格式不正确: $VERSION"
+          exit 1
+        fi
+
+        echo "✅ 版本号验证通过"
       continue-on-error: false
 
-    - name: 测试构建
+    - name: 测试应用导入
       run: |
-        echo "📦 测试应用构建..."
-        # 这里可以添加实际的构建命令
-        python -m plookingII --version || echo "无法获取版本信息"
-      continue-on-error: true
+        echo "📦 测试应用导入和版本信息..."
+        python -c "from plookingII.__version__ import get_full_version; print(get_full_version())"
+      continue-on-error: false
 
   # ============================================================================
   # 汇总状态

@@ -30,6 +30,9 @@ MANIFEST
 # PyInstaller
 *.manifest
 
+# py2app 自动生成的文件
+setup.py
+
 # ==================== 测试相关 ====================
 # Unit test / coverage reports
 htmlcov/

@@ -1,0 +1,277 @@
+name: 📦 Release
+
+# 当推送新的 tag 时自动触发发布流程
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # 匹配 v1.0.0, v1.7.1 等格式
+
+  # 手动触发
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '版本号 (例如: 1.7.1)'
+        required: true
+        type: string
+
+# 平台要求说明
+# ⚠️ 本项目是 macOS x86 专用应用
+# - 构建必须在 macOS Intel (x86_64) 上进行
+# - 使用 PyObjC、AppKit、Quartz 等 macOS 原生框架
+# - 不支持跨平台构建
+
+permissions:
+  contents: write  # 需要写权限来创建 Release
+
+jobs:
+  # ============================================================================
+  # 构建和发布 macOS 应用
+  # ============================================================================
+  build-and-release:
+    name: 🚀 构建并发布 macOS 应用
+    runs-on: macos-13  # Intel x86_64 架构
+
+    steps:
+      # ------------------------------------------------------------------------
+      # 准备环境
+      # ------------------------------------------------------------------------
+      - name: 📥 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 获取完整历史，用于生成 changelog
+
+      - name: 🐍 设置 Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: 🔍 验证系统架构
+        run: |
+          echo "📊 系统信息:"
+          uname -a
+          echo ""
+          echo "🔧 CPU 架构:"
+          uname -m
+          echo ""
+          echo "🍎 macOS 版本:"
+          sw_vers
+
+      # ------------------------------------------------------------------------
+      # 获取版本信息
+      # ------------------------------------------------------------------------
+      - name: 📌 获取版本号
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+          else
+            # 从 tag 中提取版本号 (去掉 v 前缀)
+            VERSION=${GITHUB_REF#refs/tags/v}
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+
+          echo "📦 构建版本: $VERSION"
+
+      - name: ✅ 验证版本号一致性
+        run: |
+          echo "🔍 验证版本号..."
+          EXPECTED_VERSION="${{ steps.get_version.outputs.version }}"
+          ACTUAL_VERSION=$(python -c "from plookingII.__version__ import __version__; print(__version__)")
+
+          echo "期望版本: $EXPECTED_VERSION"
+          echo "实际版本: $ACTUAL_VERSION"
+
+          if [ "$EXPECTED_VERSION" != "$ACTUAL_VERSION" ]; then
+            echo "❌ 错误: 版本号不匹配！"
+            echo "请确保 plookingII/__version__.py 中的版本号与 tag 一致"
+            exit 1
+          fi
+
+          echo "✅ 版本号验证通过"
+
+      # ------------------------------------------------------------------------
+      # 安装依赖
+      # ------------------------------------------------------------------------
+      - name: 📦 安装依赖
+        run: |
+          echo "📥 升级 pip..."
+          python -m pip install --upgrade pip
+
+          echo "📥 安装项目依赖..."
+          pip install -r requirements.txt
+
+          echo "📥 安装构建工具..."
+          pip install py2app
+
+      - name: 🔍 验证 macOS 框架
+        run: |
+          echo "🔍 验证 PyObjC 和 macOS 框架..."
+          python -c "import objc; print(f'✅ PyObjC: {objc.__version__}')"
+          python -c "import AppKit; print('✅ AppKit 可用')"
+          python -c "import Quartz; print('✅ Quartz 可用')"
+          python -c "import Cocoa; print('✅ Cocoa 可用')"
+
+      # ------------------------------------------------------------------------
+      # 构建应用
+      # ------------------------------------------------------------------------
+      - name: 🔨 构建 macOS 应用
+        run: |
+          echo "📦 开始构建应用..."
+          python tools/package_release.py --build
+
+          echo "✅ 构建完成"
+          ls -lh dist/
+
+      - name: 📦 打包应用
+        run: |
+          echo "🗜️ 创建发布压缩包..."
+          python tools/package_release.py --package
+
+          echo "✅ 打包完成"
+          ls -lh release/
+
+      # ------------------------------------------------------------------------
+      # 生成发布说明
+      # ------------------------------------------------------------------------
+      - name: 📝 生成 Changelog
+        id: changelog
+        run: |
+          VERSION="${{ steps.get_version.outputs.version }}"
+
+          # 检查是否有 CHANGELOG.md
+          if [ -f "CHANGELOG.md" ]; then
+            # 提取当前版本的 changelog
+            CHANGELOG=$(awk "/## \[?$VERSION\]?/,/## \[?[0-9]+\.[0-9]+\.[0-9]+\]?/" CHANGELOG.md | sed '1d;$d')
+
+            if [ -z "$CHANGELOG" ]; then
+              echo "⚠️ 未在 CHANGELOG.md 中找到版本 $VERSION 的更新日志"
+              CHANGELOG="详见 [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
+            fi
+          else
+            echo "⚠️ 未找到 CHANGELOG.md 文件"
+            CHANGELOG="详见项目文档"
+          fi
+
+          # 保存到文件（GitHub Actions 不支持多行输出变量）
+          echo "$CHANGELOG" > /tmp/changelog.txt
+
+          echo "📝 Changelog 已生成"
+
+      - name: 📋 准备发布说明
+        run: |
+          VERSION="${{ steps.get_version.outputs.version }}"
+
+          cat > /tmp/release_notes.md << 'EOF'
+          # PlookingII v$VERSION
+
+          ## 📦 下载说明
+
+          **支持平台**: macOS Intel (x86_64)
+
+          1. 下载 `PlookingII-v$VERSION-macOS-x86_64.zip`
+          2. 解压得到 `PlookingII.app`
+          3. 拖拽到"应用程序"文件夹
+          4. 首次运行需在"系统偏好设置 > 安全性与隐私"中允许
+
+          ## 🔐 校验和验证
+
+          ```bash
+          shasum -a 256 -c PlookingII-v$VERSION-macOS-x86_64.zip.sha256
+          ```
+
+          ## 📝 更新内容
+
+          EOF
+
+          # 替换版本号
+          sed -i '' "s/\$VERSION/$VERSION/g" /tmp/release_notes.md
+
+          # 添加 changelog
+          cat /tmp/changelog.txt >> /tmp/release_notes.md
+
+          # 添加系统要求
+          cat >> /tmp/release_notes.md << 'EOF'
+
+          ## 💻 系统要求
+
+          - **操作系统**: macOS 10.15 (Catalina) 或更高版本
+          - **架构**: Intel x86_64
+          - **内存**: 建议 4GB 以上
+
+          ## 🔗 相关链接
+
+          - [完整更新日志](https://github.com/$REPO/blob/main/CHANGELOG.md)
+          - [问题反馈](https://github.com/$REPO/issues)
+          - [项目文档](https://github.com/$REPO#readme)
+
+          ---
+
+          **PlookingII Team** © 2025
+          EOF
+
+          # 替换仓库名
+          sed -i '' "s|\$REPO|${{ github.repository }}|g" /tmp/release_notes.md
+
+          echo "📋 发布说明已准备完成"
+          cat /tmp/release_notes.md
+
+      # ------------------------------------------------------------------------
+      # 创建 GitHub Release
+      # ------------------------------------------------------------------------
+      - name: 🚀 创建 GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.get_version.outputs.tag }}
+          name: PlookingII ${{ steps.get_version.outputs.tag }}
+          body_path: /tmp/release_notes.md
+          draft: false
+          prerelease: false
+          files: |
+            release/PlookingII-v${{ steps.get_version.outputs.version }}-macOS-x86_64.zip
+            release/PlookingII-v${{ steps.get_version.outputs.version }}-macOS-x86_64.zip.sha256
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # ------------------------------------------------------------------------
+      # 构建摘要
+      # ------------------------------------------------------------------------
+      - name: 📊 发布摘要
+        run: |
+          VERSION="${{ steps.get_version.outputs.version }}"
+          TAG="${{ steps.get_version.outputs.tag }}"
+
+          echo "## 🎉 发布成功！" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**版本**: $TAG" >> $GITHUB_STEP_SUMMARY
+          echo "**平台**: macOS Intel (x86_64)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 发布产物" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # 显示文件大小
+          ZIP_SIZE=$(ls -lh release/*.zip | awk '{print $5}')
+          echo "- **应用压缩包**: PlookingII-v$VERSION-macOS-x86_64.zip ($ZIP_SIZE)" >> $GITHUB_STEP_SUMMARY
+          echo "- **校验和文件**: PlookingII-v$VERSION-macOS-x86_64.zip.sha256" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔗 Release 链接" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "https://github.com/${{ github.repository }}/releases/tag/$TAG" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================================================
+  # 发布成功通知
+  # ============================================================================
+  notify-success:
+    name: ✅ 发布成功
+    runs-on: ubuntu-latest
+    needs: build-and-release
+    if: success()
+
+    steps:
+      - name: 🎉 发布成功
+        run: |
+          echo "🎉 PlookingII ${{ needs.build-and-release.outputs.version }} 发布成功！"
+          echo "📦 Release 已创建并上传产物"
+          echo "🔗 访问 https://github.com/${{ github.repository }}/releases 查看"

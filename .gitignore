@@ -193,7 +193,6 @@ cython_debug/
 
 # 脚本和工具（开发用，不托管）
 scripts/
-tools/
 
 # Makefile（测试相关，不托管）
 Makefile.test
@@ -208,7 +207,6 @@ Makefile.test
 .github/CODEOWNERS
 .github/dependabot.yml
 .github/workflows/docs.yml
-.github/workflows/release.yml
 .github/workflows/test-timeout-protection.yml
 
 # Pre-commit

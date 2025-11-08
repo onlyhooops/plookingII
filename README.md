@@ -3,14 +3,13 @@
 macOS 原生图片浏览器 - 高性能、智能化的图片浏览体验
 
 [![CI](https://github.com/onlyhooops/plookingII/actions/workflows/ci.yml/badge.svg)](https://github.com/onlyhooops/plookingII/actions/workflows/ci.yml)
-[![Documentation](https://github.com/onlyhooops/plookingII/actions/workflows/docs.yml/badge.svg)](https://github.com/onlyhooops/plookingII/actions/workflows/docs.yml)
 [![codecov](https://codecov.io/gh/onlyhooops/plookingII/branch/main/graph/badge.svg)](https://codecov.io/gh/onlyhooops/plookingII)
 [![Security](https://github.com/onlyhooops/plookingII/actions/workflows/security.yml/badge.svg)](https://github.com/onlyhooops/plookingII/actions/workflows/security.yml)
 [![Release](https://github.com/onlyhooops/plookingII/actions/workflows/release.yml/badge.svg)](https://github.com/onlyhooops/plookingII/actions/workflows/release.yml)
-[![Python 3.9-3.12](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12-blue)](https://www.python.org/downloads/)
+[![Python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![Ruff](https://img.shields.io/badge/linter-ruff-brightgreen.svg)](https://github.com/astral-sh/ruff)
 
 ## 🚀 快速开始
 

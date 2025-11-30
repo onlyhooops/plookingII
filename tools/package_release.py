@@ -1,23 +1,16 @@
 #!/usr/bin/env python3
 """
-PlookingII 发布打包脚本
-
-用于构建和打包 macOS 应用程序，生成可分发的 .app bundle 和 .zip 压缩包。
+PlookingII macOS x86_64 发布打包脚本
 
 功能：
-1. 使用 py2app 构建 macOS 应用
-2. 创建可分发的 ZIP 压缩包
-3. 生成校验和文件
-4. 准备 GitHub Release 发布物
+1. 清理构建环境
+2. 生成针对 macOS x86_64 优化的 setup.py
+3. 使用 py2app 构建独立应用程序
+4. 验证二进制文件架构
+5. 打包为发布用的 ZIP 文件
 
-使用方法：
-    python3 tools/package_release.py --build           # 仅构建
-    python3 tools/package_release.py --package         # 仅打包
-    python3 tools/package_release.py --build --package # 构建并打包
-    python3 tools/package_release.py --clean           # 清理构建产物
-
-Author: PlookingII Team
-Date: 2025-11-07
+Usage:
+    python3 tools/package_release.py [options]
 """
 
 import argparse
@@ -26,336 +19,341 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
+
+# 项目根目录
+PROJECT_ROOT = Path(__file__).parent.parent.absolute()
 
 
 def get_version():
-    """从 __version__.py 获取版本号"""
-    version_file = Path(__file__).parent.parent / "plookingII" / "__version__.py"
+    """获取版本号"""
+    version_file = PROJECT_ROOT / "plookingII" / "__version__.py"
     namespace = {}
-    with open(version_file) as f:
-        exec(f.read(), namespace)
-    return namespace["__version__"]
+    try:
+        with open(version_file) as f:
+            exec(f.read(), namespace)
+        return namespace["__version__"]
+    except Exception as e:
+        print(f"⚠️ 无法读取版本号: {e}")
+        return "0.0.0"
+
+
+def run_command(cmd, cwd=None, check=True, shell=False):
+    """运行命令并打印输出"""
+    print(f"Executing: {' '.join(cmd) if isinstance(cmd, list) else cmd}")
+    try:
+        subprocess.run(
+            cmd,
+            cwd=cwd,
+            check=check,
+            shell=shell,
+            text=True,
+            capture_output=False,  # 直接输出到终端以便调试
+        )
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Command failed with exit code {e.returncode}")
+        return False
 
 
 def clean_build():
-    """清理构建目录"""
-    print("🧹 清理构建目录...")
+    """清理构建残留"""
+    print("\n🧹 清理构建环境...")
 
-    dirs_to_clean = ["build", "dist", "release"]
-    for dirname in dirs_to_clean:
-        dirpath = Path(dirname)
-        if dirpath.exists():
-            print(f"   删除: {dirpath}")
-            shutil.rmtree(dirpath)
+    paths_to_clean = [
+        PROJECT_ROOT / "build",
+        PROJECT_ROOT / "dist",
+        PROJECT_ROOT / "setup.py",
+    ]
+
+    # 清理目录
+    for p in paths_to_clean:
+        if p.exists():
+            print(f"   Removing: {p}")
+            if p.is_dir():
+                shutil.rmtree(p, ignore_errors=True)
+            else:
+                p.unlink()
 
     # 清理 .egg-info
-    for egg_info in Path(".").glob("*.egg-info"):
-        print(f"   删除: {egg_info}")
-        shutil.rmtree(egg_info)
+    for p in PROJECT_ROOT.glob("*.egg-info"):
+        print(f"   Removing: {p}")
+        shutil.rmtree(p, ignore_errors=True)
+
+    # 清理 __pycache__
+    print("   Cleaning __pycache__...")
+    for p in PROJECT_ROOT.rglob("__pycache__"):
+        try:
+            shutil.rmtree(p, ignore_errors=True)
+        except Exception:
+            pass
 
     print("✅ 清理完成")
 
 
-def build_app():
-    """使用 py2app 构建应用"""
-    print("📦 开始构建 macOS 应用...")
+def create_setup_py(version):
+    """生成 setup.py"""
+    print("\n📝 生成 setup.py...")
 
-    # 检查 setup.py 是否存在
-    if not Path("setup.py").exists():
-        create_setup_py()
+    # 明确排除列表，减小包体积并避免冲突
+    excludes = [
+        "tkinter",
+        "matplotlib",
+        "scipy",
+        "numpy",  # 明确排除 numpy
+        "pandas",
+        "PyQt5",  # 排除 Qt 相关
+        "PyQt6",
+        "pyside2",
+        "PySide6",
+        "sip",
+        "wx",
+        "cv2",  # 排除 OpenCV
+        "opencv-python",
+        "PIL.TkPlugin",
+        "distutils",
+        "setuptools",
+        "pkg_resources",
+        "pip",
+        "wheel",
+        "ipython",
+        "pytest",
+    ]
 
-    # 运行 py2app 构建
-    try:
-        cmd = [sys.executable, "setup.py", "py2app"]
-        print(f"   执行: {' '.join(cmd)}")
-        result = subprocess.run(cmd, check=True, capture_output=True, text=True)
-        print(result.stdout)
-        print("✅ 应用构建完成")
-        return True
-    except subprocess.CalledProcessError as e:
-        print(f"❌ 构建失败: {e}")
-        print(f"错误输出: {e.stderr}")
-        return False
+    # 包含列表
+    includes = [
+        "os",
+        "sys",
+        "logging",
+        "pathlib",
+        "shutil",
+        "subprocess",
+        "threading",
+        "time",
+        "hashlib",
+        "sqlite3",
+        "json",
+        "plistlib",
+        "imp",  # 修复 PIL 依赖问题
+        # 第三方库
+        "PIL",
+        "psutil",
+        # macOS 库
+        "objc",
+        "Foundation",
+        "AppKit",
+        "Quartz",
+    ]
 
+    packages = [
+        "plookingII",
+    ]
 
-def create_setup_py():
-    """创建 setup.py 配置文件"""
-    print("📝 创建 setup.py...")
-
-    setup_content = '''#!/usr/bin/env python3
-"""
-PlookingII py2app 打包配置
-"""
-
+    setup_content = f"""
 from setuptools import setup
-from plookingII.__version__ import __version__
 
 APP = ['plookingII/__main__.py']
-DATA_FILES = [
-    ('', ['LICENSE', 'README.md']),
-]
-
-OPTIONS = {
+DATA_FILES = []
+OPTIONS = {{
     'argv_emulation': False,
     'iconfile': 'plookingII/logo/PlookingII.icns',
-    'plist': {
+    'plist': {{
         'CFBundleName': 'PlookingII',
         'CFBundleDisplayName': 'PlookingII',
-        'CFBundleGetInfoString': f"PlookingII {__version__}",
+        'CFBundleGetInfoString': 'PlookingII {version}',
         'CFBundleIdentifier': 'com.plookingii.app',
-        'CFBundleVersion': __version__,
-        'CFBundleShortVersionString': __version__,
+        'CFBundleVersion': '{version}',
+        'CFBundleShortVersionString': '{version}',
         'NSHumanReadableCopyright': '© 2025 PlookingII Team',
-        'NSHighResolutionCapable': True,
         'LSMinimumSystemVersion': '10.15',
-        'LSApplicationCategoryType': 'public.app-category.graphics-design',
-        'NSDocumentsFolderUsageDescription': 'PlookingII needs access to your documents to browse images.',
-        'NSDesktopFolderUsageDescription': 'PlookingII needs access to your desktop to browse images.',
-        'NSDownloadsFolderUsageDescription': 'PlookingII needs access to your downloads to browse images.',
-    },
-    'packages': ['plookingII'],
-    'includes': [
-        'objc',
-        'Foundation',
-        'AppKit',
-        'Quartz',
-        'Cocoa',
-        'PIL',
-        'sqlite3',
-    ],
-    'excludes': [
-        'test',
-        'tests',
-        'pytest',
-        'setuptools',
-        'distutils',
-    ],
+        'NSHighResolutionCapable': True,
+        'NSRequiresAquaSystemAppearance': False,  # 支持深色模式
+        'LSEnvironment': {{
+            'LANG': 'en_US.UTF-8',
+            'LC_ALL': 'en_US.UTF-8',
+        }},
+    }},
+    'packages': {packages},
+    'includes': {includes},
+    'excludes': {excludes},
     'optimize': 2,
-    'compressed': True,
-    'semi_standalone': False,
-    'site_packages': True,
-}
+    'strip': True,  # 剥离符号以减小体积
+    'site_packages': True, # 包含 site-packages
+    'semi_standalone': False, # 全独立模式
+    'resources': [],
+}}
 
 setup(
     name='PlookingII',
-    version=__version__,
     app=APP,
     data_files=DATA_FILES,
-    options={'py2app': OPTIONS},
+    options={{'py2app': OPTIONS}},
     setup_requires=['py2app'],
 )
-'''
+"""
 
-    with open("setup.py", "w") as f:
+    setup_path = PROJECT_ROOT / "setup.py"
+    with open(setup_path, "w") as f:
         f.write(setup_content)
 
-    print("✅ setup.py 创建完成")
+    print(f"✅ setup.py 已生成于 {setup_path}")
 
 
-def package_app():
-    """打包应用为可分发格式"""
-    print("📦 开始打包应用...")
+def get_size(path):
+    """计算文件或目录大小"""
+    total = 0
+    if path.is_file():
+        return path.stat().st_size
+    for p in path.rglob("*"):
+        if p.is_file():
+            total += p.stat().st_size
+    return total
 
-    version = get_version()
-    dist_dir = Path("dist")
-    app_path = dist_dir / "PlookingII.app"
 
-    if not app_path.exists():
-        print(f"❌ 应用不存在: {app_path}")
-        print("   请先运行 --build 构建应用")
+def verify_arch(app_path):
+    """验证二进制架构"""
+    print("\n🔍 验证应用架构...")
+    binary = app_path / "Contents" / "MacOS" / "PlookingII"
+
+    if not binary.exists():
+        print("❌ 找不到二进制文件")
         return False
 
-    # 创建 release 目录
-    release_dir = Path("release")
+    try:
+        result = subprocess.run(["file", str(binary)], capture_output=True, text=True)
+        output = result.stdout
+        print(f"   Binary info: {output.strip()}")
+
+        if "x86_64" in output:
+            print("✅ 确认包含 x86_64 架构")
+        else:
+            print("⚠️ 警告: 未检测到 x86_64 架构")
+
+        return True
+    except Exception as e:
+        print(f"❌ 验证失败: {e}")
+        return False
+
+
+def build():
+    """执行构建"""
+    print("\n📦 开始构建过程...")
+
+    version = get_version()
+    print(f"   Target Version: {version}")
+
+    # 1. 清理
+    clean_build()
+
+    # 2. 生成配置
+    create_setup_py(version)
+
+    # 3. 运行 py2app
+    print("\n🚀 运行 py2app (这可能需要几分钟)...")
+    # 强制指定架构（尽管 py2app 通常跟随 python 解释器，但我们可以通过环境变量尝试影响）
+    env = os.environ.copy()
+    env["ARCHFLAGS"] = "-arch x86_64"
+
+    cmd = [sys.executable, "setup.py", "py2app"]
+    if not run_command(cmd, cwd=PROJECT_ROOT):
+        print("❌ 构建失败")
+        sys.exit(1)
+
+    app_path = PROJECT_ROOT / "dist" / "PlookingII.app"
+    if not app_path.exists():
+        print("❌ 构建看似成功但未找到 .app 文件")
+        sys.exit(1)
+
+    # 3.1 强力清理未使用的巨型库 (PyQt6 等)
+    # py2app 即使排除也可能包含它们，手动删除以减小体积
+    print("\n🧹 进一步清理未使用的库...")
+    lib_path = app_path / "Contents" / "Resources" / "lib" / "python3.11"
+    unused_libs = ["PyQt6", "PyQt5", "PySide6", "pyside2", "wx", "cv2", "numpy", "matplotlib"]
+
+    for lib_name in unused_libs:
+        target = lib_path / lib_name
+        if target.exists():
+            print(f"   Removing unused lib: {lib_name} ({(get_size(target) / 1024 / 1024):.2f} MB)")
+            shutil.rmtree(target, ignore_errors=True)
+
+    print("✅ 构建成功")
+
+    # 4. 验证
+    verify_arch(app_path)
+
+    # 5. 签名和权限处理
+    print("\n🔐 处理应用签名和权限...")
+    try:
+        # 移除隔离属性 (修复 "应用已损坏" 提示)
+        run_command(["xattr", "-cr", str(app_path)])
+        print("   已移除隔离属性")
+
+        # Ad-hoc 签名
+        run_command(["codesign", "--force", "--deep", "-s", "-", str(app_path)])
+        print("   已应用 Ad-hoc 签名")
+    except Exception as e:
+        print(f"⚠️ 签名处理遇到警告 (可忽略): {e}")
+
+    return version, app_path
+
+
+def package(version, app_path):
+    """打包为发布的 ZIP"""
+    print("\n🎁 打包发布文件...")
+
+    release_dir = PROJECT_ROOT / "release"
     release_dir.mkdir(exist_ok=True)
 
-    # 创建 ZIP 压缩包
     zip_name = f"PlookingII-v{version}-macOS-x86_64.zip"
     zip_path = release_dir / zip_name
 
-    print(f"   创建压缩包: {zip_name}")
-    try:
-        # 使用 ditto 创建 macOS 兼容的 ZIP
-        cmd = ["ditto", "-c", "-k", "--sequesterRsrc", "--keepParent", str(app_path), str(zip_path)]
-        subprocess.run(cmd, check=True, capture_output=True)
-        print(f"✅ 压缩包创建完成: {zip_path}")
-    except subprocess.CalledProcessError as e:
-        print(f"❌ 压缩失败: {e}")
-        return False
+    # 删除旧的
+    if zip_path.exists():
+        zip_path.unlink()
 
-    # 生成 SHA256 校验和
-    print("   生成校验和...")
-    sha256 = calculate_sha256(zip_path)
-    checksum_file = zip_path.with_suffix(".zip.sha256")
+    print(f"   Creating: {zip_name}")
 
-    with open(checksum_file, "w") as f:
-        f.write(f"{sha256}  {zip_name}\n")
+    # 使用 ditto 保持权限和资源分叉
+    cmd = ["ditto", "-c", "-k", "--sequesterRsrc", "--keepParent", str(app_path), str(zip_path)]
 
-    print(f"✅ 校验和: {sha256}")
-    print(f"✅ 校验和文件: {checksum_file}")
+    if run_command(cmd):
+        print(f"✅ 打包完成: {zip_path}")
 
-    # 显示文件大小
-    file_size_mb = zip_path.stat().st_size / (1024 * 1024)
-    print(f"📊 文件大小: {file_size_mb:.2f} MB")
+        # 计算 SHA256
+        sha256 = hashlib.sha256()
+        with open(zip_path, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                sha256.update(chunk)
 
-    # 创建发布说明
-    create_release_notes(version, release_dir)
+        checksum_path = zip_path.with_suffix(".zip.sha256")
+        with open(checksum_path, "w") as f:
+            f.write(f"{sha256.hexdigest()}  {zip_name}\n")
 
-    print("\n" + "=" * 70)
-    print("✅ 打包完成！")
-    print("=" * 70)
-    print(f"\n发布产物位置: {release_dir.absolute()}")
-    print(f"  • 应用压缩包: {zip_name}")
-    print(f"  • 校验和文件: {checksum_file.name}")
-    print(f"  • 发布说明: RELEASE_NOTES.md")
-    print("\n准备发布到 GitHub Release:")
-    print(f"  1. 创建新的 Release: v{version}")
-    print(f"  2. 上传文件: {zip_name} 和 {checksum_file.name}")
-    print(f"  3. 使用 RELEASE_NOTES.md 作为发布说明")
-    print("=" * 70 + "\n")
-
-    return True
-
-
-def calculate_sha256(file_path):
-    """计算文件的 SHA256 校验和"""
-    sha256_hash = hashlib.sha256()
-    with open(file_path, "rb") as f:
-        for byte_block in iter(lambda: f.read(4096), b""):
-            sha256_hash.update(byte_block)
-    return sha256_hash.hexdigest()
-
-
-def create_release_notes(version, release_dir):
-    """创建发布说明"""
-    notes = f"""# PlookingII v{version} Release Notes
-
-## 📦 发布信息
-
-**版本号**: v{version}
-**发布日期**: {Path(__file__).stat().st_mtime}
-**平台**: macOS x86_64 (Intel)
-
-## 🎯 核心特性
-
-- ✨ **macOS 原生体验** - 完全基于 PyObjC、AppKit、Quartz 框架
-- 🚀 **高性能渲染** - CGImage 直通渲染，零拷贝优化
-- 🔄 **智能预加载** - 自适应缓存策略，流畅浏览体验
-- 🎨 **EXIF 方向修正** - 自动处理图像方向
-- 🗂️ **拖拽支持** - 从 Finder 拖拽文件夹快速浏览
-- 🌐 **SMB 优化** - 远程文件高效访问
-
-## 💻 系统要求
-
-- **操作系统**: macOS 10.15 (Catalina) 或更高版本
-- **架构**: Intel x86_64（不支持 Apple Silicon）
-- **内存**: 建议 4GB 以上
-
-## 📥 安装说明
-
-1. 下载 `PlookingII-v{version}-macOS-x86_64.zip`
-2. 解压得到 `PlookingII.app`
-3. 拖拽到"应用程序"文件夹
-4. 首次运行可能需要在"系统偏好设置 > 安全性与隐私"中允许
-
-## 🔐 安全校验
-
-下载后请验证文件完整性：
-
-```bash
-shasum -a 256 -c PlookingII-v{version}-macOS-x86_64.zip.sha256
-```
-
-## 📝 使用方法
-
-1. 启动应用
-2. 拖拽包含图片的文件夹到窗口
-3. 使用键盘快捷键浏览：
-   - ← → : 切换图片
-   - Space : 拖拽移动
-   - Cmd+R : 在 Finder 中显示
-   - Cmd+Option+R/L : 旋转图片
-
-## 🐛 已知问题
-
-- 仅支持 Intel Mac，Apple Silicon 需要使用 Rosetta 2
-- 不支持跨平台（Linux、Windows）
-
-## 🔗 相关链接
-
-- 项目主页: https://github.com/onlyhooops/plookingII
-- 问题反馈: https://github.com/onlyhooops/plookingII/issues
-- 更新日志: https://github.com/onlyhooops/plookingII/blob/main/CHANGELOG.md
-
----
-
-**PlookingII Team** © 2025
-"""
-
-    notes_file = release_dir / "RELEASE_NOTES.md"
-    with open(notes_file, "w") as f:
-        f.write(notes)
-
-    print(f"📝 发布说明已创建: {notes_file}")
+        print(f"   SHA256: {checksum_path}")
+    else:
+        print("❌ 打包失败")
+        sys.exit(1)
 
 
 def main():
-    """主函数"""
-    parser = argparse.ArgumentParser(
-        description="PlookingII 发布打包工具",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-示例:
-  python3 tools/package_release.py --build           # 仅构建
-  python3 tools/package_release.py --package         # 仅打包
-  python3 tools/package_release.py --build --package # 构建并打包（推荐）
-  python3 tools/package_release.py --clean           # 清理
-        """,
-    )
-
-    parser.add_argument("--build", action="store_true", help="构建应用")
-    parser.add_argument("--package", action="store_true", help="打包应用")
-    parser.add_argument("--clean", action="store_true", help="清理构建产物")
-
+    parser = argparse.ArgumentParser(description="PlookingII Build Tool")
+    parser.add_argument("--clean-only", action="store_true", help="仅清理")
     args = parser.parse_args()
 
-    # 检查是否在项目根目录
-    if not Path("plookingII").exists():
-        print("❌ 错误: 请在项目根目录运行此脚本")
-        sys.exit(1)
-
-    # 获取版本号
-    version = get_version()
-    print(f"\n{'=' * 70}")
-    print(f"  PlookingII v{version} - 发布打包工具")
-    print(f"{'=' * 70}\n")
+    if args.clean_only:
+        clean_build()
+        return
 
     try:
-        if args.clean:
-            clean_build()
-            return
-
-        if not (args.build or args.package):
-            # 默认行为：构建并打包
-            args.build = True
-            args.package = True
-
-        if args.build:
-            if not build_app():
-                sys.exit(1)
-
-        if args.package:
-            if not package_app():
-                sys.exit(1)
-
-        print("\n🎉 所有操作完成！\n")
-
+        version, app_path = build()
+        package(version, app_path)
+        print("\n✨ 所有任务完成！")
     except KeyboardInterrupt:
-        print("\n\n⚠️ 操作已取消")
+        print("\n⚠️ 用户取消")
         sys.exit(130)
     except Exception as e:
-        print(f"\n❌ 发生错误: {e}")
+        print(f"\n❌ 未预期的错误: {e}")
         import traceback
 
         traceback.print_exc()

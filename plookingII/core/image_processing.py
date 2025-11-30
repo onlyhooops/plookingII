@@ -153,18 +153,35 @@ class HybridImageProcessor:
             float: 文件大小（MB）
         """
         try:
-            if file_path in self._file_size_cache:
-                return self._file_size_cache[file_path]
-            size_bytes = os.path.getsize(file_path)
-            size_mb = size_bytes / (1024 * 1024)
-            # 简单上限，避免缓存过大
-            if len(self._file_size_cache) > 2048:
-                self._file_size_cache.clear()
-            self._file_size_cache[file_path] = size_mb
+            # 使用批量文件信息加载器（带缓存）
+            from .file_info_batch_loader import get_file_info_loader
+
+            loader = get_file_info_loader()
+            size_mb = loader.get_file_size_mb(file_path, use_cache=True)
+
+            # 保持向后兼容：更新内部缓存
+            if file_path not in self._file_size_cache:
+                if len(self._file_size_cache) > 2048:
+                    self._file_size_cache.clear()
+                self._file_size_cache[file_path] = size_mb
+            else:
+                self._file_size_cache[file_path] = size_mb
+
             return size_mb
         except Exception as e:
             logger.warning("Failed to get file size for {file_path}: %s", e)
-            return 0.0
+            # 回退到旧方法
+            try:
+                if file_path in self._file_size_cache:
+                    return self._file_size_cache[file_path]
+                size_bytes = os.path.getsize(file_path)
+                size_mb = size_bytes / (1024 * 1024)
+                if len(self._file_size_cache) > 2048:
+                    self._file_size_cache.clear()
+                self._file_size_cache[file_path] = size_mb
+                return size_mb
+            except Exception:
+                return 0.0
 
     def _get_file_extension(self, file_path: str) -> str:
         """获取文件扩展名
@@ -176,15 +193,33 @@ class HybridImageProcessor:
             str: 文件扩展名（小写，不含点号）
         """
         try:
-            if file_path in self._ext_cache:
-                return self._ext_cache[file_path]
-            ext = os.path.splitext(file_path)[1].lower().lstrip(".")
-            if len(self._ext_cache) > 2048:
-                self._ext_cache.clear()
-            self._ext_cache[file_path] = ext
+            # 使用批量文件信息加载器（带缓存）
+            from .file_info_batch_loader import get_file_info_loader
+
+            loader = get_file_info_loader()
+            ext = loader.get_file_extension(file_path, use_cache=True)
+
+            # 保持向后兼容：更新内部缓存
+            if file_path not in self._ext_cache:
+                if len(self._ext_cache) > 2048:
+                    self._ext_cache.clear()
+                self._ext_cache[file_path] = ext
+            else:
+                self._ext_cache[file_path] = ext
+
             return ext
         except Exception:
-            return ""
+            # 回退到旧方法
+            try:
+                if file_path in self._ext_cache:
+                    return self._ext_cache[file_path]
+                ext = os.path.splitext(file_path)[1].lower().lstrip(".")
+                if len(self._ext_cache) > 2048:
+                    self._ext_cache.clear()
+                self._ext_cache[file_path] = ext
+                return ext
+            except Exception:
+                return ""
 
     def _is_supported_format(self, file_ext: str) -> bool:
         """检查文件格式是否支持

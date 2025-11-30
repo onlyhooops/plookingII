@@ -202,8 +202,12 @@ class SMBOptimizer:
         try:
             with error_context("directory_listing_cache", ErrorCategory.FILE_SYSTEM):
                 if not self._is_smb_path(dir_path):
-                    # 非SMB路径直接返回
-                    return os.listdir(dir_path) if os.path.isdir(dir_path) else []
+                    # 非SMB路径：使用批量文件信息加载器优化
+                    from .file_info_batch_loader import get_file_info_loader
+
+                    loader = get_file_info_loader()
+                    file_infos = loader.scan_directory(dir_path, filter_exts=None)
+                    return [info.path for info in file_infos]
 
                 current_time = time.time()
 
@@ -219,10 +223,14 @@ class SMBOptimizer:
                                 self.stats["cache_hits"] += 1
                             return cached_list
 
-                # 读取目录
+                # 读取目录：使用 os.scandir() 优化性能
                 start_time = time.perf_counter()
                 try:
-                    file_list = os.listdir(dir_path)
+                    file_list = []
+                    with os.scandir(dir_path) as entries:
+                        for entry in entries:
+                            if not entry.name.startswith("."):  # 跳过隐藏文件
+                                file_list.append(entry.name)
                 except (OSError, PermissionError) as e:
                     self.logging.getLogger(__name__).log_error(e, f"directory_listing_{dir_path}")
                     return []

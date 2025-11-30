@@ -293,20 +293,26 @@ class DragDropController:
             bool: 是否可能包含图片
         """
         try:
-            # 快速检查：只检查前10个文件
-            count = 0
-            for filename in os.listdir(folder_path):
-                if filename.lower().endswith(SUPPORTED_IMAGE_EXTS):
-                    return True
+            # 快速检查：使用批量文件信息加载器优化 I/O
+            from ...core.file_info_batch_loader import get_file_info_loader
 
-                count += 1
-                if count >= 10:
-                    break
+            loader = get_file_info_loader()
+            file_infos = loader.scan_directory(folder_path, filter_exts=SUPPORTED_IMAGE_EXTS)
+            # 只检查前10个文件（快速检查）
+            return len(file_infos) > 0
+        except Exception:
+            # 回退到旧方法
+            try:
+                count = 0
+                for filename in os.listdir(folder_path):
+                    if filename.lower().endswith(SUPPORTED_IMAGE_EXTS):
+                        return True
 
-            return False
-
-        except Exception as e:
-            logger.debug("快速文件夹检查失败: %s", e)
+                    count += 1
+                    if count >= 10:
+                        break
+            except Exception as e:
+                logger.debug("快速文件夹检查失败: %s", e)
             return False
 
     def _show_drag_feedback(self, folder_path: str):

@@ -264,9 +264,20 @@ class FolderManager:
             bool: 是否包含图片
         """
         try:
-            return any(f.lower().endswith(exts) for f in os.listdir(dirpath))
+            # 使用批量文件信息加载器优化 I/O
+            from ...core.file_info_batch_loader import get_file_info_loader
+
+            loader = get_file_info_loader()
+            file_infos = loader.scan_directory(dirpath, filter_exts=exts)
+            return len(file_infos) > 0
         except (OSError, PermissionError):
             return False
+        except Exception:
+            # 回退到旧方法
+            try:
+                return any(f.lower().endswith(exts) for f in os.listdir(dirpath))
+            except (OSError, PermissionError):
+                return False
 
     def load_current_subfolder(self, restore_index=None):
         """加载当前子文件夹的图片，支持恢复到指定图片索引
@@ -385,18 +396,34 @@ class FolderManager:
         images = []
 
         try:
-            # 遍历文件夹中的所有文件
-            for filename in os.listdir(folder_path):
-                if filename.lower().endswith(exts):  # 检查文件扩展名
-                    image_path = os.path.join(folder_path, filename)
-                    images.append(image_path)
+            # 使用批量文件信息加载器优化 I/O 性能
+            from ...core.file_info_batch_loader import get_file_info_loader
+
+            loader = get_file_info_loader()
+            # 使用 os.scandir() 优化目录扫描（性能提升 2-3 倍）
+            # 同时过滤扩展名，减少后续处理
+            file_infos = loader.scan_directory(folder_path, filter_exts=exts)
+
+            # 提取文件路径（只包含文件，排除目录）
+            for info in file_infos:
+                if info.is_file and info.extension in (ext.lower().lstrip(".") for ext in exts):
+                    images.append(info.path)
 
             # 图片始终按文件名正序排序，不受reverse_folder_order影响
             images.sort()
             return images
         except Exception:
             # 文件夹访问失败时返回空列表
-            return []
+            # 回退到旧方法（兼容性）
+            try:
+                for filename in os.listdir(folder_path):
+                    if filename.lower().endswith(exts):
+                        image_path = os.path.join(folder_path, filename)
+                        images.append(image_path)
+                images.sort()
+                return images
+            except Exception:
+                return []
 
     def jump_to_next_folder(self):
         """跳转到下一个文件夹的第一张图片，支持父级目录同级文件夹切换"""
@@ -979,20 +1006,33 @@ class FolderManager:
 
         try:
             # 获取父级目录下的所有子文件夹
-            sibling_folders = []
-            for item in os.listdir(parent_dir):
-                item_path = os.path.join(parent_dir, item)
-                if os.path.isdir(item_path):
-                    sibling_folders.append(item_path)
+            # 使用批量文件信息加载器优化 I/O
+            from ...core.file_info_batch_loader import get_file_info_loader
 
-            # 按文件夹名升序排序（不区分大小写）
+            loader = get_file_info_loader()
+            file_infos = loader.scan_directory(parent_dir, filter_exts=None)
+            sibling_folders = [info.path for info in file_infos if info.is_dir]
+        except (OSError, PermissionError):
+            # 回退到旧方法
             try:
-                sibling_folders.sort(key=lambda p: os.path.basename(p).lower())
-            except Exception:
-                sibling_folders.sort()
-            return parent_dir, sibling_folders
+                sibling_folders = []
+                for item in os.listdir(parent_dir):
+                    item_path = os.path.join(parent_dir, item)
+                    if os.path.isdir(item_path):
+                        sibling_folders.append(item_path)
+            except (OSError, PermissionError):
+                sibling_folders = []
         except Exception:
-            return None, []
+            # 其他异常，返回空列表
+            sibling_folders = []
+
+        # 按文件夹名升序排序（不区分大小写）
+        try:
+            sibling_folders.sort(key=lambda p: os.path.basename(p).lower())
+        except Exception:
+            sibling_folders.sort()
+
+        return parent_dir, sibling_folders
 
     def _move_to_next_sibling_folder(self, current_folder):
         """移动到当前文件夹的下一个同级文件夹

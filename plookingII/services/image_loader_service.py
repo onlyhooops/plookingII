@@ -73,12 +73,22 @@ class ImageLoaderService:
             图片文件路径列表，按文件名排序
         """
         try:
-            images = []
+            # 使用批量文件信息加载器优化 I/O
+            from ..core.file_info_batch_loader import get_file_info_loader
 
-            for filename in os.listdir(folder_path):
-                if filename.lower().endswith(SUPPORTED_IMAGE_EXTS):
-                    image_path = os.path.join(folder_path, filename)
-                    images.append(image_path)
+            loader = get_file_info_loader()
+            file_infos = loader.scan_directory(folder_path, filter_exts=SUPPORTED_IMAGE_EXTS)
+            images = [info.path for info in file_infos if info.is_file]
+        except Exception:
+            # 回退到旧方法
+            try:
+                images = []
+                for filename in os.listdir(folder_path):
+                    if filename.lower().endswith(SUPPORTED_IMAGE_EXTS):
+                        image_path = os.path.join(folder_path, filename)
+                        images.append(image_path)
+            except Exception:
+                images = []
 
             # 图片始终按正常顺序排序，不受reverse_folder_order影响
             images.sort()

@@ -289,6 +289,7 @@ class FileInfoBatchLoader:
                             is_file=entry.is_file(follow_symlinks=False),
                             is_dir=entry.is_dir(follow_symlinks=False),
                             mtime=stat_info.st_mtime,
+                            cached_at=time.time(),
                         )
 
                         file_infos.append(info)
@@ -316,10 +317,12 @@ class FileInfoBatchLoader:
         Returns:
             文件信息对象
         """
+        # 始终提取扩展名（即使文件不存在）
+        ext = os.path.splitext(file_path)[1].lower().lstrip(".")
+
         try:
             if os.path.exists(file_path):
                 stat_info = os.stat(file_path)
-                ext = os.path.splitext(file_path)[1].lower().lstrip(".")
 
                 return FileInfo(
                     path=file_path,
@@ -330,13 +333,14 @@ class FileInfoBatchLoader:
                     is_file=os.path.isfile(file_path),
                     is_dir=os.path.isdir(file_path),
                     mtime=stat_info.st_mtime,
+                    cached_at=time.time(),
                 )
 
-            return FileInfo(path=file_path, exists=False)
+            return FileInfo(path=file_path, extension=ext, exists=False, cached_at=time.time())
 
         except (OSError, PermissionError) as e:
             logger.debug("Failed to load file info for %s: %s", file_path, e)
-            return FileInfo(path=file_path, exists=False)
+            return FileInfo(path=file_path, extension=ext, exists=False, cached_at=time.time())
 
     def _load_file_info_batch(self, file_paths: list[str]) -> dict[str, FileInfo]:
         """批量加载文件信息
@@ -355,7 +359,9 @@ class FileInfoBatchLoader:
                 result[file_path] = info
             except Exception as e:
                 logger.debug("Failed to load file info for %s: %s", file_path, e)
-                result[file_path] = FileInfo(path=file_path, exists=False)
+                # 即使失败也提取扩展名
+                ext = os.path.splitext(file_path)[1].lower().lstrip(".")
+                result[file_path] = FileInfo(path=file_path, extension=ext, exists=False, cached_at=time.time())
 
         return result
 

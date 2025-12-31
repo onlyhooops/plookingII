@@ -311,9 +311,10 @@ class DragDropController:
                     count += 1
                     if count >= 10:
                         break
+                return False
             except Exception as e:
                 logger.debug("快速文件夹检查失败: %s", e)
-            return False
+                return False
 
     def _show_drag_feedback(self, folder_path: str):
         """

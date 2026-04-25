@@ -8,11 +8,12 @@ import contextlib
 import logging
 import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 from ...config.constants import APP_NAME, IMAGE_PROCESSING_CONFIG
 from ...config.manager import get_config, set_config
 from ...core.image_processing import HybridImageProcessor
-from ...core.simple_cache import AdvancedImageCache, BidirectionalCachePool
+from ...core.simple_cache import AdvancedImageCache, BidirectionalCachePool, estimate_image_memory_mb
 
 # 使用统一监控系统
 from ...monitor import get_unified_monitor
@@ -64,6 +65,9 @@ class ImageManager:
             image_processor=self.hybrid_processor,
             advanced_cache=self.image_cache,
         )
+
+        # 后台线程池：限制并发线程数，防止导航时大量创建线程导致性能下降
+        self._executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="imgmgr")
 
         # 内存监控线程
         self._memory_monitor_running = False
@@ -515,7 +519,7 @@ class ImageManager:
             except Exception:
                 logger.exception("background_load failed for %s", image_path)
 
-        threading.Thread(target=background_load, daemon=True).start()
+        self._executor.submit(background_load)
 
     def _load_image_with_concurrency(self, image_path: str, target_size):
         try:
@@ -586,7 +590,7 @@ class ImageManager:
                 except Exception:
                     logger.debug("_prepare_next_image_async worker failed", exc_info=True)
 
-            threading.Thread(target=worker, args=(next_path, gen), daemon=True).start()
+            self._executor.submit(worker, next_path, gen)
         except Exception:
             logger.debug("_prepare_next_image_async failed", exc_info=True)
 
@@ -681,9 +685,7 @@ class ImageManager:
             gen = self._load_generation
 
             for path, priority in candidates:
-                threading.Thread(
-                    target=self._prefetch_worker, args=(path, target_size, gen, priority), daemon=True
-                ).start()
+                self._executor.submit(self._prefetch_worker, path, target_size, gen, priority)
         except Exception:
             logger.debug("_schedule_adaptive_prefetch failed", exc_info=True)
 
@@ -702,7 +704,8 @@ class ImageManager:
             if expected_gen != self._load_generation:
                 return
             with contextlib.suppress(Exception):
-                self.image_cache.put_new(path, img, layer="preload")
+                size_mb = estimate_image_memory_mb(img)
+                self.image_cache.put(path, img, size_mb=size_mb)
         except Exception:
             logger.debug("_prefetch_worker failed", exc_info=True)
 
@@ -754,9 +757,7 @@ class ImageManager:
             except Exception:
                 logger.exception("Progressive load failed for %s", image_path)
 
-        progressive_thread = threading.Thread(target=progressive_load_worker, daemon=True)
-        progressive_thread.start()
-        self.current_progressive_task = progressive_thread
+        self.current_progressive_task = self._executor.submit(progressive_load_worker)
 
     def _maybe_two_stage_for_ultra(self, image_path: str, target_size: tuple) -> bool:
         """根据文件大小阈值决定是否采用两阶段显示（预览→全清晰度）"""
@@ -906,12 +907,13 @@ class ImageManager:
                         return
                     # 放入主缓存层
                     with contextlib.suppress(Exception):
-                        self.image_cache.put_new(path, img, layer="main")
+                        size_mb = estimate_image_memory_mb(img)
+                        self.image_cache.put(path, img, size_mb=size_mb)
                 except Exception:
                     logger.debug("promote hot3 failed", exc_info=True)
 
             for p in neighbors:
-                threading.Thread(target=promote, args=(p, gen), daemon=True).start()
+                self._executor.submit(promote, p, gen)
         except Exception:
             logger.debug("_ensure_hot3_residency failed", exc_info=True)
 
@@ -929,223 +931,69 @@ class ImageManager:
             except Exception:
                 logger.exception("background_worker failed")
 
-        bg_thread = threading.Thread(target=background_worker, daemon=True)
-        bg_thread.start()
+        self._executor.submit(background_worker)
 
     def _check_memory_usage(self):
         """检查内存使用情况"""
         memory_status = self.monitor.get_memory_status()
-        memory_info = {
-            "available_mb": memory_status.available_mb,
-            "used_mb": memory_status.used_mb,
-        }
         cache_stats = self.image_cache.get_stats()
+        total_cache_memory = cache_stats.get("memory_mb", 0)
 
-        # 从各层缓存统计中获取内存使用量
-        total_cache_memory = 0
-        if "layers" in cache_stats:
-            for layer_stats in cache_stats["layers"].values():
-                if "memory_mb" in layer_stats:
-                    total_cache_memory += layer_stats["memory_mb"]
-
-        # 记录内存使用情况
         logger.debug(
-            "Memory usage - Available: %.1fMB, Cache: {total_cache_memory:.1f}MB", memory_info.get("available_mb", 0)
+            "Memory - Available: %.1fMB, Cache: %.1fMB",
+            memory_status.available_mb,
+            total_cache_memory,
         )
 
-        # 获取可用内存
-        available_mb = memory_info.get("available_mb", 0)
+        available_mb = memory_status.available_mb
+        pressure_level = memory_status.pressure_level
 
-        # 如果缓存内存使用过高，触发清理
-        if total_cache_memory > 3000:  # 3GB阈值，适配4GB总预算
-            logger.info("High cache memory usage, triggering cleanup")
-            self.image_cache.trim_to_budget()
-
-        # 统一的缓存收缩
-        self._trim_preload_if_needed()
-        self._trim_main_caches_if_needed()
-
-        # 层级策略
-        if available_mb < 500:  # 提升到500MB
+        if available_mb < 500:
             self._emergency_memory_cleanup()
-        elif available_mb < 1000:  # 提升到1000MB
+        elif available_mb < 1000:
             self._aggressive_memory_cleanup()
-        elif memory_status.pressure_level in ("high", "critical") or total_cache_memory > 400:  # 提升到400MB
+        elif pressure_level in ("high", "critical") or total_cache_memory > 1500:
             self._moderate_memory_cleanup()
-        elif total_cache_memory > 300:  # 提升到300MB
+        elif total_cache_memory > 1000:
             self._preventive_memory_cleanup()
 
         self._start_background_memory_monitor()
 
     def _emergency_memory_cleanup(self):
-        """紧急内存清理"""
-        self.image_cache.preview_cache.clear()
-        self.image_cache.preview_memory_mb = 0
-        try:
-            if hasattr(self.image_cache, "preload_cache") and self.image_cache.preload_cache is not None:
-                self.image_cache.preload_cache.clear()
-            if hasattr(self.image_cache, "preload_memory_mb"):
-                self.image_cache.preload_memory_mb = 0
-        except Exception:
-            pass
-
-        current_path = (
-            self.main_window.images[self.main_window.current_index]
-            if self.main_window.images and (0 <= self.main_window.current_index < len(self.main_window.images))
-            else None
-        )
-        current_img = None
-        if current_path:
-            current_img = self.image_cache.get(current_path)
-
-        self.image_cache.clear()
-        self.image_cache.estimated_memory_mb = 0
-
-        if current_path and current_img:
-            with contextlib.suppress(Exception):
-                self.image_cache.put_new(current_path, current_img, layer="main")
-
-        # 强制垃圾回收
+        """紧急内存清理：只保留当前图片"""
+        cache_size = len(self.image_cache)
+        if cache_size > 1:
+            self.image_cache.evict_oldest(cache_size - 1)
         import gc
 
         gc.collect()
 
     def _aggressive_memory_cleanup(self):
-        """激进内存清理"""
-        self.image_cache.preview_cache.clear()
-        self.image_cache.preview_memory_mb = 0
-
-        preload_size = (
-            len(self.image_cache.preload_cache) if getattr(self.image_cache, "preload_cache", None) is not None else 0
-        )
-        if preload_size > 2:
-            items_to_remove = preload_size - 2
-            for _ in range(items_to_remove):
-                try:
-                    if (
-                        getattr(self.image_cache, "preload_cache", None) is not None
-                        and len(self.image_cache.preload_cache) > 2
-                    ):
-                        self.image_cache._evict_oldest_preload()
-                except Exception:
-                    break
-        # 预加载内存使用更新已移除（统一监控自动管理）
-
-        cache_size = self.image_cache.get_size()
+        """激进内存清理：保留当前+邻居"""
+        cache_size = len(self.image_cache)
         if cache_size > 3:
-            items_to_remove = cache_size - 3
-            for _ in range(items_to_remove):
-                if self.image_cache.get_size() > 3:
-                    self.image_cache._evict_oldest()
-
-        # 强制垃圾回收
+            self.image_cache.evict_oldest(cache_size - 3)
         import gc
 
         gc.collect()
 
     def _moderate_memory_cleanup(self):
-        """适度内存清理"""
-        preview_size = len(self.image_cache.preview_cache)
-        if preview_size > 2:
-            items_to_remove = preview_size // 2
-            for _ in range(items_to_remove):
-                if self.image_cache.preview_cache:
-                    self.image_cache._evict_oldest_preview()
-
-        preload_size = (
-            len(self.image_cache.preload_cache) if getattr(self.image_cache, "preload_cache", None) is not None else 0
-        )
-        if preload_size > 4:
-            items_to_remove = preload_size - 4
-            for _ in range(items_to_remove):
-                try:
-                    if (
-                        getattr(self.image_cache, "preload_cache", None) is not None
-                        and len(self.image_cache.preload_cache) > 4
-                    ):
-                        self.image_cache._evict_oldest_preload()
-                except Exception:
-                    break
-        # 预加载内存使用更新已移除（统一监控自动管理）
-
-        cache_size = self.image_cache.get_size()
+        """适度内存清理：减半"""
+        cache_size = len(self.image_cache)
         if cache_size > 5:
-            items_to_remove = cache_size - 5
-            for _ in range(items_to_remove):
-                if self.image_cache.get_size() > 5:
-                    self.image_cache._evict_oldest()
+            self.image_cache.evict_oldest(cache_size // 2)
 
     def _preventive_memory_cleanup(self):
-        """预防性内存清理"""
-        preview_size = len(self.image_cache.preview_cache)
-        if preview_size > 5:
-            items_to_remove = preview_size - 5
-            for _ in range(items_to_remove):
-                if self.image_cache.preview_cache:
-                    self.image_cache._evict_oldest_preview()
-
-        preload_size = (
-            len(self.image_cache.preload_cache) if getattr(self.image_cache, "preload_cache", None) is not None else 0
-        )
-        if preload_size > 6:
-            items_to_remove = preload_size - 6
-            for _ in range(items_to_remove):
-                try:
-                    if (
-                        getattr(self.image_cache, "preload_cache", None) is not None
-                        and len(self.image_cache.preload_cache) > 6
-                    ):
-                        self.image_cache._evict_oldest_preload()
-                except Exception:
-                    break
-        # 预加载内存使用更新已移除（统一监控自动管理）
-
-        cache_size = self.image_cache.get_size()
+        """预防性内存清理：不超过8项"""
+        cache_size = len(self.image_cache)
         if cache_size > 8:
-            items_to_remove = cache_size - 8
-            for _ in range(items_to_remove):
-                if self.image_cache.get_size() > 8:
-                    self.image_cache._evict_oldest()
+            self.image_cache.evict_oldest(cache_size - 8)
 
     def _trim_preload_if_needed(self):
-        """根据需要修剪预加载缓存"""
-        memory_status = self.monitor.get_memory_status()
-        if memory_status.pressure_level in ("high", "critical"):
-            preload_size = (
-                len(self.image_cache.preload_cache)
-                if getattr(self.image_cache, "preload_cache", None) is not None
-                else 0
-            )
-            if preload_size > 3:
-                items_to_remove = preload_size - 3
-                for _ in range(items_to_remove):
-                    try:
-                        if (
-                            getattr(self.image_cache, "preload_cache", None) is not None
-                            and len(self.image_cache.preload_cache) > 3
-                        ):
-                            self.image_cache._evict_oldest_preload()
-                    except Exception:
-                        break
-                if hasattr(self.memory_monitor, "update_preload_memory_usage"):
-                    self.memory_monitor.update_preload_memory_usage(getattr(self.image_cache, "preload_memory_mb", 0))
+        pass
 
     def _trim_main_caches_if_needed(self):
-        """根据需要修剪主缓存"""
-        memory_status = self.monitor.get_memory_status()
-        if memory_status.pressure_level in ("high", "critical"):
-            preview_size = len(self.image_cache.preview_cache)
-            if preview_size > 3:
-                items_to_remove = preview_size - 3
-                for _ in range(items_to_remove):
-                    if self.image_cache.preview_cache:
-                        self.image_cache._evict_oldest_preview()
-            cache_size = self.image_cache.get_size()
-            if cache_size > 5:
-                items_to_remove = cache_size - 5
-                for _ in range(items_to_remove):
-                    if self.image_cache.get_size() > 5:
-                        self.image_cache._evict_oldest()
+        pass
 
     def _start_background_memory_monitor(self):
         """启动后台内存监控线程"""
@@ -1331,8 +1179,14 @@ class ImageManager:
 
     def cleanup(self):
         """清理图像管理器资源"""
+        self.shutdown()
+
+    def shutdown(self):
+        """关闭图像管理器并释放资源"""
         try:
             self._memory_monitor_running = False
+            if hasattr(self, "_executor"):
+                self._executor.shutdown(wait=False)
             if self.hybrid_processor:
                 stopper = getattr(self.hybrid_processor, "stop_processing", None)
                 if callable(stopper):
@@ -1341,3 +1195,8 @@ class ImageManager:
                 self.bidi_pool.shutdown()
         except Exception:
             pass
+
+    def __del__(self):
+        with contextlib.suppress(Exception):
+            if hasattr(self, "_executor"):
+                self._executor.shutdown(wait=False)

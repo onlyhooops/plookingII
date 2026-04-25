@@ -204,6 +204,7 @@ Makefile.test
 .cache/
 *.bak
 *.backup
+backup_*/
 
 # ==================== Git 相关 ====================
 # Git配置（保留.github/workflows核心CI）

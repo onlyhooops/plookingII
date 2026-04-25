@@ -21,7 +21,7 @@ Date: 2025-10-06
 """
 
 # 🎯 唯一版本号定义 - 发布新版本时只需修改这里
-__version__ = "1.7.1"
+__version__ = "1.7.2"
 
 # 版本号别名（向后兼容）
 VERSION = __version__
@@ -32,10 +32,10 @@ VERSION_INFO = tuple(int(x) for x in __version__.split("."))
 MAJOR, MINOR, PATCH = VERSION_INFO
 
 # 版本描述
-VERSION_DESCRIPTION = "Architecture Refinement"
+VERSION_DESCRIPTION = "Memory Optimization & Performance Fix"
 
 # 发布日期
-RELEASE_DATE = "2025-10-06"
+RELEASE_DATE = "2025-04-25"
 
 
 def get_version() -> str:

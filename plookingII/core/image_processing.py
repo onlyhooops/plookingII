@@ -78,9 +78,9 @@ class HybridImageProcessor:
             return
 
         try:
-            # 配置Quartz选项（启用EXIF方向自动变换）
+            # 配置Quartz选项（不缓存到ImageIO内部，由应用层统一管理缓存）
             self.quartz_options = {
-                "kCGImageSourceShouldCache": True,
+                "kCGImageSourceShouldCache": False,
                 "kCGImageSourceShouldAllowFloat": True,
                 "kCGImageSourceCreateThumbnailFromImageAlways": True,
                 "kCGImageSourceCreateThumbnailWithTransform": True,  # 启用EXIF方向处理

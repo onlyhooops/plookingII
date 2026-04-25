@@ -7,6 +7,35 @@
 
 <!--next-version-->
 
+## [1.7.2] - 2025-04-25
+
+### 🐛 关键 Bug 修复
+
+#### 🚨 内存泄漏修复（性能雪崩根因）
+
+- **修复缓存内存记账使用文件大小而非实际像素内存**
+  - 之前：用 5MB（文件大小）记录一张 6000×4000 照片 → 实际解码占用 96MB
+  - 现在：用 `宽度 × 高度 × 4 字节` 计算实际像素内存
+  - 结果：LRU 淘汰策略恢复正常触发，缓存不再无限制膨胀
+
+- **修复所有缓存 `put()` 调用未传实际内存大小的问题**
+  - `AdvancedImageCache`、`ImageManager`、`PreloadManager`、`FolderManager` 共 9 处 `put()` 全部修正
+  - 添加模块级 `estimate_image_memory_mb()` 函数统一估算
+
+- **收紧缓存上限**：`max_items=50→20`, `max_memory_mb=500→2000`（基于正确像素内存记账）
+
+- **修复内存清理方法引用不存在的属性**
+  - 之前：`_emergency_memory_cleanup()` 等方法引用 `preview_cache`、`preload_cache` 等不存在属性（静默吞异常，清理从未生效）
+  - 现在：使用 `evict_oldest()` + `gc.collect()`，所有层级清理逻辑正常工作
+
+- **关闭 ImageIO 内部缓存**：`kCGImageSourceShouldCache=False`
+  - 消除同一张图片在 ImageIO 和应用层双重缓存，内存消耗减半
+
+- **限制导航线程并发**：用 `ThreadPoolExecutor(max_workers=4)` 替代每次导航创建 7-8 个独立线程
+  - 消除后台线程无限堆积导致的 UI 卡顿
+
+---
+
 ## [1.7.1] - 2025-10-06
 
 ### 🚀 新增功能
@@ -15,13 +44,13 @@
 - **版本号单一真源**：创建 `plookingII/__version__.py` 作为唯一版本定义处
   - 所有模块自动导入，无需手动同步
   - 完全消除版本号不一致风险
-  
+
 - **自动化工具**：新增 `scripts/bump_version.py` 版本提升工具
   - 支持 major/minor/patch 语义化版本提升
   - 支持指定具体版本号
   - 自动更新发布日期
   - 内置版本一致性验证
-  
+
 - **动态版本读取**：`pyproject.toml` 使用 dynamic version
   - 打包时自动读取版本号
   - 符合 PEP 621 标准

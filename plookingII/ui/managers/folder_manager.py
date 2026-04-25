@@ -17,6 +17,7 @@ from AppKit import NSAlert
 from ...config.constants import APP_NAME, IMAGE_PROCESSING_CONFIG, SUPPORTED_IMAGE_EXTS
 from ...config.ui_strings import get_ui_string
 from ...core.history import TaskHistoryManager
+from ...core.simple_cache import estimate_image_memory_mb
 from ...imports import logging, os, threading, time
 from ...services.recent import RecentFoldersManager
 
@@ -345,11 +346,9 @@ class FolderManager:
                             )
                             if image:
                                 # 将图片放入缓存，供后续显示使用
-                                # 计算目标尺寸用于缓存
                                 self.main_window.image_manager._get_target_size_for_view(scale_factor=2)
-                                self.main_window.image_manager.image_cache.put_new(
-                                    first_image_path, image, layer="main"
-                                )
+                                size_mb = estimate_image_memory_mb(image)
+                                self.main_window.image_manager.image_cache.put(first_image_path, image, size_mb=size_mb)
                         except Exception:
                             logger.debug("Preload first image failed", exc_info=True)
 

@@ -15,6 +15,7 @@ from typing import Any
 from ..config.constants import APP_NAME
 from ..config.manager import get_config
 from ..imports import logging
+from .simple_cache import estimate_image_memory_mb
 
 logger = logging.getLogger(APP_NAME)
 
@@ -221,7 +222,8 @@ class PreloadExecutor:
             if result:
                 # 将结果存储到缓存中
                 if hasattr(self.cache, "image_cache"):
-                    self.cache.image_cache.put_new(task.image_key, result, layer="preload")
+                    size_mb = estimate_image_memory_mb(result)
+                    self.cache.image_cache.put(task.image_key, result, size_mb=size_mb)
                 return True
             return False
         except Exception:

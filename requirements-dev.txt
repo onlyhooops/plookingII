@@ -6,7 +6,7 @@ pytest-mock>=3.11.1
 pytest-xdist>=3.3.1
 pytest-asyncio>=0.21.1
 pytest-randomly>=3.13.0
-pytest-benchmark>=4.0.0
+pytest-benchmark>=5.2.3
 
 # 代码质量检查
 mypy>=1.5.0

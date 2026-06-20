@@ -15,6 +15,7 @@ Author: PlookingII Team
 """
 
 import contextlib
+import math
 import os
 import shutil
 import subprocess
@@ -27,6 +28,40 @@ from ..config.constants import APP_NAME
 from ..imports import logging as _logging
 
 logger = _logging.getLogger(APP_NAME)
+
+# Quartz imports for real rotation pipeline
+try:
+    from Quartz import (
+        CGAffineTransformMakeRotation,
+        CGBitmapContextCreate,
+        CGBitmapContextCreateImage,
+        CGColorSpaceCreateDeviceRGB,
+        CGContextConcatCTM,
+        CGContextDrawImage,
+        CGContextTranslateCTM,
+        CGImageDestinationAddImage,
+        CGImageDestinationCreateWithURL,
+        CGImageDestinationFinalize,
+        CGImageGetHeight,
+        CGImageGetWidth,
+        CGImageSourceCopyPropertiesAtIndex,
+        CGImageSourceCreateImageAtIndex,
+        CGImageSourceCreateWithURL,
+        CGRectMake,
+        kCGBitmapByteOrder32Little,
+        kCGImageAlphaPremultipliedFirst,
+        kCGImagePropertyExifDictionary,
+        kCGImagePropertyGPSDictionary,
+        kCGImagePropertyIPTCDictionary,
+        kCGImagePropertyOrientation,
+        kCGImagePropertyTIFFDictionary,
+        kUTTypeJPEG,
+        kUTTypePNG,
+    )
+
+    _QUARTZ_AVAILABLE = True
+except ImportError:
+    _QUARTZ_AVAILABLE = False
 
 
 class ImageRotationProcessor:
@@ -331,23 +366,124 @@ class ImageRotationProcessor:
             return False
 
     def _rotate_with_quartz(self, image_path, direction):
-        """使用Quartz进行图像旋转
+        """使用Quartz进行真正的图像旋转
+
+        通过 Core Graphics 进行像素级旋转并保留元数据。
+        如果 Quartz 不可用，回退到 PIL。
 
         Args:
             image_path: 图像文件路径
-            direction: 旋转方向
+            direction: 旋转方向 ("clockwise" 或 "counterclockwise")
 
         Returns:
             bool: 操作是否成功
         """
-        try:
-            # 使用PIL作为Quartz的备用方案
-            # 对于大文件，仍然使用PIL但采用更优化的处理方式
+        if not _QUARTZ_AVAILABLE:
+            logger.debug("Quartz不可用，回退到PIL旋转")
             return self._rotate_with_pil_optimized(image_path, direction)
 
-        except Exception as e:
-            logger.exception("Quartz旋转失败 %s: %s", image_path, e)
-            return False
+        try:
+            from Foundation import NSURL
+
+            # 步骤1: 读取源图像
+            url = NSURL.fileURLWithPath_(image_path)
+            source = CGImageSourceCreateWithURL(url, None)
+            if not source:
+                logger.warning("无法创建CGImageSource: %s", image_path)
+                return self._rotate_with_pil_optimized(image_path, direction)
+
+            # 步骤2: 获取图像属性（元数据）
+            source_props = CGImageSourceCopyPropertiesAtIndex(source, 0, None)
+
+            # 步骤3: 获取源 CGImage
+            image = CGImageSourceCreateImageAtIndex(source, 0, None)
+            if not image:
+                logger.warning("无法从source创建CGImage: %s", image_path)
+                return self._rotate_with_pil_optimized(image_path, direction)
+
+            w = int(CGImageGetWidth(image))
+            h = int(CGImageGetHeight(image))
+
+            # 步骤4: 计算旋转角度（clockwise=顺时针=-90°, counterclockwise=逆时针=+90°）
+            angle_rad = -math.pi / 2.0 if direction == "clockwise" else math.pi / 2.0
+
+            # 步骤5: 创建交换了宽高的位图上下文（90°旋转后宽高互换）
+            color_space = CGColorSpaceCreateDeviceRGB()
+            bitmap_info = kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little
+            ctx = CGBitmapContextCreate(None, h, w, 8, 0, color_space, bitmap_info)
+            if not ctx:
+                logger.warning("无法创建位图上下文: %s", image_path)
+                return self._rotate_with_pil_optimized(image_path, direction)
+
+            # 步骤6: 应用旋转变换
+            # 移动原点到新画布中心 → 旋转 → 移动回旧图像中心
+            CGContextTranslateCTM(ctx, h / 2.0, w / 2.0)
+            CGContextConcatCTM(ctx, CGAffineTransformMakeRotation(angle_rad))
+            CGContextTranslateCTM(ctx, -w / 2.0, -h / 2.0)
+
+            # 绘制原始图像
+            CGContextDrawImage(ctx, CGRectMake(0, 0, w, h), image)
+
+            # 获取旋转后的 CGImage
+            rotated_image = CGBitmapContextCreateImage(ctx)
+            if not rotated_image:
+                logger.warning("无法创建旋转后的CGImage: %s", image_path)
+                return self._rotate_with_pil_optimized(image_path, direction)
+
+            # 步骤7: 创建输出目标（临时文件）
+            ext = os.path.splitext(image_path)[1].lower()
+            ut_type = kUTTypeJPEG if ext in [".jpg", ".jpeg"] else kUTTypePNG
+
+            dir_name = os.path.dirname(image_path) or "."
+            with tempfile.NamedTemporaryFile(prefix=".rot_", suffix=ext, dir=dir_name, delete=False) as tmpf:
+                tmp_path = tmpf.name
+
+            tmp_url = NSURL.fileURLWithPath_(tmp_path)
+            dest = CGImageDestinationCreateWithURL(tmp_url, ut_type, 1, None)
+            if not dest:
+                with contextlib.suppress(Exception):
+                    os.unlink(tmp_path)
+                logger.warning("无法创建CGImageDestination: %s", image_path)
+                return self._rotate_with_pil_optimized(image_path, direction)
+
+            # 步骤8: 传递元数据（EXIF、GPS等），并将 Orientation 重置为 1
+            image_props = {}
+            if source_props:
+                for key in (
+                    kCGImagePropertyExifDictionary,
+                    kCGImagePropertyGPSDictionary,
+                    kCGImagePropertyTIFFDictionary,
+                    kCGImagePropertyIPTCDictionary,
+                ):
+                    val = source_props.get(key)
+                    if val:
+                        image_props[key] = val
+            image_props[kCGImagePropertyOrientation] = 1
+
+            CGImageDestinationAddImage(dest, rotated_image, image_props)
+
+            if not CGImageDestinationFinalize(dest):
+                with contextlib.suppress(Exception):
+                    os.unlink(tmp_path)
+                logger.warning("CGImageDestinationFinalize失败: %s", image_path)
+                return self._rotate_with_pil_optimized(image_path, direction)
+
+            # 步骤9: 原子替换原文件
+            os.replace(tmp_path, image_path)
+            return True
+
+        except ImportError:
+            logger.debug("Quartz模块导入失败，回退到PIL旋转")
+            return self._rotate_with_pil_optimized(image_path, direction)
+        except Exception:
+            logger.exception("Quartz旋转失败 %s", image_path)
+            # 尝试清理临时文件
+            try:
+                if "tmp_path" in dir() and os.path.exists(tmp_path):
+                    os.unlink(tmp_path)
+            except Exception:
+                pass
+            return self._rotate_with_pil_optimized(image_path, direction)
 
     def _rotate_with_pil_optimized(self, image_path, direction):
         """使用优化的PIL进行大文件旋转

@@ -7,6 +7,29 @@
 
 <!--next-version-->
 
+## [2.0.0] - 2025-04-25
+
+### 🎯 macOS 原生平台深度集成
+
+#### 系统级内存管理
+- **NSProcessInfo 动态内存预算**：`MemoryOptimizer` 从硬编码 2GB 改为 `physicalMemory() * 30%`，自动适配不同硬件（1GB-4GB），低功耗模式自动削减 25%
+- **NSCache 替代手写 LRU**：`SimpleImageCache` 内部存储从 `OrderedDict` 切换为 `Foundation.NSCache`，自动响应系统内存压力通知，由系统内核协调驱逐时机
+
+#### Quartz 硬件加速
+- **真正的 Quartz 旋转管线**：`_rotate_with_quartz` 从 PIL 空壳重写为完整的 `CGImageSource → CGAffineTransform → CGImageDestination` 管线，保持 EXIF/GPS/IPTC 元数据，原子替换原文件
+- **全尺寸 EXIF 方向变换**：完整图片加载路径检测并自动旋转变换竖拍照片
+
+#### 渲染与调度优化
+- **`_get_image_display_rect` 缓存修复**：`_cached_img_rect` 从未被使用 → 现在正确缓存并关联 `_cached_view_bounds`，消除每帧冗余浮点计算
+- **窗口 resize 批处理**：`setFrame_display_` 中用 `NSAnimationContext.beginGrouping()`/`endGrouping()` 批量提交所有 `setFrame_` 变更，消除布局震荡
+- **NSRunLoop 统一调度**：`UnifiedStatusController` 从 `threading.Thread` 轮询改为 `NSTimer` + `NSRunLoopCommonModes`
+
+#### 向后兼容
+- ✅ `SimpleImageCache` 公开 API 保持不变
+- ✅ `MemoryOptimizer` 支持手动传入 `max_memory_mb` 覆盖自动计算
+
+---
+
 ## [1.8.0] - 2025-04-25
 
 ### 🚀 性能优化

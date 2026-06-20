@@ -21,6 +21,8 @@ from collections import deque
 from collections.abc import Callable
 from typing import Any
 
+from Foundation import NSProcessInfo
+
 from ..config.constants import APP_NAME
 from ..config.manager import Config
 
@@ -316,13 +318,20 @@ class MemoryOptimizer:
     智能管理内存使用，防止内存溢出。
     """
 
-    def __init__(self, max_memory_mb: float = 2048.0):
+    def __init__(self, max_memory_mb: float | None = None):
         """初始化内存优化器
 
         Args:
-            max_memory_mb: 最大内存限制（MB）
+            max_memory_mb: 最大内存限制（MB），为 None 则自动从系统物理内存推算
+
+        动态预算规则：
+        - 取物理内存的 30%
+        - 下限 1GB，上限 4GB
+        - 低功耗模式（电池/省电）下再削减 25%
         """
-        self._max_memory_bytes = max_memory_mb * 1024 * 1024
+        cache_budget = self._compute_physical_memory_budget() if max_memory_mb is None else max_memory_mb
+
+        self._max_memory_bytes = cache_budget * 1024 * 1024
         self._current_memory_bytes = 0.0
         self._memory_lock = threading.RLock()
 
@@ -332,6 +341,43 @@ class MemoryOptimizer:
 
         # 性能统计
         self.stats = {"cleanup_count": 0, "total_freed_mb": 0.0, "peak_memory_mb": 0.0}
+
+    @staticmethod
+    def _compute_physical_memory_budget() -> float:
+        """根据系统物理内存计算缓存预算（MB）
+
+        规则：
+        - 取物理内存的 30%
+        - 下限 1GB (1024MB)，上限 4GB (4096MB)
+        - isLowPowerModeEnabled() 时削减 25%
+        """
+        try:
+            process_info = NSProcessInfo.processInfo()
+            physical_memory_bytes = process_info.physicalMemory()
+            physical_memory_mb = physical_memory_bytes / (1024 * 1024)
+        except Exception as exc:
+            logger.warning("NSProcessInfo 查询物理内存失败，回退到 2048MB: %s", exc)
+            return 2048.0
+
+        budget = physical_memory_mb * 0.30
+        budget = max(1024.0, min(4096.0, budget))
+
+        try:
+            if process_info.isLowPowerModeEnabled():
+                budget *= 0.75
+                logger.info(
+                    "检测到低功耗模式，缓存预算削减 25%% 至 %.0fMB",
+                    budget,
+                )
+        except Exception:
+            pass
+
+        logger.info(
+            "物理内存 %.0fMB → 缓存预算 %.0fMB（30%%）",
+            physical_memory_mb,
+            budget,
+        )
+        return budget
 
     def allocate(self, size_bytes: float) -> bool:
         """分配内存

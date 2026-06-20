@@ -204,6 +204,7 @@ class AdaptiveImageView(NSImageView):
         # 性能优化相关属性
         self._last_scroll_time = 0  # 上次滚轮事件时间
         self._cached_img_rect = None  # 缓存的图片显示区域
+        self._cached_view_bounds = None  # 缓存对应的视图边界 (width, height)
         self._redraw_timer = None  # 重绘定时器
         self._pending_redraw = False  # 是否有待处理的重绘
 
@@ -241,6 +242,7 @@ class AdaptiveImageView(NSImageView):
 
         # 清除性能优化缓存
         self._cached_img_rect = None
+        self._cached_view_bounds = None
         self._cancel_pending_redraw()
 
         # 同步更新滑块值到100%
@@ -366,8 +368,8 @@ class AdaptiveImageView(NSImageView):
         self.offset_y = new_offset_y
 
         # 清除缓存的图片区域
-        if hasattr(self, "_cached_img_rect"):
-            self._cached_img_rect = None
+        self._cached_img_rect = None
+        self._cached_view_bounds = None
 
         # 优化重绘 - 只在必要时重绘
         self._schedule_optimized_redraw()
@@ -754,6 +756,11 @@ class AdaptiveImageView(NSImageView):
             )
 
     def _get_image_display_rect(self, view_rect):
+        # 检查缓存：如果视图边界未变且缓存有效，直接返回
+        view_size_key = (view_rect.size.width, view_rect.size.height)
+        if self._cached_img_rect is not None and self._cached_view_bounds == view_size_key:
+            return self._cached_img_rect
+
         # 自适应边距 - 优化：减少边距以扩大图片显示区域
         min_margin = 8  # 从12减少到8
         max_margin = 40  # 从60减少到40
@@ -795,7 +802,12 @@ class AdaptiveImageView(NSImageView):
         scaled_height = image_size.height * scale
         x = view_rect.origin.x + (view_size.width - scaled_width) / 2
         y = view_rect.origin.y + (view_size.height - scaled_height) / 2
-        return NSMakeRect(x, y, scaled_width, scaled_height)
+
+        # 缓存计算结果
+        result = NSMakeRect(x, y, scaled_width, scaled_height)
+        self._cached_img_rect = result
+        self._cached_view_bounds = view_size_key
+        return result
 
     # 性能优化方法
     def _schedule_optimized_redraw(self):
@@ -824,6 +836,7 @@ class AdaptiveImageView(NSImageView):
 
         # 清除缓存的图片区域，强制重新计算
         self._cached_img_rect = None
+        self._cached_view_bounds = None
 
         # 执行实际重绘
         self.setNeedsDisplay_(True)

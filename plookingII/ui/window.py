@@ -1,5 +1,6 @@
 import objc
 from AppKit import (
+    NSAnimationContext,
     NSApplication,
     NSBackingStoreBuffered,
     NSColor,
@@ -295,11 +296,17 @@ class MainWindow(NSWindow):
             content_view = self.contentView()
             frame = content_view.frame()
 
+            # 使用动画上下文批处理所有布局变更
+            NSAnimationContext.beginGrouping()
+            NSAnimationContext.currentContext().setDuration_(0.0)
+
             # 更新控制器框架
             self.image_view_controller.update_frame(frame)
             self.status_bar_controller.update_frame(frame)
             # 侧边栏已移除，无需更新
             # 无导航工具栏更新
+
+            NSAnimationContext.endGrouping()
         except Exception as e:
             logger.warning("窗口尺寸更新失败: %s", e)
 
@@ -388,8 +395,8 @@ class MainWindow(NSWindow):
             self.image_view.zoom_scale = new_scale
 
             # 清除缓存并重绘
-            if hasattr(self.image_view, "_cached_img_rect"):
-                self.image_view._cached_img_rect = None
+            self.image_view._cached_img_rect = None
+            self.image_view._cached_view_bounds = None
             self.image_view.setNeedsDisplay_(True)
 
         except Exception as e:

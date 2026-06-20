@@ -16,9 +16,10 @@ import contextlib
 import logging
 import threading
 import time
-from collections import OrderedDict
 from dataclasses import dataclass, field
 from typing import Any
+
+import Foundation
 
 logger = logging.getLogger(__name__)
 
@@ -120,11 +121,15 @@ class SimpleImageCache:
         self.max_items = max_items
         self.max_memory_mb = max_memory_mb
 
-        # 使用 OrderedDict 实现 LRU
-        self._cache: OrderedDict[str, CacheEntry] = OrderedDict()
+        # 使用 NSCache 替代 OrderedDict
+        self._ns_cache = Foundation.NSCache.alloc().init()
+        self._ns_cache.setCountLimit_(max_items)
+        self._ns_cache.setTotalCostLimit_(int(max_memory_mb * 1024 * 1024))
         self._lock = threading.RLock()
 
-        # 统计信息
+        # 统计信息（手动追踪，NSCache 不暴露内部计数）
+        self._item_sizes: dict[str, float] = {}
+        self._item_count = 0
         self._current_memory_mb = 0.0
         self._hits = 0
         self._misses = 0
@@ -143,17 +148,11 @@ class SimpleImageCache:
             缓存的值，未找到返回 None
         """
         with self._lock:
-            if key in self._cache:
-                entry = self._cache[key]
-                # 更新访问信息
-                entry.accessed_at = time.time()
-                entry.access_count += 1
-                # 移到末尾（LRU：最近使用）
-                self._cache.move_to_end(key)
-
+            value = self._ns_cache.objectForKey_(key)
+            if value is not None:
                 self._hits += 1
                 logger.debug("Cache HIT [%s]: %s", self.name, key)
-                return entry.value
+                return value
             self._misses += 1
             logger.debug("Cache MISS [%s]: %s", self.name, key)
             return None
@@ -167,21 +166,15 @@ class SimpleImageCache:
             size_mb: 值的内存大小(MB)
         """
         with self._lock:
-            # 如果键已存在，先移除旧的
-            if key in self._cache:
-                old_entry = self._cache[key]
-                self._current_memory_mb -= old_entry.size_mb
-                del self._cache[key]
+            # 如果键已存在，先移除旧的（更新统计）
+            if key in self._item_sizes:
+                self._current_memory_mb -= self._item_sizes.pop(key)
+                self._item_count -= 1
 
-            # 检查是否需要淘汰
-            while len(self._cache) >= self.max_items or (self._current_memory_mb + size_mb) > self.max_memory_mb:
-                if not self._cache:
-                    break
-                self._evict_lru()
-
-            # 添加新条目
-            entry = CacheEntry(key=key, value=value, size_mb=size_mb)
-            self._cache[key] = entry
+            cost_bytes = int(size_mb * 1024 * 1024)
+            self._ns_cache.setObject_forKey_cost_(value, key, cost_bytes)
+            self._item_sizes[key] = size_mb
+            self._item_count += 1
             self._current_memory_mb += size_mb
 
             logger.debug(
@@ -198,10 +191,10 @@ class SimpleImageCache:
             是否成功移除
         """
         with self._lock:
-            if key in self._cache:
-                entry = self._cache[key]
-                self._current_memory_mb -= entry.size_mb
-                del self._cache[key]
+            if key in self._item_sizes:
+                self._current_memory_mb -= self._item_sizes.pop(key)
+                self._item_count -= 1
+                self._ns_cache.removeObjectForKey_(key)
                 logger.debug("Cache REMOVE [%s]: %s", self.name, key)
                 return True
             return False
@@ -209,26 +202,19 @@ class SimpleImageCache:
     def clear(self):
         """清空缓存"""
         with self._lock:
-            count = len(self._cache)
+            count = self._item_count
             memory = self._current_memory_mb
-            self._cache.clear()
+            self._ns_cache.removeAllObjects()
+            self._item_sizes.clear()
+            self._item_count = 0
             self._current_memory_mb = 0.0
             logger.info("Cache CLEAR [%s]: removed %s items, freed %.2fMB", self.name, count, memory)
 
-    def _evict_lru(self):
-        """淘汰最久未使用的项（LRU）"""
-        if not self._cache:
-            return
-
-        # OrderedDict: 第一项是最久未使用的
-        key, entry = self._cache.popitem(last=False)
-        self._current_memory_mb -= entry.size_mb
-        self._evictions += 1
-
-        logger.debug("Cache EVICT [%s]: %s (freed %.2fMB)", self.name, key, entry.size_mb)
-
     def evict_oldest(self, count: int = 1) -> int:
-        """公开方法：淘汰最久未使用的项
+        """公开方法：淘汰缓存项
+
+        NSCache 自动管理系统内存压力淘汰，此方法为兼容性保留。
+        仅在 count >= 当前项数时执行强制清空。
 
         Args:
             count: 要淘汰的项数
@@ -236,14 +222,14 @@ class SimpleImageCache:
         Returns:
             实际淘汰的项数
         """
-        evicted = 0
         with self._lock:
-            for _ in range(count):
-                if not self._cache:
-                    break
-                self._evict_lru()
-                evicted += 1
-        return evicted
+            if count >= self._item_count and self._item_count > 0:
+                evicted = self._item_count
+                self.clear()
+                self._evictions += evicted
+                return evicted
+            # NSCache 自动管理淘汰，无需手动干预
+            return 0
 
     def get_current_memory_mb(self) -> float:
         """获取当前缓存内存使用量（MB）"""
@@ -262,11 +248,13 @@ class SimpleImageCache:
 
             return {
                 "name": self.name,
-                "size": len(self._cache),
+                "size": self._item_count,
                 "max_items": self.max_items,
                 "memory_mb": round(self._current_memory_mb, 2),
                 "max_memory_mb": self.max_memory_mb,
-                "memory_usage_pct": round((self._current_memory_mb / self.max_memory_mb * 100), 2),
+                "memory_usage_pct": round((self._current_memory_mb / self.max_memory_mb * 100), 2)
+                if self.max_memory_mb > 0
+                else 0.0,
                 "hits": self._hits,
                 "misses": self._misses,
                 "hit_rate_pct": round(hit_rate, 2),
@@ -275,11 +263,11 @@ class SimpleImageCache:
 
     def __len__(self) -> int:
         """返回缓存项数量"""
-        return len(self._cache)
+        return self._item_count
 
     def __contains__(self, key: str) -> bool:
         """检查键是否存在"""
-        return key in self._cache
+        return key in self._item_sizes
 
     def __repr__(self) -> str:
         stats = self.get_stats()

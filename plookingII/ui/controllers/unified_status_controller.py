@@ -16,7 +16,7 @@ Author: PlookingII Team
 """
 
 import objc
-from AppKit import NSColor, NSFont, NSRect, NSTextField, NSTitlebarAccessoryViewController, NSView
+from AppKit import NSColor, NSFont, NSRect, NSTextField, NSTimer, NSTitlebarAccessoryViewController, NSView
 
 from ...config.constants import APP_NAME
 from ...core.session_manager import SessionManager
@@ -302,27 +302,24 @@ class UnifiedStatusController:
             logger.exception("Failed to setup titlebar constraints: %s", e)
 
     def _start_session_updates(self):
-        """启动会话更新定时器"""
+        """启动会话更新定时器（NSTimer + NSRunLoopCommonModes）"""
         try:
-            if hasattr(self, "_session_update_timer_active"):
-                self._session_update_timer_active = False
+            # 先停掉已有定时器，避免重复注册
+            if self._session_update_timer is not None:
+                self._session_update_timer.invalidate()
+                self._session_update_timer = None
 
-            # 简化的定时器实现，使用Python threading代替NSTimer
-            import threading
+            self._session_update_timer = NSTimer.scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(
+                5.0, self, "updateSessionStatus_:", None, True
+            )
 
-            def update_timer():
-                while hasattr(self, "_session_update_timer_active") and self._session_update_timer_active:
-                    try:
-                        self.updateSessionStatus_(None)
-                    except Exception:
-                        logger.debug("Session status update failed", exc_info=True)
-                    threading.Event().wait(5.0)
+            from Foundation import NSRunLoop
 
-            self._session_update_timer_active = True
-            self._session_update_timer = threading.Thread(target=update_timer, daemon=True)
-            self._session_update_timer.start()
+            NSRunLoop.currentRunLoop().addTimer_forMode_(
+                self._session_update_timer, NSRunLoop.currentRunLoop().commonModes
+            )
 
-            logger.debug("Session update timer started")
+            logger.debug("Session update timer started (NSTimer)")
 
         except Exception as e:
             logger.exception("Failed to start session updates: %s", e)
@@ -579,8 +576,8 @@ class UnifiedStatusController:
                 self._status_timer.cancel()
                 self._status_timer = None
 
-            if hasattr(self, "_session_update_timer_active"):
-                self._session_update_timer_active = False
+            if self._session_update_timer:
+                self._session_update_timer.invalidate()
                 self._session_update_timer = None
 
             if self._hide_timer:

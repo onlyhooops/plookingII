@@ -75,6 +75,8 @@ class AppDiscovery:
     def __init__(self, workspace: NSWorkspace):
         self.workspace = workspace
         self.browser_filter = BrowserFilter()
+        self._apps_cache: dict[str, list[AppInfo]] = {}  # 按文件扩展名/UTI 缓存
+        self._icon_cache: dict[str, object] = {}  # 按应用路径缓存图标
 
     def get_apps_for_file(self, file_path: str) -> list[AppInfo]:
         """获取可以打开指定文件的应用程序列表
@@ -86,11 +88,18 @@ class AppDiscovery:
             List[AppInfo]: 应用程序信息列表
         """
         try:
+            # 用文件扩展名作为缓存键
+            _, ext = os.path.splitext(file_path)
+            cache_key = ext.lower() if ext else file_path
+            if cache_key in self._apps_cache:
+                return self._apps_cache[cache_key]
+
             file_url = NSURL.fileURLWithPath_(file_path)
             apps_urls = self.workspace.URLsForApplicationsToOpenURL_(file_url)
             default_app_url = self.workspace.URLForApplicationToOpenURL_(file_url)
 
             if not apps_urls:
+                self._apps_cache[cache_key] = []
                 return []
 
             apps = []
@@ -112,6 +121,7 @@ class AppDiscovery:
                     apps.append(AppInfo(app_url, app_name, app_path))
                     added_paths.add(app_path)
 
+            self._apps_cache[cache_key] = apps
             return apps
 
         except Exception as e:
@@ -125,6 +135,7 @@ class MenuItemBuilder:
     def __init__(self, workspace: NSWorkspace, target_view):
         self.workspace = workspace
         self.target_view = target_view
+        self._icon_cache: dict[str, object] = {}  # 按应用路径缓存图标
 
     def create_title_item(self, file_path: str) -> NSMenuItem:
         """创建标题菜单项
@@ -175,9 +186,9 @@ class MenuItemBuilder:
         menu_item.setRepresentedObject_(app_info.url)
         menu_item.setEnabled_(True)
 
-        # 设置应用程序图标
+        # 设置应用程序图标（缓存查询结果）
         try:
-            app_icon = self.workspace.iconForFile_(app_info.path)
+            app_icon = self._get_app_icon(app_info.path)
             if app_icon:
                 app_icon.setSize_((16, 16))
                 menu_item.setImage_(app_icon)
@@ -185,6 +196,22 @@ class MenuItemBuilder:
             logger.debug("%s 图标设置失败: {e}", app_info.name)
 
         return menu_item
+
+    def _get_app_icon(self, app_path: str):
+        """获取应用图标（带缓存）
+
+        Args:
+            app_path: 应用程序路径
+
+        Returns:
+            图标对象或 None
+        """
+        if app_path in self._icon_cache:
+            return self._icon_cache[app_path]
+        icon = self.workspace.iconForFile_(app_path)
+        if icon:
+            self._icon_cache[app_path] = icon
+        return icon
 
     def create_other_item(self) -> NSMenuItem:
         """创建"其他..."菜单项

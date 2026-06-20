@@ -515,6 +515,31 @@ class OperationManager:
         """
         return self._keep_action_stack
 
+    def get_keep_count(self) -> int:
+        """获取当前会话已精选的图片数量
+
+        从精选文件夹的实际文件系统中读取支持的图片文件数量，
+        确保计数在中断恢复后保持准确连续。
+
+        Returns:
+            int: 已精选图片数量（来自实际文件夹内容）
+        """
+        try:
+            keep_folder = getattr(self.main_window, "keep_folder", "")
+            if not keep_folder or not os.path.isdir(keep_folder):
+                return 0
+            from ...config.constants import SUPPORTED_IMAGE_EXTS
+
+            count = 0
+            with os.scandir(keep_folder) as it:
+                for entry in it:
+                    if entry.is_file() and entry.name.lower().endswith(SUPPORTED_IMAGE_EXTS):
+                        count += 1
+            return count
+        except Exception:
+            logger.debug("获取精选计数失败", exc_info=True)
+            return 0
+
     def clear_keep_action_stack(self):
         """清空保留操作栈"""
         self._keep_action_stack = []

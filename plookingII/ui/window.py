@@ -222,6 +222,7 @@ class MainWindow(NSWindow):
         self.zoom_slider = None
         self.image_seq_label = None
         self.folder_seq_label = None
+        self.selection_count_label = None
         self.center_status_label = None
 
     def _setup_ui(self):
@@ -241,6 +242,7 @@ class MainWindow(NSWindow):
         self.zoom_slider = self.status_bar_controller.zoom_slider
         self.image_seq_label = self.status_bar_controller.image_seq_label
         self.folder_seq_label = self.status_bar_controller.folder_seq_label
+        self.selection_count_label = self.status_bar_controller.selection_count_label
         self.center_status_label = self.status_bar_controller.center_status_label
 
     def windowShouldClose_(self, sender):

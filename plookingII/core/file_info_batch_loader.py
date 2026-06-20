@@ -321,22 +321,25 @@ class FileInfoBatchLoader:
         ext = os.path.splitext(file_path)[1].lower().lstrip(".")
 
         try:
-            if os.path.exists(file_path):
+            import stat
+
+            try:
                 stat_info = os.stat(file_path)
+            except OSError:
+                return FileInfo(path=file_path, extension=ext, exists=False, cached_at=time.time())
 
-                return FileInfo(
-                    path=file_path,
-                    size_bytes=stat_info.st_size,
-                    size_mb=stat_info.st_size / (1024 * 1024),
-                    extension=ext,
-                    exists=True,
-                    is_file=os.path.isfile(file_path),
-                    is_dir=os.path.isdir(file_path),
-                    mtime=stat_info.st_mtime,
-                    cached_at=time.time(),
-                )
-
-            return FileInfo(path=file_path, extension=ext, exists=False, cached_at=time.time())
+            mode = stat_info.st_mode
+            return FileInfo(
+                path=file_path,
+                size_bytes=stat_info.st_size,
+                size_mb=stat_info.st_size / (1024 * 1024),
+                extension=ext,
+                exists=True,
+                is_file=stat.S_ISREG(mode),
+                is_dir=stat.S_ISDIR(mode),
+                mtime=stat_info.st_mtime,
+                cached_at=time.time(),
+            )
 
         except (OSError, PermissionError) as e:
             logger.debug("Failed to load file info for %s: %s", file_path, e)

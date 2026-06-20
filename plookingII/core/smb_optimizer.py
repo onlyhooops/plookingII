@@ -160,19 +160,18 @@ class SMBOptimizer:
                     LogLevel.DEBUG, LogCategory.PERFORMANCE, f"Starting batch read for {len(smb_paths)} SMB files"
                 )
 
-                # 使用线程池并发读取
+                # 使用类级线程池并发读取
                 results = []
-                with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-                    future_to_path = {executor.submit(self._read_single_file, path): path for path in smb_paths}
+                futures = {self.executor.submit(self._read_single_file, path): path for path in smb_paths}
 
-                    for future in concurrent.futures.as_completed(future_to_path):
-                        path = future_to_path[future]
-                        try:
-                            result = future.result()
-                            results.append(result)
-                        except Exception as e:
-                            self.logging.getLogger(__name__).log_error(e, f"batch_read_file_{path}")
-                            results.append(ReadResult(file_path=path, data=b"", success=False, latency_ms=0.0, error=e))
+                for future in concurrent.futures.as_completed(futures):
+                    path = futures[future]
+                    try:
+                        result = future.result()
+                        results.append(result)
+                    except Exception as e:
+                        self.logging.getLogger(__name__).log_error(e, f"batch_read_file_{path}")
+                        results.append(ReadResult(file_path=path, data=b"", success=False, latency_ms=0.0, error=e))
 
                 # 更新统计信息
                 with self.stats_lock:
@@ -328,6 +327,10 @@ class SMBOptimizer:
         """获取性能统计信息"""
         with self.stats_lock:
             return self.stats.copy()
+
+    def shutdown(self):
+        """关闭线程池，释放资源"""
+        self.executor.shutdown(wait=False)
 
     def clear_cache(self):
         """清空所有缓存"""

@@ -161,36 +161,35 @@ class PreloadExecutor:
             "start_time": time.time(),
         }
 
+        # 收集有效的预加载任务
+        valid_tasks = []
         for task in tasks:
-            # 检查是否需要取消
             if cancel_check_callback(generation):
-                stats["cancelled"] += len(tasks) - stats["completed"] - stats["skipped"] - stats["errors"]
+                stats["cancelled"] = len(tasks) - len(valid_tasks)
                 break
+            if task.image_key in self.cache._cache:
+                stats["skipped"] += 1
+                continue
+            if self._should_skip_due_to_memory():
+                stats["skipped"] += 1
+                continue
+            valid_tasks.append(task)
 
-            try:
-                # 检查是否已在缓存中
-                if task.image_key in self.cache._cache:
-                    stats["skipped"] += 1
-                    continue
+        # 并行提交所有有效预加载任务
+        if valid_tasks:
+            futures = []
+            for task in valid_tasks:
+                future = self._executor.submit(self._load_single_image, task)
+                futures.append(future)
 
-                # 检查内存是否充足
-                if self._should_skip_due_to_memory():
-                    stats["skipped"] += 1
-                    continue
-
-                # 执行预加载
-                success = self._load_single_image(task)
-                if success:
-                    stats["completed"] += 1
-                else:
+            for future in futures:
+                try:
+                    if future.result():
+                        stats["completed"] += 1
+                    else:
+                        stats["errors"] += 1
+                except Exception:
                     stats["errors"] += 1
-
-                # 短暂延迟，避免过度占用资源
-                time.sleep(0.01)
-
-            except Exception as e:
-                logger.warning("预加载任务执行失败: %s", e)
-                stats["errors"] += 1
 
         stats["duration"] = time.time() - stats["start_time"]
         return stats

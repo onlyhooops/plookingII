@@ -7,6 +7,30 @@
 
 <!--next-version-->
 
+## [1.8.0] - 2025-04-25
+
+### 🚀 性能优化
+
+#### 核心算法效率提升
+- **修复 `_select_loading_strategy` 空字符串 bug**：`can_handle("")` 永远返回 False 导致所有策略静默回退到 auto，策略选择系统形同虚设
+- **PreloadManager 真正并发执行**：用 `ThreadPoolExecutor.submit()` 并行提交预加载任务，移除人为 `time.sleep(0.01)` 延迟
+- **fix: `_load_file_info` 中 4 次 stat() 调用**：`os.path.exists()` + `os.stat()` + `os.path.isfile()` + `os.path.isdir()` → 单一 `os.stat()` + `stat.S_ISREG/S_ISDIR`
+- **修复 `ImageMemoryPool` 记账错误**：`return_buffer()` 中 `allocated_bytes` 错误地增加而非减少，导致池内存统计混乱
+
+#### 硬件资源精细化管控
+- **修复线程池泄漏**：`RemoteFileManager` 和 `SMBOptimizer` 的 ThreadPoolExecutor 从未关闭，已添加 `shutdown()` 方法
+- **消除重复线程池创建**：`_preload_batch()` 和 `batch_read_files()` 每次调用都创建新池，改为复用类级 `self.executor`
+- **全尺寸 EXIF 方向变换**：完整图像加载路径添加方向检测与自动旋转变换，修复竖拍照片方向错误
+
+#### UI 渲染与交互优化
+- **主线程同步 I/O 消除**：`update_status_display()` 中 `get_image_dimensions_safe()` + `os.path.getsize()` 改为从 ImageManager 缓存读取
+- **右键菜单缓存**：`AppDiscovery` 按扩展名缓存启动服务查询结果，应用图标缓存避免重复 `iconForFile_()`
+- **mouseDragged_ 重绘节流**：复用 `_schedule_optimized_redraw()` 限制为 60fps
+- **删除冗余 setNeedsDisplay_**：`display_image()` 中 `setCGImage_` 已触发重绘，移除重复调用
+- **移除空 5s 轮询定时器**：`updateSessionStatus_` 为空操作，不再消耗运行循环唤醒
+
+---
+
 ## [1.7.2] - 2025-04-25
 
 ### 🐛 关键 Bug 修复

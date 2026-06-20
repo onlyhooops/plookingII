@@ -432,7 +432,7 @@ class AdaptiveImageView(NSImageView):
             self.offset_x += dx
             self.offset_y += dy
             self.last_mouse_pos = cur_pos
-            self.setNeedsDisplay_(True)
+            self._schedule_optimized_redraw()
         else:
             objc.super(AdaptiveImageView, self).mouseDragged_(event)
 

@@ -344,6 +344,10 @@ class RemoteFileManager:
 
             return stats
 
+    def shutdown(self):
+        """关闭线程池，释放资源"""
+        self.executor.shutdown(wait=False)
+
     def clear_cache(self):
         """清空缓存"""
         self.network_cache.clear_all_cache()
@@ -553,28 +557,27 @@ class RemoteFileManager:
         """批量预加载文件"""
         results = []
 
-        # 使用线程池并发预加载
-        with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            future_to_path = {executor.submit(self._preload_single_file, path): path for path in file_paths}
+        # 使用类级线程池并发预加载
+        futures = {self.executor.submit(self._preload_single_file, path): path for path in file_paths}
 
-            for future in concurrent.futures.as_completed(future_to_path):
-                path = future_to_path[future]
-                try:
-                    result = future.result()
-                    results.append(result)
-                except Exception as e:
-                    self.logging.getLogger(__name__).log_error(e, f"preload_batch_{path}")
-                    results.append(
-                        LoadingResult(
-                            file_path=path,
-                            data=b"",
-                            success=False,
-                            loading_mode=LoadingMode.PRELOAD,
-                            latency_ms=0.0,
-                            from_cache=False,
-                            error=e,
-                        )
+        for future in concurrent.futures.as_completed(futures):
+            path = futures[future]
+            try:
+                result = future.result()
+                results.append(result)
+            except Exception as e:
+                self.logging.getLogger(__name__).log_error(e, f"preload_batch_{path}")
+                results.append(
+                    LoadingResult(
+                        file_path=path,
+                        data=b"",
+                        success=False,
+                        loading_mode=LoadingMode.PRELOAD,
+                        latency_ms=0.0,
+                        from_cache=False,
+                        error=e,
                     )
+                )
 
         return results
 

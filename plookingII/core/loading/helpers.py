@@ -101,9 +101,11 @@ def load_with_quartz(file_path: str, target_size: tuple[int, int] | None = None,
     try:
         from Foundation import NSURL
         from Quartz import (
+            CGImageSourceCopyPropertiesAtIndex,
             CGImageSourceCreateImageAtIndex,
             CGImageSourceCreateThumbnailAtIndex,
             CGImageSourceCreateWithURL,
+            kCGImagePropertyOrientation,
             kCGImageSourceCreateThumbnailFromImageAlways,
             kCGImageSourceCreateThumbnailWithTransform,
             kCGImageSourceShouldAllowFloat,
@@ -129,7 +131,20 @@ def load_with_quartz(file_path: str, target_size: tuple[int, int] | None = None,
                 kCGImageSourceShouldAllowFloat: True,
             }
             return CGImageSourceCreateThumbnailAtIndex(source, 0, options)
-        # 加载完整图片
+        # 加载完整图片，处理EXIF方向
+        props = CGImageSourceCopyPropertiesAtIndex(source, 0, None)
+        orientation = props.get(kCGImagePropertyOrientation, 1) if props else 1
+
+        if orientation > 1:
+            # EXIF方向需要修正，使用thumbnail API以应用transform
+            options = {
+                kCGImageSourceShouldCache: True,
+                kCGImageSourceShouldAllowFloat: True,
+                kCGImageSourceCreateThumbnailFromImageAlways: True,
+                kCGImageSourceCreateThumbnailWithTransform: True,
+                kCGImageSourceThumbnailMaxPixelSize: 0,  # 0 = 不限制尺寸，返回原图
+            }
+            return CGImageSourceCreateThumbnailAtIndex(source, 0, options)
         options = {
             kCGImageSourceShouldCache: True,
             kCGImageSourceShouldAllowFloat: True,

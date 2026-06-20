@@ -21,7 +21,7 @@ Date: 2025-10-06
 """
 
 # 🎯 唯一版本号定义 - 发布新版本时只需修改这里
-__version__ = "1.7.2"
+__version__ = "1.8.0"
 
 # 版本号别名（向后兼容）
 VERSION = __version__
@@ -32,7 +32,7 @@ VERSION_INFO = tuple(int(x) for x in __version__.split("."))
 MAJOR, MINOR, PATCH = VERSION_INFO
 
 # 版本描述
-VERSION_DESCRIPTION = "Memory Optimization & Performance Fix"
+VERSION_DESCRIPTION = "Core Algorithm & Resource Optimization"
 
 # 发布日期
 RELEASE_DATE = "2025-04-25"

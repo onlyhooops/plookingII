@@ -166,7 +166,6 @@ class ImageViewController:
                 pass
         # 默认路径：NSImage
         self.image_view.setImage_(image)
-        self.image_view.setNeedsDisplay_(True)
 
     def clear_image(self):
         """清空图像显示"""

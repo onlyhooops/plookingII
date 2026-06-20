@@ -43,6 +43,7 @@ class StatusBarController:
         self.status_bar_view = None
         self.image_seq_label = None
         self.folder_seq_label = None
+        self.selection_count_label = None  # 已精选数量标签
         self.center_status_label = None
         self._status_timer = None
         self.update_indicator = None  # 图片更新状态指示器
@@ -82,12 +83,18 @@ class StatusBarController:
         slider_width = 80  # 缩放滑块宽度
         slider_margin = 10  # 缩放滑块边距
         right_label_width = 80  # 右侧标签宽度
-        right_margin = slider_width + slider_margin + 10  # 右侧边距
+        sel_label_width = 100  # 精选数量标签宽度
+        label_gap = 6  # 标签间距
+        # 从右到左累加计算每个组件的x坐标
+        # 布局: [slider] [sel_count] [folder_seq] [update_indicator] [center_status...]
+        slider_x = w - slider_width - slider_margin
+        sel_label_x = slider_x - sel_label_width - label_gap
+        right_label_x = sel_label_x - right_label_width - label_gap
 
         # 创建缩放滑块 - 在最右侧
         from AppKit import NSSlider, NSSliderTypeLinear
 
-        self.zoom_slider = NSSlider.alloc().initWithFrame_(((w - slider_width - slider_margin, 7), (slider_width, 16)))
+        self.zoom_slider = NSSlider.alloc().initWithFrame_(((slider_x, 7), (slider_width, 16)))
         self.zoom_slider.setControlSize_(NSSmallControlSize)  # 小尺寸控件
         self.zoom_slider.setSliderType_(NSSliderTypeLinear)  # 线性滑块
         self.zoom_slider.setMinValue_(1.0)  # 最小缩放：100%
@@ -102,7 +109,18 @@ class StatusBarController:
 
         # 创建状态指示器：放置于左下角（恢复靠左对齐）
         left_inset = 10
-        center_label_width = w - (right_label_width + right_margin) - (left_inset + 10)
+        update_indicator_width = 20  # 定义在右侧总宽计算之前
+        # 右侧所有组件总宽度 = update_indicator + gap + folder_seq + gap + sel_count + gap + slider
+        right_side_total = (
+            update_indicator_width
+            + label_gap
+            + right_label_width
+            + label_gap
+            + sel_label_width
+            + slider_margin
+            + slider_width
+        )
+        center_label_width = w - right_side_total - left_inset - 5
         center_label_width = max(center_label_width, 120)
         self.center_status_label = NSTextField.alloc().initWithFrame_(((left_inset, 5), (center_label_width, 20)))
         self.center_status_label.setEditable_(False)
@@ -113,9 +131,8 @@ class StatusBarController:
         self.center_status_label.setStringValue_("准备开始照片筛选...")
         self.status_bar_view.addSubview_(self.center_status_label)
 
-        # 创建更新状态指示器（在右侧标签前）
-        update_indicator_width = 20
-        update_indicator_x = w - right_label_width - right_margin - update_indicator_width - 5
+        # 创建更新状态指示器（在文件夹序号标签左侧）
+        update_indicator_x = right_label_x - update_indicator_width - label_gap
 
         self.update_indicator = NSTextField.alloc().initWithFrame_(
             ((update_indicator_x, 5), (update_indicator_width, 20))
@@ -129,10 +146,8 @@ class StatusBarController:
         self.update_indicator.setHidden_(True)  # 初始隐藏
         self.status_bar_view.addSubview_(self.update_indicator)
 
-        # 创建右侧标签：显示文件夹序号
-        self.folder_seq_label = NSTextField.alloc().initWithFrame_(
-            ((w - right_label_width - right_margin, 5), (right_label_width, 20))
-        )
+        # 创建文件夹序号标签
+        self.folder_seq_label = NSTextField.alloc().initWithFrame_(((right_label_x, 5), (right_label_width, 20)))
         self.folder_seq_label.setEditable_(False)
         self.folder_seq_label.setBordered_(False)
         self.folder_seq_label.setDrawsBackground_(False)
@@ -141,18 +156,21 @@ class StatusBarController:
         self.folder_seq_label.setStringValue_("0/0")
         self.status_bar_view.addSubview_(self.folder_seq_label)
 
+        # 创建已精选数量标签（在文件夹序号标签和缩放滑块之间）
+        self.selection_count_label = NSTextField.alloc().initWithFrame_(((sel_label_x, 5), (sel_label_width, 20)))
+        self.selection_count_label.setEditable_(False)
+        self.selection_count_label.setBordered_(False)
+        self.selection_count_label.setDrawsBackground_(False)
+        self.selection_count_label.setFont_(NSFont.systemFontOfSize_(12))
+        self.selection_count_label.setAlignment_(2)
+        self.selection_count_label.setStringValue_("精选: 0")
+        self.status_bar_view.addSubview_(self.selection_count_label)
+
         # 启动会话状态更新定时器
         self.start_session_updates()
 
     def start_session_updates(self):
-        """启动会话状态更新定时器"""
-        if self._session_update_timer:
-            self._session_update_timer.invalidate()
-
-        # 每5秒更新一次会话状态
-        self._session_update_timer = NSTimer.scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(
-            5.0, self, "updateSessionStatus:", None, True
-        )
+        """启动会话状态更新定时器（已禁用——回调为空操作，避免空轮询消耗资源）"""
 
     def updateSessionStatus_(self, timer):
         """定时器回调：更新会话状态 - 趣味功能已移除
@@ -215,22 +233,46 @@ class StatusBarController:
         # 更新状态栏框架
         self.status_bar_view.setFrame_(NSRect((0, 0), (width, status_bar_height)))
 
-        # 重新布局状态栏标签
-        slider_width = 80  # 缩放滑块宽度
-        slider_margin = 10  # 缩放滑块边距
-        right_label_width = 80  # 右侧标签宽度
-        right_margin = slider_width + slider_margin + 10  # 右侧边距
+        # 重新布局状态栏标签（与 setup_ui 保持一致）
+        slider_width = 80
+        slider_margin = 10
+        right_label_width = 80
+        sel_label_width = 100
+        label_gap = 6
+        update_indicator_width = 20
+
+        slider_x = width - slider_width - slider_margin
+        sel_label_x = slider_x - sel_label_width - label_gap
+        right_label_x = sel_label_x - right_label_width - label_gap
 
         # 更新缩放滑块位置
         if hasattr(self, "zoom_slider") and self.zoom_slider:
-            self.zoom_slider.setFrame_(((width - slider_width - slider_margin, 7), (slider_width, 16)))
+            self.zoom_slider.setFrame_(((slider_x, 7), (slider_width, 16)))
 
-        # 右侧标签位置保持不变
-        self.folder_seq_label.setFrame_(((width - right_label_width - right_margin, 5), (right_label_width, 20)))
+        # 更新精选数量标签
+        if hasattr(self, "selection_count_label") and self.selection_count_label:
+            self.selection_count_label.setFrame_(((sel_label_x, 5), (sel_label_width, 20)))
 
-        # 左下角状态指示器占据左侧区域（恢复靠左对齐）
+        # 更新文件夹序号标签
+        self.folder_seq_label.setFrame_(((right_label_x, 5), (right_label_width, 20)))
+
+        # 更新状态指示器
+        if hasattr(self, "update_indicator") and self.update_indicator:
+            update_indicator_x = right_label_x - update_indicator_width - label_gap
+            self.update_indicator.setFrame_(((update_indicator_x, 5), (update_indicator_width, 20)))
+
+        # 左下角状态指示器占据左侧区域
         left_inset = 10
-        center_label_width = width - (right_label_width + right_margin) - (left_inset + 10)
+        right_side_total = (
+            update_indicator_width
+            + label_gap
+            + right_label_width
+            + label_gap
+            + sel_label_width
+            + slider_margin
+            + slider_width
+        )
+        center_label_width = width - right_side_total - left_inset - 5
         center_label_width = max(center_label_width, 120)
         self.center_status_label.setFrame_(((left_inset, 5), (center_label_width, 20)))
 
@@ -252,26 +294,14 @@ class StatusBarController:
             os.path.basename(images[current_index]) if images and 0 <= current_index < len(images) else ""
         )
 
-        # 计算分辨率与体积（MB）
+        # 从 ImageManager 缓存读取分辨率与体积（避免同步磁盘 I/O）
         resolution_text = ""
         size_mb_text = ""
         try:
-            if current_image_name:
-                img_path = images[current_index]
-                # 分辨率（安全路径）
-                try:
-                    from ...core.functions import get_image_dimensions_safe
-
-                    dims = get_image_dimensions_safe(img_path)
-                    resolution_text = f"{dims[0]}x{dims[1]}" if dims else ""
-                except Exception:
-                    resolution_text = ""
-                # 体积
-                try:
-                    sz = os.path.getsize(img_path)
-                    size_mb_text = f"{sz / (1024 * 1024):.2f}MB"
-                except Exception:
-                    size_mb_text = ""
+            if current_image_name and hasattr(self.main_window, "image_manager"):
+                img_mgr = self.main_window.image_manager
+                resolution_text = getattr(img_mgr, "_current_image_resolution", "") or ""
+                size_mb_text = getattr(img_mgr, "_current_image_size_mb", "") or ""
         except Exception:
             pass
 
@@ -291,6 +321,9 @@ class StatusBarController:
 
         # 更新文件夹序列标签
         self.folder_seq_label.setStringValue_(f"{current_subfolder_index + 1}/{len(subfolders)}")
+
+        # 更新已精选数量标签
+        self._update_selection_count()
 
         # 更新会话管理器状态
         self.update_session_data(images, subfolders, current_index, current_subfolder_index)
@@ -460,6 +493,18 @@ class StatusBarController:
 
         except Exception as e:
             logger.exception("设置更新指示器失败: %s", e)
+
+    def _update_selection_count(self):
+        """更新已精选数量标签的显示"""
+        try:
+            if not hasattr(self, "selection_count_label") or not self.selection_count_label:
+                return
+            count = 0
+            if hasattr(self.main_window, "operation_manager") and self.main_window.operation_manager:
+                count = self.main_window.operation_manager.get_keep_count()
+            self.selection_count_label.setStringValue_(f"精选: {count}")
+        except Exception:
+            logger.debug("更新精选数量标签失败", exc_info=True)
 
     def cleanup(self):
         """清理资源"""

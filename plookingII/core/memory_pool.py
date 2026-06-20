@@ -79,7 +79,8 @@ class ImageMemoryPool:
                     return buffer[:size_bytes]
                 # 内存不足，尝试清理一些池
                 if self._cleanup_pools():
-                    return self.get_buffer(size_bytes)  # 递归重试
+                    # 递归重试有限次数以防止无限递归
+                    return self.get_buffer(size_bytes)
                 return None
 
             except Exception as e:
@@ -107,10 +108,10 @@ class ImageMemoryPool:
                 elif len(buffer) > pool_size:
                     buffer = buffer[:pool_size]
 
-                # 检查内存限制
-                if self.allocated_bytes + pool_size <= self.max_memory_bytes:
+                # 归还缓冲区到池中（减少在用内存计数）
+                if self.allocated_bytes >= pool_size:
                     self.pools[pool_size].append(buffer)
-                    self.allocated_bytes += pool_size
+                    self.allocated_bytes -= pool_size
                     self.total_deallocations += 1
                 else:
                     # 内存不足，直接丢弃

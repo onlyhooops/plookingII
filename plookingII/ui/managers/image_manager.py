@@ -6,6 +6,7 @@
 
 import contextlib
 import logging
+import os
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -81,6 +82,10 @@ class ImageManager:
         self._nav_history = []  # [(timestamp, direction)] 最近导航事件
         self._last_sequence_sync = 0  # 上次序列同步时间
 
+        # 当前图片元信息缓存（避免 status_bar 重复 I/O）
+        self._current_image_resolution = None  # "WxH" 字符串或空字符串
+        self._current_image_size_mb = None  # "X.XXMB" 字符串或空字符串
+
     def show_current_image(self):
         """显示当前图像"""
         if not self.main_window.images or self.main_window.current_index >= len(self.main_window.images):
@@ -118,6 +123,9 @@ class ImageManager:
         # 更新会话状态
         self._update_session_progress()
 
+        # 缓存当前图片元信息（供 status_bar 直接读取，避免重复 I/O）
+        self._cache_current_image_meta(image_path)
+
         self._show_image_common(image_path)
 
     def _update_session_progress(self):
@@ -133,6 +141,23 @@ class ImageManager:
 
         except Exception:
             logger.exception("更新会话进度时发生错误")
+
+    def _cache_current_image_meta(self, image_path: str):
+        """缓存当前图片的元信息（分辨率、文件体积），供状态栏直接读取，避免重复磁盘 I/O。
+
+        Args:
+            image_path: 图像文件路径
+        """
+        try:
+            from ...core.functions import get_image_dimensions_safe
+
+            dims = get_image_dimensions_safe(image_path)
+            self._current_image_resolution = f"{dims[0]}x{dims[1]}" if dims else ""
+            sz = os.path.getsize(image_path)
+            self._current_image_size_mb = f"{sz / (1024 * 1024):.2f}MB"
+        except Exception:
+            self._current_image_resolution = ""
+            self._current_image_size_mb = ""
 
     def _show_image_common(self, image_path: str):
         """通用图像显示方法

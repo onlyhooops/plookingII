@@ -123,7 +123,7 @@ class HybridImageProcessor:
                 return None
 
             # 选择并执行加载策略（原图优先：禁用预览策略介入）
-            selected_strategy = self._select_loading_strategy(strategy, file_size_mb)
+            selected_strategy = self._select_loading_strategy(strategy, file_path, file_size_mb)
             if not selected_strategy:
                 logger.warning("No suitable loading strategy found for %s", file_path)
                 return None
@@ -377,11 +377,12 @@ class HybridImageProcessor:
         except Exception:
             return None
 
-    def _select_loading_strategy(self, strategy_name: str, file_size_mb: float):
+    def _select_loading_strategy(self, strategy_name: str, file_path: str, file_size_mb: float):
         """选择加载策略
 
         Args:
             strategy_name: 策略名称
+            file_path: 文件路径（用于格式验证）
             file_size_mb: 文件大小（MB）
 
         Returns:
@@ -389,14 +390,11 @@ class HybridImageProcessor:
         """
         if strategy_name in self.loading_strategies:
             strategy = self.loading_strategies[strategy_name]
-            # 检查策略是否可以处理该文件
-            if strategy.can_handle("", file_size_mb):
+            if strategy.can_handle(file_path, file_size_mb):
                 return strategy
-            # 策略无法处理，回退到自动策略
             logger.debug("Strategy {strategy_name} cannot handle file size %sMB, falling back to auto", file_size_mb)
             return self.loading_strategies["auto"]
 
-        # 如果策略不存在，使用自动策略
         logger.warning("Unknown loading strategy: %s, falling back to auto", strategy_name)
         return self.loading_strategies["auto"]
 

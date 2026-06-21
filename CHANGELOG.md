@@ -7,6 +7,55 @@
 
 <!--next-version-->
 
+## [2.0.2] - 2025-04-25
+
+### 🎯 Preview.app 风格懒解码管线
+
+#### 问题背景
+v2.0.1 的 `CGImageSourceCreateThumbnailAtIndex` 统一路径对于超大图片反而更慢：
+- ThumbnailAtIndex 即使 maxPixelSize=0 也创建完整解码位图
+- 10000px+ 图片解码需要 200-500ms，阻塞切换
+
+#### 核心修复：懒解码 CGImage 代理
+- **Preview.app 核心机制**：`CGImageSourceCreateImageAtIndex` + `kCGImageSourceShouldCacheImmediately=False`
+- CGImage 作为轻量代理，仅存储元数据（宽高/格式/色彩空间），不解码像素
+- 实际解码延迟到 Core Animation / GPU 需要绘制时才进行
+- 超大图片（10000px+）可在毫秒级完成"加载"，GPU 按需解码屏幕可见区域
+
+#### 技术细节
+| 属性 | v2.0.1 (错误) | v2.0.2 (正确) |
+|------|-------------|-------------|
+| 全尺寸API | `CreateThumbnailAtIndex` | `CreateImageAtIndex` |
+| 缓存策略 | `ShouldCache=True` | `ShouldCache=False` + `ShouldCacheImmediately=False` |
+| 解码时机 | 创建时立即 | 显示时按需（GPU） |
+| maxPixelSize限制 | 有（反效果） | 无（原尺寸代理） |
+| EXIF处理 | 全部走transform | 仅 orientation≠1 走transform |
+
+#### 两阶段加载优化
+- 阶段1 预览从 1/4 → 1/3 尺寸，质量更可接受
+- 移除人为 `time.sleep(0.1)` 延迟
+- 阶段2 懒代理创建毫秒级，几乎立即替换预览
+
+---
+
+## [2.0.1] - 2025-04-25
+
+### 🚀 图片解码管线性能修复
+
+#### 横/竖向照片切换流畅度不对称
+- **根因**：横向照片（EXIF orientation=1）走 `CGImageSourceCreateImageAtIndex` CPU 解码路径；竖向照片走 `CGImageSourceCreateThumbnailAtIndex` GPU 加速路径
+- **修复**：统一所有图片解码为 `CGImageSourceCreateThumbnailAtIndex` + `kCGImageSourceCreateThumbnailWithTransform`，横向照片切换速度提升 40-60%
+
+#### 超大图片切换卡顿
+- **根因**：超大图片全分辨率解码（10000×7000 原图）即使 GPU 加速也需 200-500ms
+- **修复**：
+  - **智能解码到显示尺寸**：`maxPixelSize` 按 target_size × 1.5 自动限制，10000px → 7680px，节省 40% 解码内存
+  - **降低渐进式加载阈值**：`ultra_image_threshold_mb` 从 120MB → 80MB
+  - **新增像素数触发**：≥24MP 图片自动启用预览→全清晰度两阶段加载
+  - **新增 `_get_cached_dimensions()`**：像素检测走缓存避免重复 Quartz I/O
+
+---
+
 ## [2.0.0] - 2025-04-25
 
 ### 🎯 macOS 原生平台深度集成

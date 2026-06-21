@@ -755,7 +755,10 @@ class ImageManager:
             return None
 
     def _load_and_display_progressive(self, image_path, target_size):
-        """渐进式加载和显示大图片
+        """渐进式加载和显示大图片（Preview.app风格两阶段）
+
+        阶段1: 立即创建缩略图→即刻显示（用户看到预览）
+        阶段2: 创建懒解码CGImage代理→在GPU空闲时decode→无缝替换
 
         Args:
             image_path: 图像文件路径
@@ -767,16 +770,17 @@ class ImageManager:
         def progressive_load_worker():
             try:
                 local_target_size = self._resolve_progressive_target_size(target_size)
-                preview_size = (max(1, local_target_size[0] // 4), max(1, local_target_size[1] // 4))
+                preview_size = (max(1, local_target_size[0] // 3), max(1, local_target_size[1] // 3))
 
-                # 第一阶段：快速加载低质量预览
+                # 阶段1：快速缩略图→立即显示
                 preview_image = self._load_image_optimized(image_path, prefer_preview=True, target_size=preview_size)
                 if preview_image:
                     self._post_to_main(lambda: self._display_image_immediate(preview_image))
 
-                    # 第二阶段：延迟加载完整质量图片
-                    time.sleep(0.1)
-                    full_image = self._load_image_optimized(image_path, target_size=local_target_size)
+                    # 阶段2：懒解码代理CGImage（毫秒级创建）→替换预览
+                    full_image = self.image_cache.load_image_with_strategy(image_path, "quartz", local_target_size)
+                    if full_image is None:
+                        full_image = self._load_image_optimized(image_path, target_size=local_target_size)
                     if full_image:
                         self._post_to_main(lambda: self._display_image_immediate(full_image))
             except Exception:
@@ -784,12 +788,59 @@ class ImageManager:
 
         self.current_progressive_task = self._executor.submit(progressive_load_worker)
 
-    def _maybe_two_stage_for_ultra(self, image_path: str, target_size: tuple) -> bool:
-        """根据文件大小阈值决定是否采用两阶段显示（预览→全清晰度）"""
+    def _get_cached_dimensions(self, image_path: str) -> tuple[int, int] | None:
+        """获取缓存的图像像素尺寸（不解码完整图像）
+
+        Args:
+            image_path: 图像文件路径
+
+        Returns:
+            (width, height) 或 None
+        """
         try:
-            ultra_mb = IMAGE_PROCESSING_CONFIG.get("ultra_image_threshold_mb", 120)
+            cache = getattr(self, "_image_dimensions_cache", None)
+            if cache and image_path in cache:
+                return cache[image_path]
+            dims = None
+            try:
+                from Foundation import NSURL
+                from Quartz import CGImageSourceCopyPropertiesAtIndex, CGImageSourceCreateWithURL
+
+                url = NSURL.fileURLWithPath_(image_path)
+                source = CGImageSourceCreateWithURL(url, None)
+                if source:
+                    props = CGImageSourceCopyPropertiesAtIndex(source, 0, None)
+                    if props:
+                        dims = (props.get("PixelWidth", 0), props.get("PixelHeight", 0))
+            except Exception:
+                pass
+            if dims and dims[0] > 0:
+                if not cache:
+                    self._image_dimensions_cache = {}
+                self._image_dimensions_cache[image_path] = dims
+            return dims
+        except Exception:
+            return None
+
+    def _maybe_two_stage_for_ultra(self, image_path: str, target_size: tuple) -> bool:
+        """根据文件大小或像素数阈值决定是否采用两阶段显示（预览→全清晰度）
+
+        触发条件：
+        1. 文件大小 >= ultra_image_threshold_mb (默认80MB)
+        2. 像素数 >= ultra_pixel_threshold (默认24MP = 6000×4000)
+        """
+        try:
+            ultra_mb = IMAGE_PROCESSING_CONFIG.get("ultra_image_threshold_mb", 80)
+            ultra_pixels = IMAGE_PROCESSING_CONFIG.get("ultra_pixel_threshold", 24_000_000)
             file_size_mb = self._get_file_size_safely(image_path)
+
             if file_size_mb >= float(ultra_mb):
+                self._load_and_display_progressive(image_path, target_size)
+                return True
+
+            # 额外检查：像素数超过阈值也启用两阶段（压缩率高的大图文件可能不大）
+            dims = self._get_cached_dimensions(image_path)
+            if dims and dims[0] * dims[1] >= ultra_pixels:
                 self._load_and_display_progressive(image_path, target_size)
                 return True
         except Exception:

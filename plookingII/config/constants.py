@@ -168,6 +168,10 @@ IMAGE_PROCESSING_CONFIG = {
     # 快速加载阈值：配置项形式的阈值设置（MB单位）
     # 简化为两级：50MB及以下原图加载，50MB以上智能加载
     "fast_load_threshold": 50,
+    # 超大图片渐进加载阈值（MB）：超过此大小的图片自动启用两阶段加载
+    "ultra_image_threshold_mb": 80,
+    # 超大像素阈值：超过此像素数的图片自动启用两阶段加载（24MP）
+    "ultra_pixel_threshold": 24_000_000,
     # 主缓存大小：主图像缓存池的容量限制
     # 50个缓存项，用于常用图像的快速访问
     "cache_size": 50,

@@ -88,15 +88,20 @@ def load_with_nsimage(file_path: str) -> Any | None:
 
 
 def load_with_quartz(file_path: str, target_size: tuple[int, int] | None = None, thumbnail: bool = False) -> Any | None:
-    """使用Quartz加载（优化，适合中等文件）
+    """使用Quartz加载（预览风格懒解码）
+
+    两种模式：
+    - thumbnail=True:  立即解码缩略图 (CGImageSourceCreateThumbnailAtIndex)
+    - thumbnail=False: 创建懒解码CGImage代理 (CGImageSourceCreateImageAtIndex + ShouldCacheImmediately=False)
+      代理CGImage不解码像素，仅在GPU需要时才解码屏幕可见区域
 
     Args:
         file_path: 文件路径
-        target_size: 目标尺寸 (width, height)
-        thumbnail: 是否创建缩略图
+        target_size: 目标尺寸 (width, height)，用于缩略图模式
+        thumbnail: 是否创建缩略图（立即解码）
 
     Returns:
-        CGImage对象，失败返回None
+        CGImage对象（代理或缩略图），失败返回None
     """
     try:
         from Foundation import NSURL
@@ -110,6 +115,7 @@ def load_with_quartz(file_path: str, target_size: tuple[int, int] | None = None,
             kCGImageSourceCreateThumbnailWithTransform,
             kCGImageSourceShouldAllowFloat,
             kCGImageSourceShouldCache,
+            kCGImageSourceShouldCacheImmediately,
             kCGImageSourceThumbnailMaxPixelSize,
         )
 
@@ -121,32 +127,42 @@ def load_with_quartz(file_path: str, target_size: tuple[int, int] | None = None,
             return None
 
         if thumbnail and target_size:
-            # 创建缩略图
+            # 缩略图模式：立即解码指定尺寸的缩略图
             max_size = max(target_size)
             options = {
                 kCGImageSourceThumbnailMaxPixelSize: max_size,
                 kCGImageSourceShouldCache: True,
+                kCGImageSourceShouldCacheImmediately: True,
                 kCGImageSourceCreateThumbnailFromImageAlways: True,
                 kCGImageSourceCreateThumbnailWithTransform: True,
                 kCGImageSourceShouldAllowFloat: True,
             }
             return CGImageSourceCreateThumbnailAtIndex(source, 0, options)
-        # 加载完整图片，处理EXIF方向
+
+        # 全尺寸模式：创建懒解码CGImage代理（Preview.app风格）
+        # - kCGImageSourceShouldCacheImmediately=False 不解码像素，CGImage仅存储元数据
+        # - 实际解码延迟到 Core Animation / GPU 需要时才进行
+        # - 超大图片（10000px+）可在数毫秒内"加载"完成
+        #
+        # EXIF方向处理：仅对真正需要方向修正的图片使用transform路径
+        # 大多数相机/手机已物理旋转JPEG数据，orientation=1，直接走懒代理
         props = CGImageSourceCopyPropertiesAtIndex(source, 0, None)
         orientation = props.get(kCGImagePropertyOrientation, 1) if props else 1
-
         if orientation > 1:
-            # EXIF方向需要修正，使用thumbnail API以应用transform
+            # 图片未物理旋转（EXIF标签指示方向），使用thumbnail API修正
             options = {
-                kCGImageSourceShouldCache: True,
+                kCGImageSourceShouldCache: False,
+                kCGImageSourceShouldCacheImmediately: False,
                 kCGImageSourceShouldAllowFloat: True,
                 kCGImageSourceCreateThumbnailFromImageAlways: True,
                 kCGImageSourceCreateThumbnailWithTransform: True,
-                kCGImageSourceThumbnailMaxPixelSize: 0,  # 0 = 不限制尺寸，返回原图
+                kCGImageSourceThumbnailMaxPixelSize: 0,  # 不限制尺寸
             }
             return CGImageSourceCreateThumbnailAtIndex(source, 0, options)
+
         options = {
-            kCGImageSourceShouldCache: True,
+            kCGImageSourceShouldCache: False,
+            kCGImageSourceShouldCacheImmediately: False,
             kCGImageSourceShouldAllowFloat: True,
         }
         return CGImageSourceCreateImageAtIndex(source, 0, options)

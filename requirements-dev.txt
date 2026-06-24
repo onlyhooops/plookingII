@@ -28,7 +28,7 @@ types-Pillow>=10.0.0
 coverage>=7.3.0
 coverage-badge>=1.1.0
 tox>=4.6.0
-hypothesis>=6.82.0
+hypothesis>=6.141.1
 
 # Mock和测试辅助
 responses>=0.23.1

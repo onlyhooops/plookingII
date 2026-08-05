@@ -37,7 +37,7 @@ hypothesis>=6.82.0
 # Mock和测试辅助
 responses>=0.23.1
 freezegun>=1.2.2
-faker>=19.2.0
+faker>=40.36.0
 
 # 性能分析
 memory-profiler>=0.61.0

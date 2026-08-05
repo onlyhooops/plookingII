@@ -5,7 +5,7 @@ pytest-timeout>=2.1.0
 pytest-mock>=3.11.1
 pytest-xdist>=3.3.1
 pytest-asyncio>=0.21.1
-pytest-randomly>=3.13.0
+pytest-randomly>=4.1.0
 pytest-benchmark>=4.0.0
 
 # 自动版本管理：根据 Conventional Commits 自动升版 + 生成 CHANGELOG

@@ -41,7 +41,7 @@ jobs:
           fetch-depth: 0  # 获取完整历史，用于生成 changelog
 
       - name: 🐍 设置 Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.11'
           cache: 'pip'

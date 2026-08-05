@@ -1,0 +1,15 @@
+[flake8]
+max-line-length = 120
+ignore = E501,W503,F403,F405,E402,E722,F811,W504
+exclude = 
+    .git,
+    __pycache__,
+    dist,
+    build,
+    .venv,
+    venv,
+    .pytest_cache,
+    tests/performance_benchmark.py,
+    plookingII/imports.py
+per-file-ignores =
+    __init__.py:F403,F405

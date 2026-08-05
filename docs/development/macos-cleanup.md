@@ -1,0 +1,303 @@
+# macOS 系统清理指南
+
+## 📋 问题背景
+
+在开发过程中，macOS 会自动记录应用打开的文件夹到系统的"最近项目"列表中。这些记录会显示在 Dock 菜单的右键菜单中，可能会泄露开发环境的敏感路径信息。
+
+### 问题表现
+
+右键点击 Dock 中的应用图标时，会显示：
+
+- 最近打开的文件夹路径
+- 测试路径（如开发测试使用的文件夹）
+- 开发环境中的私有路径
+
+## ✅ 解决方案
+
+### 1. 自动清理（开发环境）
+
+应用已集成自动清理功能，在以下情况下自动触发：
+
+#### 检测开发环境的条件
+
+- 设置了环境变量 `PLOOKINGII_DEV=1`
+- 在虚拟环境中运行
+- 从源码目录运行（存在 `.git` 目录）
+
+#### 自动清理时机
+
+- **应用退出时**：自动清理所有最近文档记录
+
+#### 实现方式
+
+```python
+# 在 plookingII/app/main.py 中
+def applicationShouldTerminate_(self, sender):
+    # ... 其他清理逻辑 ...
+
+    # 开发环境下自动清理 macOS 最近文档记录
+    from ..utils.macos_cleanup import MacOSCleanupManager
+
+    MacOSCleanupManager.auto_cleanup_if_dev()
+
+    return True
+```
+
+### 2. 手动清理
+
+#### 使用清理脚本
+
+```bash
+# 运行清理脚本
+make clear-recent
+
+# 或直接运行
+python3 scripts/clear_recent_items.py
+```
+
+#### 清理内容
+
+脚本会清理以下内容：
+
+- ✅ macOS 系统最近文档列表
+- ✅ NSDocumentController 记录
+- ✅ Dock 菜单显示的最近项目
+- ✅ 应用内部最近文件夹数据库
+
+### 3. 代码中使用
+
+```python
+from plookingII.utils.macos_cleanup import MacOSCleanupManager
+
+# 检测是否为开发环境
+is_dev = MacOSCleanupManager.is_development_environment()
+
+# 清理 macOS 系统最近文档
+MacOSCleanupManager.clear_recent_documents()
+
+# 清理应用最近文档
+MacOSCleanupManager.clear_app_recent_documents()
+
+# 如果在开发环境，自动清理
+MacOSCleanupManager.auto_cleanup_if_dev()
+```
+
+## 🔧 技术实现
+
+### 清理方法
+
+#### 1. NSRecentDocumentRecords
+
+```python
+from Foundation import NSUserDefaults
+
+defaults = NSUserDefaults.standardUserDefaults()
+defaults.removeObjectForKey_("NSRecentDocumentRecords")
+defaults.synchronize()
+```
+
+#### 2. AppleScript 重置
+
+```applescript
+tell application "System Events"
+    tell appearance preferences
+        set recent documents limit to 0
+        set recent applications limit to 0
+        set recent servers limit to 0
+    end tell
+end tell
+```
+
+#### 3. NSDocumentController
+
+```python
+from Foundation import NSDocumentController
+
+doc_controller = NSDocumentController.sharedDocumentController()
+doc_controller.clearRecentDocuments_(None)
+```
+
+#### 4. 应用数据库
+
+```python
+from plookingII.services.recent import RecentFoldersManager
+
+manager = RecentFoldersManager()
+manager.clear()
+manager.cleanup_invalid_entries()
+```
+
+### 开发环境检测
+
+系统会自动检测以下特征：
+
+1. **环境变量**
+
+   ```bash
+   export PLOOKINGII_DEV=1
+   ```
+
+1. **虚拟环境**
+
+   - 检测 `sys.real_prefix`
+   - 检测 `sys.base_prefix != sys.prefix`
+
+1. **源码目录**
+
+   - 检测 `.git` 目录的存在
+
+## 📝 使用示例
+
+### 开发时设置
+
+```bash
+# 1. 设置开发环境标志
+export PLOOKINGII_DEV=1
+
+# 2. 正常运行应用
+python3 -m plookingII
+
+# 3. 应用退出时会自动清理
+```
+
+### 手动清理
+
+```bash
+# 立即清理所有最近项目记录
+make clear-recent
+```
+
+### 输出示例
+
+```
+======================================================================
+🧹 PlookingII - macOS 最近项目清理工具
+======================================================================
+
+正在检测运行环境...
+✅ 检测到开发环境
+
+正在清理最近项目记录...
+----------------------------------------------------------------------
+1. 清理 macOS 系统最近文档...
+   ✅ 系统最近文档已清理
+2. 清理应用最近文档...
+   ✅ 应用最近文档已清理
+3. 清理应用数据库最近记录...
+   ✅ 已清理数据库记录 (移除 0 条无效记录)
+
+----------------------------------------------------------------------
+✅ 清理完成！
+
+清理内容:
+  • macOS 系统最近文档列表
+  • NSDocumentController 记录
+  • Dock 菜单显示的最近项目
+  • 应用内部最近文件夹数据库
+
+注意:
+  • Dock 菜单可能需要重启应用后才会更新
+  • 部分系统设置需要重新登录才能完全生效
+
+======================================================================
+```
+
+## ⚠️ 注意事项
+
+### 1. Dock 菜单更新
+
+- Dock 菜单可能需要重启应用后才会更新
+- 部分系统设置需要重新登录才能完全生效
+
+### 2. 生产环境
+
+- 生产环境（发布的 .app 包）**不会**自动清理
+- 用户的最近项目记录会正常保留
+- 只有开发环境才会触发自动清理
+
+### 3. 清理时机
+
+- 推荐在每次开发测试结束后手动清理
+- 或依赖应用退出时的自动清理
+- 避免将测试路径提交到版本控制或发布
+
+## 📚 相关文件
+
+### 核心实现
+
+- `plookingII/utils/macos_cleanup.py` - 清理工具实现
+- `scripts/clear_recent_items.py` - 清理脚本
+- `plookingII/app/main.py` - 应用退出时的清理逻辑
+
+### 配置
+
+- `Makefile` - `make clear-recent` 命令
+- `pyproject.toml` - Ruff 配置（忽略 print 语句）
+
+### 文档
+
+- `MACOS_CLEANUP_GUIDE.md` - 本文档
+
+## 🎯 最佳实践
+
+### 开发环境推荐设置
+
+```bash
+# .zshrc 或 .bashrc 中添加
+export PLOOKINGII_DEV=1
+
+# 使用虚拟环境
+python3 -m venv venv
+source venv/bin/activate
+```
+
+### CI/CD 环境
+
+```yaml
+# .github/workflows/ci.yml
+env:
+  PLOOKINGII_DEV: 1
+```
+
+### 测试前清理
+
+```bash
+# 测试前清理历史记录
+make clear-recent
+
+# 运行测试
+make test
+
+# 测试后再次清理
+make clear-recent
+```
+
+## 🔐 隐私保护
+
+### 保护内容
+
+- ✅ 开发者的测试路径
+- ✅ 私有文件夹名称
+- ✅ 开发环境的文件结构
+- ✅ 敏感的项目路径
+
+### 不影响
+
+- ✅ 应用内部的最近文件夹功能（仍然正常工作）
+- ✅ 用户在生产环境的使用体验
+- ✅ 应用的核心功能
+
+## ✨ 总结
+
+通过集成的清理系统：
+
+1. **自动化**：开发环境下自动清理，无需手动操作
+1. **安全性**：避免开发路径泄露到版本控制或发布包
+1. **灵活性**：支持手动清理和自动清理两种模式
+1. **透明性**：清晰的日志输出，方便调试和确认
+
+______________________________________________________________________
+
+**维护者**: PlookingII Team
+**版本**: 1.6.0
+**最后更新**: 2025-10-06

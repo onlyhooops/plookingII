@@ -1,0 +1,217 @@
+# ==================== Python 相关 ====================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+
+# py2app 自动生成的文件
+setup.py
+
+# ==================== 测试相关 ====================
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+coverage.json
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+tests.log
+tox.ini
+
+# ==================== 文档相关 ====================
+# Sphinx documentation
+docs/_build/
+docs/reports/
+docs/testing/
+docs/archive/
+
+# 项目文档（不托管到GitHub）
+doc/
+TESTING_QUICKSTART.md
+TEST_SYSTEM_SUMMARY.md
+TEST_SYSTEM_FILES.md
+INSTALL_TEST_SYSTEM.md
+README_TEST_SYSTEM.md
+FINAL_DELIVERY.md
+PERFORMANCE_OPTIMIZATION_FINAL_REPORT.md
+FINAL_CLEANUP_REPORT.md
+DEPLOYMENT_GUIDE.md
+API_DOCUMENTATION.md
+测试系统部署报告.md
+
+# ==================== 构建和发布 ====================
+# Build artifacts
+build/
+dist/
+release/
+original/
+archive/
+
+# PyInstaller spec file (生成的)
+PlookingII.spec
+
+# ==================== IDE 和编辑器 ====================
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# ==================== 操作系统 ====================
+# macOS
+.DS_Store
+.DS_Store?
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ==================== 开发工具 ====================
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# Ruff
+.ruff_cache/
+
+# Bandit
+.bandit
+
+# ==================== 项目特定 ====================
+# 日志文件
+*.log
+*.tmp
+*.temp
+
+# 脚本和工具（开发用，不托管）
+scripts/
+
+# Makefile（测试相关，不托管）
+Makefile.test
+
+# 缓存和临时文件
+.cache/
+*.bak
+*.backup
+backup_*/
+
+# ==================== Git 相关 ====================
+# Git配置（保留.github/workflows核心CI）
+.github/CODEOWNERS
+.github/dependabot.yml
+.github/workflows/docs.yml
+.github/workflows/test-timeout-protection.yml
+
+# Pre-commit
+.pre-commit-config.yaml

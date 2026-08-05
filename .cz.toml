@@ -1,0 +1,36 @@
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "1.4.0"
+version_files = [
+    "plookingII/config/constants.py:VERSION"
+]
+tag_format = "v$version"
+update_changelog_on_bump = true
+changelog_file = "CHANGELOG.md"
+changelog_incremental = true
+changelog_start_rev = "v1.0.0"
+
+# Commit message pattern
+bump_pattern = "^(feat|fix|refactor|perf|docs|style|test|build|ci|chore|revert)"
+bump_map = {
+    "feat" = "MINOR",
+    "fix" = "PATCH",
+    "refactor" = "PATCH",
+    "perf" = "PATCH",
+    "BREAKING CHANGE" = "MAJOR"
+}
+
+# Changelog sections
+[tool.commitizen.change_type_order]
+feat = "✨ Features"
+fix = "🐛 Bug Fixes"
+refactor = "♻️ Code Refactoring"
+perf = "⚡ Performance Improvements"
+docs = "📚 Documentation"
+style = "💄 Styles"
+test = "✅ Tests"
+build = "📦 Build System"
+ci = "👷 CI/CD"
+chore = "🔧 Chores"
+revert = "⏪ Reverts"
+

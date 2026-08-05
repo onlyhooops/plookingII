@@ -1,0 +1,25 @@
+# 代码所有者配置
+# 这个文件定义了项目不同部分的代码审查责任人
+
+# 全局所有者
+* @plookingII-team
+
+# 测试相关
+/tests/ @plookingII-team
+pytest.ini @plookingII-team
+requirements-dev.txt @plookingII-team
+
+# CI/CD配置
+/.github/ @plookingII-team
+
+# 核心代码
+/plookingII/core/ @plookingII-team
+/plookingII/config/ @plookingII-team
+
+# UI代码
+/plookingII/ui/ @plookingII-team
+
+# 文档
+/docs/ @plookingII-team
+*.md @plookingII-team
+

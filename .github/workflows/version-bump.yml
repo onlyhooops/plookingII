@@ -1,0 +1,53 @@
+name: 🔖 自动版本提升与更新日志
+
+# 每次代码变动合并到 main 后，自动：
+# 1. 根据 Conventional Commits 计算下一个版本号（feat→minor，fix/perf/refactor→patch）
+# 2. 更新 plookingII/__version__.py
+# 3. 在 CHANGELOG.md 的 <!--next-version--> 处插入新版本记录
+# 4. 自动创建版本提交与 vX.Y.Z 标签
+# 5. 推送回仓库，随后触发 release.yml 的构建发布
+#
+# 开发者不再需要手动改版本号/写 CHANGELOG；只负责写规范的提交信息。
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # 手动触发：用于历史积压时一次性补齐
+
+permissions:
+  contents: write # 需要写权限来提交版本变更与创建标签
+
+jobs:
+  auto-version:
+    name: 自动升版 + 更新日志
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 检出代码（完整历史，用于计算版本与生成日志）
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: 🐍 设置 Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: 📦 安装 python-semantic-release
+        run: pip install "python-semantic-release>=9,<10"
+
+      - name: 🔖 计算下一版本并更新版本号/CHANGELOG
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python -m semantic_release version --no-push
+
+      - name: 📤 推送版本提交与标签
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push origin main --tags

@@ -157,6 +157,10 @@ class DirectoryImageListCache:
 
     用途：文件夹级导航（跳转/跳过/回退）反复扫描相邻文件夹时，
     命中缓存可跳过 NSDirectoryEnumerator 全量枚举与排序。
+
+    同时维护"目录是否含图"布尔缓存：目录树深度扫描阶段对每个目录
+    只枚举一次，之后 _dir_contains_images 直接命中布尔结果，避免
+    "先判断是否含图、再枚举图片列表"的两轮全量枚举。
     """
 
     def __init__(self, max_size: int = 64):
@@ -169,6 +173,8 @@ class DirectoryImageListCache:
         # 内部以不可变元组保存图片列表，对外返回副本：
         # 防止调用方（如 main_window.images）原地 pop/修改污染共享缓存
         self._cache: OrderedDict[str, tuple[float, tuple[str, ...]]] = OrderedDict()  # dir -> (mtime, images)
+        # 含图布尔缓存：dir -> (mtime, has_images)
+        self._contains_cache: OrderedDict[str, tuple[float, bool]] = OrderedDict()
         self._lock = threading.RLock()
 
     def get(self, dir_path: str) -> list[str] | None:
@@ -200,10 +206,38 @@ class DirectoryImageListCache:
             # 以不可变元组存储，杜绝外部引用突变
             self._cache[dir_path] = (mtime, tuple(images))
 
+    def get_contains(self, dir_path: str) -> bool | None:
+        """获取目录是否含图的布尔缓存；mtime 变化或不存在时返回 None"""
+        with self._lock:
+            entry = self._contains_cache.get(dir_path)
+            if entry is None:
+                return None
+            mtime, has_images = entry
+            try:
+                current_mtime = os.stat(dir_path).st_mtime
+            except OSError:
+                current_mtime = -1.0
+            if abs(current_mtime - mtime) > 1e-9:
+                del self._contains_cache[dir_path]
+                return None
+            # LRU：移动到末尾
+            self._contains_cache.move_to_end(dir_path)
+            return has_images
+
+    def put_contains(self, dir_path: str, mtime: float, has_images: bool) -> None:
+        """写入含图布尔缓存条目"""
+        with self._lock:
+            if dir_path in self._contains_cache:
+                del self._contains_cache[dir_path]
+            while len(self._contains_cache) >= self.max_size:
+                self._contains_cache.popitem(last=False)
+            self._contains_cache[dir_path] = (mtime, bool(has_images))
+
     def clear(self) -> None:
         """清空缓存"""
         with self._lock:
             self._cache.clear()
+            self._contains_cache.clear()
 
 
 class FileInfoBatchLoader:
@@ -309,6 +343,11 @@ class FileInfoBatchLoader:
         macOS NSFileManager.enumerator 底层使用 getattrlistbulk()，
         批量预取文件属性，比 os.scandir() + 逐文件 stat() 快 3-5x。
 
+        注意：仅扫描 dir_path 本身的直接子项，不递归进入任何子目录
+        （与 _scan_directory_fallback 的 os.scandir 行为保持一致）。
+        递归扫描会导致父目录的图片列表混入子目录（如“精选”目录）中的图片，
+        破坏“按文件夹浏览”的核心逻辑。
+
         Args:
             dir_path: 目录路径
             filter_exts: 过滤的文件扩展名列表（小写，不含点号），None 表示不过滤
@@ -329,6 +368,7 @@ class FileInfoBatchLoader:
             from Foundation import (
                 NSURL,
                 NSDirectoryEnumerationSkipsHiddenFiles,
+                NSDirectoryEnumerationSkipsSubdirectoryDescendants,
                 NSFileManager,
                 NSURLContentModificationDateKey,
                 NSURLFileSizeKey,
@@ -345,7 +385,10 @@ class FileInfoBatchLoader:
             ]
             enumerator = (
                 NSFileManager.defaultManager().enumeratorAtURL_includingPropertiesForKeys_options_errorHandler_(
-                    folder_url, keys, NSDirectoryEnumerationSkipsHiddenFiles, None
+                    folder_url,
+                    keys,
+                    NSDirectoryEnumerationSkipsHiddenFiles | NSDirectoryEnumerationSkipsSubdirectoryDescendants,
+                    None,
                 )
             )
 
@@ -447,6 +490,46 @@ class FileInfoBatchLoader:
         images.sort()
         self._dir_images_cache.put(dir_path, mtime, images)
         return images
+
+    def directory_contains_images(self, dir_path: str, filter_exts: tuple[str, ...] | None = None) -> bool:
+        """判断目录是否包含图片（目录级布尔缓存）
+
+        深度扫描阶段对目录树逐目录判断"是否含图"时，首次枚举后写入
+        布尔缓存；后续重复判断（如阶段2深扫与阶段1浅扫重叠、邻目录
+        预扫描）直接命中，避免对同一目录反复全量枚举。
+
+        顺带将本次枚举到的图片列表写入列表缓存，使随后的
+        get_directory_images 直接命中，进一步消除重复枚举。
+
+        Args:
+            dir_path: 目录路径
+            filter_exts: 过滤的文件扩展名列表（小写，不含点号），None 表示不过滤
+
+        Returns:
+            目录是否包含图片
+        """
+        if not os.path.isdir(dir_path):
+            return False
+
+        try:
+            mtime = os.stat(dir_path).st_mtime
+        except OSError:
+            mtime = -1.0
+
+        cached = self._dir_images_cache.get_contains(dir_path)
+        if cached is not None:
+            return cached
+
+        file_infos = self.scan_directory(dir_path, filter_exts=filter_exts)
+        images = [info.path for info in file_infos if info.is_file]
+        has_images = bool(images)
+
+        # 顺带填充列表缓存：后续 get_directory_images 直接命中
+        if images:
+            images.sort()
+            self._dir_images_cache.put(dir_path, mtime, images)
+        self._dir_images_cache.put_contains(dir_path, mtime, has_images)
+        return has_images
 
     def _scan_directory_fallback(self, dir_path: str, filter_exts_lower: tuple[str, ...]) -> list[FileInfo]:
         """回退方案：os.scandir() + 逐文件 stat()

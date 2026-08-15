@@ -136,19 +136,17 @@ class TestFolderScanning:
         """测试目录包含图片"""
         from unittest.mock import MagicMock
 
-        from plookingII.core.file_info_batch_loader import FileInfo
-
         # Mock loader 返回包含图片的文件信息
         mock_loader = MagicMock()
-        mock_loader.scan_directory.return_value = [
-            FileInfo(path="/test/folder/img1.jpg", extension="jpg", exists=True, is_file=True),
-            FileInfo(path="/test/folder/img2.png", extension="png", exists=True, is_file=True),
-        ]
+        mock_loader.directory_contains_images.return_value = True
         mock_get_loader.return_value = mock_loader
 
         result = folder_manager._dir_contains_images("/test/folder", (".jpg", ".png"))
 
         assert result is True
+        mock_loader.directory_contains_images.assert_called_once_with(
+            "/test/folder", filter_exts=(".jpg", ".png")
+        )
 
     @patch("plookingII.ui.managers.folder_manager.os.listdir")
     def test_dir_contains_images_false(self, mock_listdir, folder_manager):

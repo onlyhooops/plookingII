@@ -13,6 +13,7 @@ from AppKit import NSEventModifierFlagCommand, NSTimer
 from ...config.constants import APP_NAME
 from ...core.performance_optimizer import get_performance_optimizer
 from ...imports import logging, threading, time
+from ...monitor import get_perf_tracker
 
 # pyright: reportUndefinedVariable=false
 
@@ -66,6 +67,10 @@ class NavigationController:
 
         # 导航历史记录（用于性能优化）
         self._last_index = None
+
+        # 轻量性能跟踪：记录按键到画面响应的端到端延迟
+        self.perf = get_perf_tracker()
+        self._nav_press_time = None
 
     def handle_key_event(self, event):
         """处理键盘事件
@@ -168,6 +173,8 @@ class NavigationController:
             direction: 导航方向 ("left" 或 "right")
         """
         current_time = time.time()
+        # 记录本次按键时刻（含队列中的后续按键，最终以最后一次按键计时）
+        self._nav_press_time = time.perf_counter()
 
         # 如果正在导航中，直接更新目标索引，不重复触发
         with self._navigation_lock:
@@ -210,22 +217,13 @@ class NavigationController:
             if self._key_debounce_timer:
                 self._key_debounce_timer.invalidate()
 
-            # 使用性能优化器计算最优防抖时间
+            # 使用性能优化器计算最优防抖时间（轻量入口：
+            # 仅计算防抖延迟，不生成按键路径上不会被消费的预加载索引）
             adaptive_delay = self._key_debounce_delay  # 默认值
             if self._perf_optimizer:
                 try:
-                    # 计算导航优化参数
-                    from_idx = self._last_index if self._last_index is not None else self.main_window.current_index
-                    to_idx = self.main_window.current_index + (1 if direction == "right" else -1)
-                    total = len(self.main_window.images) if self.main_window.images else 1
-
-                    optimization = self._perf_optimizer.optimize_navigation(from_idx, to_idx, total)
-                    adaptive_delay = optimization.get("optimal_debounce_sec", self._key_debounce_delay)
-
-                    logger.debug(
-                        "Adaptive debounce: %.1fms, velocity: {optimization.get('navigation_velocity', 0):.2f} img/s",
-                        adaptive_delay * 1000,
-                    )
+                    adaptive_delay = self._perf_optimizer.calculate_optimal_debounce(current_time)
+                    logger.debug("Adaptive debounce: %.1fms", adaptive_delay * 1000)
                 except Exception as e:
                     logger.debug("Failed to calculate optimal debounce: %s", e)
                     # 回退到原有的自适应逻辑
@@ -254,6 +252,10 @@ class NavigationController:
 
     def execute_pending_navigation(self):
         """执行待处理的导航操作（合并队列步进，单次渲染，性能优化版）"""
+        press_time = getattr(self, "_nav_press_time", None)
+        self._nav_press_time = None
+        nav_start = time.perf_counter()
+        nav_from_index = getattr(self.main_window, "current_index", 0)
         with self._navigation_lock:
             if not self._pending_navigation:
                 return
@@ -332,10 +334,18 @@ class NavigationController:
             self.main_window._last_keep_action = None  # 跳图后撤回失效
 
         finally:
-            # 记录导航后的索引（用于性能优化）
+            # 轻量性能跟踪：按键 → 画面响应端到端延迟
+            try:
+                self.perf.record("navigation", (time.perf_counter() - (press_time or nav_start)) * 1000)
+            except Exception:
+                pass
+
+            # 记录导航后的索引（用于性能优化），并更新预加载方向跟踪
             try:
                 current_index = self.main_window.current_index if hasattr(self.main_window, "current_index") else 0
                 self._last_index = current_index
+                if self._perf_optimizer:
+                    self._perf_optimizer.navigation_optimizer.update_direction(nav_from_index, current_index)
             except Exception:
                 pass
 

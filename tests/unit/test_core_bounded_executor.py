@@ -57,3 +57,49 @@ class TestBoundedExecutor:
         bounded = BoundedExecutor(pool, max_queued=4)
         bounded.shutdown(wait=False)
         assert pool._shutdown
+
+
+class TestImageManagerNoncriticalSubmit:
+    """测试 ImageManager._submit_noncritical 的有界丢弃语义（P2-2）"""
+
+    def test_submit_noncritical_drops_when_queue_full(self):
+        """关键池队列满时，非关键任务被丢弃（返回 None）"""
+        from unittest.mock import MagicMock, patch
+
+        from plookingII.ui.managers.image_manager import ImageManager
+
+        manager = ImageManager.__new__(ImageManager)
+        manager._KEY_EXECUTOR_MAX_QUEUED = 2
+
+        mock_queue = MagicMock()
+        mock_queue.qsize.return_value = 2  # 队列已满
+        mock_executor = MagicMock()
+        mock_executor._work_queue = mock_queue
+        manager._executor = mock_executor
+
+        result = manager._submit_noncritical(lambda: 1)
+
+        assert result is None
+        mock_executor.submit.assert_not_called()
+
+    def test_submit_noncritical_submits_when_queue_has_space(self):
+        """队列未满时非关键任务正常提交"""
+        from unittest.mock import MagicMock
+
+        from plookingII.ui.managers.image_manager import ImageManager
+
+        manager = ImageManager.__new__(ImageManager)
+        manager._KEY_EXECUTOR_MAX_QUEUED = 8
+
+        mock_queue = MagicMock()
+        mock_queue.qsize.return_value = 3
+        mock_executor = MagicMock()
+        mock_executor._work_queue = mock_queue
+        future = MagicMock()
+        mock_executor.submit.return_value = future
+        manager._executor = mock_executor
+
+        result = manager._submit_noncritical(lambda: 1)
+
+        assert result is future
+        mock_executor.submit.assert_called_once()

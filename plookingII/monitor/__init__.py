@@ -23,6 +23,13 @@ Author: PlookingII Team
 Date: 2025-10-06 (简化整合)
 """
 
+from .perf_tracker import (
+    PerfTimer,
+    PerfTracker,
+    get_perf_tracker,
+    perf_timed,
+    shutdown_perf_tracker,
+)
 from .unified_monitor import (
     MemoryStatus,
     MonitoringLevel,
@@ -36,19 +43,20 @@ from .unified_monitor import (
 __all__ = [
     "MemoryStatus",
     "MonitoringLevel",
+    "PerfTimer",
+    "PerfTracker",
     "PerformanceMetrics",
-    # 核心类
     "UnifiedMonitor",
     "get_memory_status",
+    "get_perf_tracker",
     "get_recent_operations",
     "get_stats",
-    # 工厂函数
     "get_unified_monitor",
-    # 装饰器
     "monitor_performance",
-    # 便捷函数
+    "perf_timed",
     "record_operation",
     "reset_unified_monitor",
+    "shutdown_perf_tracker",
 ]
 
 # === 便捷函数（向后兼容）===

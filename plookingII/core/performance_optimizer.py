@@ -515,6 +515,20 @@ class PerformanceOptimizer:
             "navigation_velocity": self.navigation_optimizer._navigation_velocity,
         }
 
+    def calculate_optimal_debounce(self, current_time: float) -> float:
+        """计算最优防抖时间（按键热路径轻量入口）
+
+        仅计算防抖延迟，不生成预加载索引/跳帧建议等按键路径上
+        不会被消费的中间结果，避免每次按键同步执行无用计算。
+
+        Args:
+            current_time: 当前时间戳
+
+        Returns:
+            最优防抖时间（秒）
+        """
+        return self.navigation_optimizer.calculate_optimal_debounce(current_time)
+
     def check_memory_and_cleanup(self, cleanup_callback: Callable | None = None) -> bool:
         """检查内存并清理
 

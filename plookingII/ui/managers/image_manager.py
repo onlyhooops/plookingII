@@ -9,7 +9,7 @@ import logging
 import os
 import threading
 import time
-from collections import OrderedDict
+from collections import OrderedDict, deque
 from concurrent.futures import ThreadPoolExecutor
 
 from ...config.constants import APP_NAME, IMAGE_PROCESSING_CONFIG
@@ -24,7 +24,7 @@ from ...core.simple_cache import (
 )
 
 # 使用统一监控系统
-from ...monitor import get_unified_monitor
+from ...monitor import get_perf_tracker, get_unified_monitor
 
 logger = logging.getLogger(APP_NAME)
 
@@ -53,7 +53,12 @@ class ImageManager:
 
         # 统一监控器
         self.monitor = get_unified_monitor()
+        # 轻量性能跟踪器（聚合统计 + 会话报告，供后续分析）
+        self.perf = get_perf_tracker()
         self.slim_mode = get_config("feature.slim_mode", False)
+        # 热路径配置缓存：full_res_browse 在每次显示/升级路径读取，
+        # 配置启动时加载、运行期不变，构造时快照避免热路径重复 RLock 查询
+        self._full_res_browse = get_config("feature.full_res_browse", True)
 
         # 高级图像缓存（max_items 自适应物理内存）
         adaptive_max_items, adaptive_max_memory = self._compute_cache_params()
@@ -91,11 +96,15 @@ class ImageManager:
         # 后台线程池：限制并发线程数，防止导航时大量创建线程导致性能下降
         # 关键路径（当前图加载/下一张预读/元信息/内存检查）
         self._executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="imgmgr")
+        # 关键池队列深度上限：快速导航时非关键后台任务（缓存升级、内存检查等）
+        # 超过该上限即丢弃新提交，防止过期任务无限积压挤占关键解码资源
+        # （关键路径任务带代次检查，即使被丢弃，下一次导航也会重新调度）
+        self._KEY_EXECUTOR_MAX_QUEUED = 8
         # 扩展预取线程池（自适应预取 + HOT3 常驻）
         # 与关键路径分离，避免快速导航时过期预取任务挤占当前图解码线程；
         # 外层有界队列保证快速连按时过期任务被优先丢弃，不无限积压
         self._prefetch_executor = BoundedExecutor(
-            ThreadPoolExecutor(max_workers=2, thread_name_prefix="prefetch"), max_queued=8
+            ThreadPoolExecutor(max_workers=2, thread_name_prefix="prefetch"), max_queued=6
         )
 
         # 内存监控线程
@@ -147,6 +156,15 @@ class ImageManager:
         self._MAX_NO_MPF_CACHE = 500
         # 最近一次“全分辨率已显示”的代次：防止异步预览覆盖已显示的全分辨率画面
         self._full_shown_generation = -1
+
+        # 解码耗时经验表（P2-1）：按文件大小分档记录近 N 次实测解码耗时，
+        # 用于"自适应两阶段显示"——同一规格文件实测解码慢时自动降级为先显示
+        # 预览再懒解码全分辨率，改善中低端机器首帧体验。
+        # 结构: {size_bucket: deque(maxlen=RECENT_N)}，LRU 上限防长期运行无界增长。
+        self._decode_experience: OrderedDict[str, deque] = OrderedDict()
+        self._DECODE_EXPERIENCE_MAX_BUCKETS = 64
+        self._DECODE_EXPERIENCE_RECENT_N = 5
+        self._DECODE_EXPERIENCE_SLOW_MS = 150.0
 
         # 渲染节流守卫：确保所有渲染路径（缓存命中/预加载/后台解码）的最小显示间隔一致
         # 静态场景 80ms (12.5fps)，快速导航时自适应降低至 30ms (33fps)
@@ -340,7 +358,7 @@ class ImageManager:
         Returns:
             tuple or None: 目标尺寸(width, height)，全分辨率时返回None
         """
-        if get_config("feature.full_res_browse", True):
+        if self._full_res_browse:
             return None
         return self._get_dynamic_target_size()
 
@@ -384,6 +402,11 @@ class ImageManager:
                 method=method,
                 success=True,
             )
+        except Exception:
+            pass
+        # 轻量性能跟踪：图片显示端到端耗时（含缓存命中方法分布）
+        try:
+            self.perf.record("image_display", max(0.0, time.time() - t_start) * 1000, method=method)
         except Exception:
             pass
 
@@ -452,7 +475,7 @@ class ImageManager:
             image_path: 图像文件路径
             cached_image: 当前缓存条目对应的图像对象
         """
-        if not get_config("feature.full_res_browse", True):
+        if not self._full_res_browse:
             return
         try:
             file_dims = self._get_cached_dimensions(image_path)
@@ -483,7 +506,8 @@ class ImageManager:
                 except Exception:
                     logger.debug("_maybe_upgrade_cached_image failed", exc_info=True)
 
-            self._executor.submit(upgrade)
+            # 非关键后台任务：队列积压超限时丢弃（快速导航时升级任务很快过期）
+            self._submit_noncritical(upgrade)
         except Exception:
             logger.debug("_maybe_upgrade_cached_image check failed", exc_info=True)
 
@@ -831,6 +855,31 @@ class ImageManager:
 
         self._executor.submit(background_load)
 
+    def _submit_noncritical(self, fn, *args, **kwargs):
+        """提交非关键后台任务（有界：队列积压超限时丢弃新任务）
+
+        用于缓存升级、内存检查等可重入/可跳过的后台任务：
+        快速导航时这些任务很快过期（代次检查会提前退出），
+        队列深度超过上限时直接丢弃新提交，避免过期任务无限积压
+        挤占关键解码线程。
+
+        Args:
+            fn: 后台任务函数
+            *args, **kwargs: 传递给 fn 的参数
+
+        Returns:
+            Future 或 None（队列满被丢弃时）
+        """
+        try:
+            work_queue = getattr(self._executor, "_work_queue", None)
+            if work_queue is not None and work_queue.qsize() >= self._KEY_EXECUTOR_MAX_QUEUED:
+                logger.debug("关键池队列已满(%s)，丢弃非关键任务", self._KEY_EXECUTOR_MAX_QUEUED)
+                return None
+            return self._executor.submit(fn, *args, **kwargs)
+        except Exception:
+            logger.debug("提交非关键任务失败", exc_info=True)
+            return None
+
     def _load_image_with_concurrency(self, image_path: str, target_size):
         try:
             # 动态并发控制：根据 CPU 核心数自适应，多核 Mac 上充分利用解码能力
@@ -840,11 +889,85 @@ class ImageManager:
                 # Quartz 懒代理不解码像素，信号量等待是不必要的；
                 # 实际解码主要发生在缩略图/全分辨率路径，保守设置为 cores//2
                 self._decode_semaphore = threading.BoundedSemaphore(value=max(2, cpu_count // 2))
+            start = time.time()
             with self._decode_semaphore:
-                return self._load_image_optimized(image_path, target_size=target_size)
+                result = self._load_image_optimized(image_path, target_size=target_size)
+            # 归档实际解码耗时到经验表（供 P2-1 自适应两阶段消费）
+            if result is not None:
+                self._record_decode_experience(image_path, (time.time() - start) * 1000)
+            return result
         except Exception:
             logger.exception("_load_image_with_concurrency failed for %s", image_path)
             return None
+
+    # ------------------------------------------------------------------
+    # 解码耗时经验表（P2-1 自适应两阶段）
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _decode_size_bucket(file_size_mb: float) -> str:
+        """按文件大小分档（对数近似）：小档更细，大档更粗"""
+        thresholds = [
+            (1.0, "0-1MB"),
+            (5.0, "1-5MB"),
+            (12.0, "5-12MB"),
+            (30.0, "12-30MB"),
+            (80.0, "30-80MB"),
+        ]
+        for limit, label in thresholds:
+            if file_size_mb < limit:
+                return label
+        return "80MB+"
+
+    def _record_decode_experience(self, image_path: str, duration_ms: float) -> None:
+        """归档一次解码耗时到经验表（按文件大小分档）"""
+        try:
+            file_size_mb = self._get_file_size_safely(image_path)
+            bucket = self._decode_size_bucket(file_size_mb)
+            samples = self._decode_experience.get(bucket)
+            if samples is None:
+                # LRU：超出上限时淘汰最久未更新的分档
+                if len(self._decode_experience) >= self._DECODE_EXPERIENCE_MAX_BUCKETS:
+                    self._decode_experience.popitem(last=False)
+                samples = deque(maxlen=self._DECODE_EXPERIENCE_RECENT_N)
+                self._decode_experience[bucket] = samples
+            else:
+                # LRU 提升：最近更新的分档移到末尾
+                self._decode_experience.move_to_end(bucket)
+            samples.append(duration_ms)
+        except Exception:
+            logger.debug("record_decode_experience failed", exc_info=True)
+
+    def _is_decode_slow_by_experience(self, image_path: str) -> bool:
+        """按经验表判断该规格文件解码是否偏慢
+
+        同规格（文件大小分档）近 N 次实测耗时均值超过阈值时返回 True，
+        触发自适应两阶段显示。数据不足（样本 < 2）时不误判。
+        """
+        try:
+            file_size_mb = self._get_file_size_safely(image_path)
+            bucket = self._decode_size_bucket(file_size_mb)
+            samples = self._decode_experience.get(bucket)
+            if samples is None or len(samples) < 2:
+                return False
+            avg_ms = sum(samples) / len(samples)
+            return avg_ms >= self._DECODE_EXPERIENCE_SLOW_MS
+        except Exception:
+            return False
+
+    def reset_decode_experience(self) -> None:
+        """重置解码经验表（公开入口，供测试与长期运行维护）"""
+        try:
+            self._decode_experience.clear()
+        except Exception:
+            pass
+
+    def get_decode_experience_stats(self) -> dict:
+        """导出经验表统计（调试/监控用）"""
+        return {
+            "buckets": {k: list(v) for k, v in self._decode_experience.items()},
+            "slow_threshold_ms": self._DECODE_EXPERIENCE_SLOW_MS,
+            "recent_n": self._DECODE_EXPERIENCE_RECENT_N,
+        }
 
     def _try_display_next_ready(self, image_path: str) -> bool:
         """若 next-ready 缓冲与当前路径匹配，则瞬时显示并清空缓冲"""
@@ -1224,6 +1347,10 @@ class ImageManager:
         使后续导航热路径的竖向检测 / 像素阈值判断全部命中缓存，
         主线程不再触碰元数据 I/O。
 
+        跨启动加速（P3-4）：优先命中目录级持久化尺寸缓存（以目录 mtime
+        失效），二次打开同一目录直接批量回填内存缓存，跳过逐文件元数据
+        读取；未命中则逐个读取并顺带写回持久化缓存。
+
         Args:
             image_paths: 图片路径列表
             limit: 单次预热上限（大文件夹只预热前 N 张，其余按需回填）
@@ -1235,14 +1362,51 @@ class ImageManager:
             if not paths:
                 return
 
+            # 目录级持久化缓存键：以 paths 所在目录 + mtime 为失效依据
+            dir_path = os.path.dirname(paths[0]) if paths else ""
+            dir_mtime = -1.0
+            try:
+                if dir_path:
+                    dir_mtime = os.stat(dir_path).st_mtime
+            except OSError:
+                dir_mtime = -1.0
+
             def worker():
                 try:
+                    if not dir_path:
+                        return
+                    # P3-4：先查目录级持久化缓存
+                    try:
+                        from ...core.dimension_cache import get_dimension_cache
+
+                        persisted = get_dimension_cache().load(dir_path, dir_mtime)
+                    except Exception:
+                        persisted = None
+
+                    if persisted:
+                        # 命中：批量回填内存 LRU，跳过逐文件元数据 I/O
+                        for p in paths:
+                            name = os.path.basename(p)
+                            dims = persisted.get(name)
+                            if dims:
+                                self._cache_image_dimensions(p, dims)
+                        return
+
+                    # 未命中：逐个读取并收集，顺带写回持久化缓存
+                    collected: dict[str, tuple[int, int]] = {}
                     for p in paths:
                         if getattr(self.main_window, "_shutting_down", False):
                             return
                         if self._get_cached_dimensions_only(p) is not None:
                             continue
-                        self._get_cached_dimensions(p)
+                        dims = self._get_cached_dimensions(p)
+                        if dims and dims[0] > 0:
+                            collected[os.path.basename(p)] = dims
+                    try:
+                        if collected:
+                            get_dimension_cache().save(dir_path, dir_mtime, collected)
+                    except Exception:
+                        pass
                 except Exception:
                     pass
 
@@ -1251,11 +1415,14 @@ class ImageManager:
             pass
 
     def _maybe_two_stage_for_ultra(self, image_path: str, target_size: tuple) -> bool:
-        """根据文件大小或像素数阈值决定是否采用两阶段显示（预览→全清晰度）
+        """根据文件大小/像素数/解码经验决定是否采用两阶段显示（预览→全清晰度）
 
         触发条件：
         1. 文件大小 >= ultra_image_threshold_mb (默认80MB)
         2. 像素数 >= ultra_pixel_threshold (默认24MP = 6000×4000)
+        3. 解码经验表：同规格文件实测解码偏慢（P2-1 自适应）——
+           中低端机器上文件不大但解码慢（外置盘、高压缩 JPEG）时，
+           自动降级为先显示预览再懒解码全分辨率，改善首帧体验
         """
         try:
             ultra_mb = IMAGE_PROCESSING_CONFIG.get("ultra_image_threshold_mb", 80)
@@ -1270,6 +1437,11 @@ class ImageManager:
             # 仅读尺寸缓存：主线程不触发元数据 I/O，未知时依赖文件大小阈值
             dims = self._get_cached_dimensions_only(image_path)
             if dims and dims[0] * dims[1] >= ultra_pixels:
+                self._load_and_display_progressive(image_path, target_size)
+                return True
+
+            # P2-1 自适应：经验表显示该规格解码偏慢 → 两阶段
+            if self._is_decode_slow_by_experience(image_path):
                 self._load_and_display_progressive(image_path, target_size)
                 return True
         except Exception:
@@ -1349,7 +1521,7 @@ class ImageManager:
             return "fast", None
 
         # 策略2：渐进式加载（已收敛，默认禁用；仅在开关允许时启用）
-        if (not get_config("feature.disable_progressive_layer", True)) and file_size_mb >= progressive_threshold:
+        if self.progressive_loading_enabled and file_size_mb >= progressive_threshold:
             return "progressive", target_size
 
         # 策略3：预览模式（中等文件且偏好预览）
@@ -1462,7 +1634,9 @@ class ImageManager:
             finally:
                 self._bg_task_submitted = False
 
-        self._executor.submit(background_worker)
+        # 非关键后台任务：队列积压超限时丢弃（快速导航时过期任务不挤占关键解码）
+        if self._submit_noncritical(background_worker) is None:
+            self._bg_task_submitted = False
 
     def _check_memory_usage(self):
         """检查内存使用情况"""

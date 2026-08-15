@@ -93,6 +93,25 @@ class TestFileInfoBatchLoader:
 
         assert images == [str(photos / "a.png"), str(photos / "b.jpg")]
 
+    def test_get_directory_images_excludes_nested_subdirectories(self, tmp_path):
+        """回归：父目录图片列表不得混入子目录（如“精选”目录）中的图片"""
+        loader = FileInfoBatchLoader()
+        photos = tmp_path / "photos"
+        photos.mkdir()
+        (photos / "a.jpg").touch()
+        (photos / "b.png").touch()
+
+        # 模拟“精选”子目录（父目录名 + “ 精选”），内含图片
+        featured = photos / "photos 精选"
+        featured.mkdir()
+        kept = featured / "kept.jpg"
+        kept.touch()
+
+        images = loader.get_directory_images(str(photos), filter_exts=(".jpg", ".png"))
+
+        assert str(kept) not in images
+        assert images == [str(photos / "a.jpg"), str(photos / "b.png")]
+
     def test_get_directory_images_hits_cache(self, tmp_path):
         """第二次获取同一目录命中缓存，不再扫描磁盘"""
         loader = FileInfoBatchLoader()
@@ -122,3 +141,63 @@ class TestFileInfoBatchLoader:
 
         assert len(second) == 3
         assert second == [str(photos / "a.jpg"), str(photos / "b.jpg"), str(photos / "c.jpg")]
+
+    def test_directory_contains_images_hits_bool_cache(self, tmp_path):
+        """含图布尔缓存：重复判断命中缓存，只枚举一次磁盘"""
+        loader = FileInfoBatchLoader()
+        photos = tmp_path / "photos"
+        photos.mkdir()
+        (photos / "a.jpg").touch()
+
+        with patch.object(loader, "scan_directory", wraps=loader.scan_directory) as scan:
+            first = loader.directory_contains_images(str(photos), filter_exts=(".jpg",))
+            second = loader.directory_contains_images(str(photos), filter_exts=(".jpg",))
+
+        assert first is True
+        assert second is True
+        assert scan.call_count == 1
+
+    def test_directory_contains_images_no_images_cached(self, tmp_path):
+        """空目录含图判断返回 False 并缓存"""
+        loader = FileInfoBatchLoader()
+        empty = tmp_path / "empty"
+        empty.mkdir()
+
+        assert loader.directory_contains_images(str(empty), filter_exts=(".jpg",)) is False
+        # 命中缓存，不重新枚举
+        with patch.object(loader, "scan_directory", wraps=loader.scan_directory) as scan:
+            assert loader.directory_contains_images(str(empty), filter_exts=(".jpg",)) is False
+            assert scan.call_count == 0
+
+    def test_directory_contains_images_fills_list_cache(self, tmp_path):
+        """含图判断顺带填充列表缓存：后续 get_directory_images 直接命中"""
+        loader = FileInfoBatchLoader()
+        photos = tmp_path / "photos"
+        photos.mkdir()
+        (photos / "b.jpg").touch()
+        (photos / "a.jpg").touch()
+
+        # 先做含图判断（深扫阶段），应顺带写入列表缓存
+        assert loader.directory_contains_images(str(photos), filter_exts=(".jpg",)) is True
+
+        # 随后获取列表直接命中缓存，不再扫描
+        with patch.object(loader, "scan_directory", wraps=loader.scan_directory) as scan:
+            images = loader.get_directory_images(str(photos), filter_exts=(".jpg",))
+            assert scan.call_count == 0
+
+        assert images == [str(photos / "a.jpg"), str(photos / "b.jpg")]
+
+    def test_contains_bool_cache_mtime_invalidates(self, tmp_path):
+        """含图布尔缓存：目录 mtime 变化后自动失效并重新判断"""
+        loader = FileInfoBatchLoader()
+        photos = tmp_path / "photos"
+        photos.mkdir()
+
+        assert loader.directory_contains_images(str(photos), filter_exts=(".jpg",)) is False
+
+        # 新增图片改变目录 mtime（mtime 粒度不足时强制修改）
+        (photos / "a.jpg").touch()
+        future = os.stat(str(photos)).st_mtime + 100
+        os.utime(str(photos), (future, future))
+
+        assert loader.directory_contains_images(str(photos), filter_exts=(".jpg",)) is True

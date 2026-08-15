@@ -17,6 +17,7 @@ from AppKit import NSURL, NSAlert, NSModalResponseOK, NSOpenPanel, NSPopUpButton
 
 from ...config.constants import APP_NAME
 from ...config.ui_strings import get_ui_string
+from ...monitor import get_perf_tracker
 from ...ui.utils.alert_utils import present_alert_sheet, run_modal
 
 # 使用标准库与直接 AppKit 导入，避免通过项目 imports 的重复别名
@@ -92,7 +93,13 @@ class OperationManager:
             src: 源文件路径
             dst: 目标文件路径
         """
+        move_start = time.perf_counter()
         success = self._move_with_retry(src, dst)
+        # 轻量性能跟踪：精选文件移动耗时（SMB/网络盘场景重点观察）
+        try:
+            get_perf_tracker().record("keep_move", (time.perf_counter() - move_start) * 1000, success=success)
+        except Exception:
+            pass
         if success:
             return
 

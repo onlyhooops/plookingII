@@ -292,6 +292,14 @@ class AppDelegate(NSObject):
         except Exception:
             pass
 
+        # 8) 输出性能监测会话报告（轻量跟踪器，退出前落盘供后续分析）
+        try:
+            from ..monitor import shutdown_perf_tracker
+
+            shutdown_perf_tracker()
+        except Exception:
+            pass
+
         return True
 
 

@@ -19,6 +19,7 @@ from ...config.ui_strings import get_ui_string
 from ...core.history import TaskHistoryManager
 from ...core.simple_cache import estimate_image_memory_mb
 from ...imports import logging, os, threading, time
+from ...monitor import get_perf_tracker, perf_timed
 from ...services.recent import RecentFoldersManager
 
 logger = logging.getLogger(APP_NAME)
@@ -67,6 +68,9 @@ class FolderManager:
 
         # 当前正在展示的历史恢复弹窗（sheet 模式需要持有引用，避免被释放）
         self._active_history_alert = None
+
+        # 轻量性能跟踪（聚合统计 + 会话报告）
+        self.perf = get_perf_tracker()
 
     def _load_images_without_history_dialog(self, root_folder):
         """从根文件夹加载图像（不显示历史记录恢复对话框）
@@ -338,25 +342,39 @@ class FolderManager:
         Returns:
             list: 包含图片的子文件夹列表
         """
+        scan_start = time.perf_counter()
         exts = SUPPORTED_IMAGE_EXTS
         subfolders = []
         scan_lock = threading.Lock()
+        scan_success = True
 
-        directories_to_scan = self._gather_directories_to_scan(root_folder)
-        # 记录目录总数，供调用方判断单文件夹模式（避免再次 os.walk 整棵树）
-        self._last_scanned_dir_count = len(directories_to_scan)
-        if not directories_to_scan:
-            return []
-
-        # 执行并行扫描
-        self._execute_parallel_scan(directories_to_scan, exts, subfolders, scan_lock)
-
-        # 排序并返回结果（按文件夹名升序，不区分大小写）
         try:
-            subfolders.sort(key=lambda p: os.path.basename(p).lower(), reverse=self.reverse_folder_order)
+            directories_to_scan = self._gather_directories_to_scan(root_folder)
+            # 记录目录总数，供调用方判断单文件夹模式（避免再次 os.walk 整棵树）
+            self._last_scanned_dir_count = len(directories_to_scan)
+            if not directories_to_scan:
+                return []
+
+            # 执行并行扫描
+            self._execute_parallel_scan(directories_to_scan, exts, subfolders, scan_lock)
+
+            # 排序并返回结果（按文件夹名升序，不区分大小写）
+            try:
+                subfolders.sort(key=lambda p: os.path.basename(p).lower(), reverse=self.reverse_folder_order)
+            except Exception:
+                subfolders.sort(reverse=self.reverse_folder_order)
+            return subfolders
         except Exception:
-            subfolders.sort(reverse=self.reverse_folder_order)
-        return subfolders
+            scan_success = False
+            raise
+        finally:
+            # 轻量性能跟踪：整棵目录树扫描耗时
+            self.perf.record(
+                "folder_scan",
+                (time.perf_counter() - scan_start) * 1000,
+                success=scan_success,
+                folders=len(subfolders),
+            )
 
     def _execute_parallel_scan(self, directories_to_scan, exts, subfolders, scan_lock):
         """执行并行目录扫描
@@ -441,6 +459,10 @@ class FolderManager:
     def _dir_contains_images(self, dirpath, exts):
         """判断目录是否包含图片
 
+        优先走目录级布尔缓存：深度扫描阶段每个目录只枚举一次，
+        重复判断（浅扫/深扫重叠、邻目录预扫描）直接命中缓存，
+        避免对同一目录反复全量枚举。
+
         Args:
             dirpath: 目录路径
             exts: 支持的图片扩展名
@@ -449,12 +471,11 @@ class FolderManager:
             bool: 是否包含图片
         """
         try:
-            # 使用批量文件信息加载器优化 I/O
+            # 使用批量文件信息加载器优化 I/O（含目录级含图布尔缓存）
             from ...core.file_info_batch_loader import get_file_info_loader
 
             loader = get_file_info_loader()
-            file_infos = loader.scan_directory(dirpath, filter_exts=exts)
-            return len(file_infos) > 0
+            return loader.directory_contains_images(dirpath, filter_exts=exts)
         except (OSError, PermissionError):
             return False
         except Exception:
@@ -683,6 +704,7 @@ class FolderManager:
         gen = self._folder_jump_generation
 
         def scan_worker():
+            jump_start = time.perf_counter()
             try:
                 subfolders = list(self.main_window.subfolders or [])
                 idx = start_index
@@ -702,6 +724,8 @@ class FolderManager:
                     if gen != self._folder_jump_generation:
                         return
                     if found is None:
+                        # 轻量性能跟踪：边界处理（完成消息/同级切换）
+                        self.perf.record("folder_jump", (time.perf_counter() - jump_start) * 1000, found=False)
                         # 当前根目录内无更多含图文件夹：沿用原有边界逻辑
                         self._handle_folder_jump_boundary()
                         return
@@ -725,6 +749,8 @@ class FolderManager:
                     self._save_task_progress_immediate()
                     # 预热相邻文件夹图片列表，下次跨界跳转直接命中目录缓存
                     self._prefetch_neighbor_folder_lists()
+                    # 轻量性能跟踪：跨文件夹跳转端到端耗时（按键 → 首图显示）
+                    self.perf.record("folder_jump", (time.perf_counter() - jump_start) * 1000, found=True)
 
                 self._post_to_main(apply)
             except Exception:
@@ -778,6 +804,7 @@ class FolderManager:
         except Exception:
             pass
 
+    @perf_timed("folder_sibling", direction="next")
     def _load_sibling_folder(self, folder_path, parent_dir):
         """加载同级文件夹
 
@@ -899,6 +926,7 @@ class FolderManager:
         prev_folder = sibling_folders[prev_index]
         return True, prev_folder, parent_dir
 
+    @perf_timed("folder_sibling", direction="prev")
     def _load_previous_sibling_folder(self, folder_path, parent_dir):
         """加载上一个同级文件夹
 

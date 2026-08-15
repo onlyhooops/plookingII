@@ -361,6 +361,8 @@ class TestImageLoading:
         mock_strategy.load.return_value = b"resized_image"
         mock_image_processor_basic.loading_strategies["auto"] = mock_strategy
 
+        # 非全分辨率模式：热路径配置在构造时快照，直接设置实例属性
+        mock_image_processor_basic._full_res_browse = False
         with patch("plookingII.core.image_processing.get_config", return_value=False):
             result = mock_image_processor_basic.load_image_optimized(temp_image_file, target_size=(800, 600))
 
@@ -373,6 +375,8 @@ class TestImageLoading:
         mock_strategy.load.return_value = b"full_res_image"
         mock_image_processor_basic.loading_strategies["auto"] = mock_strategy
 
+        # 全分辨率模式：默认快照为 True，显式设置保证意图明确
+        mock_image_processor_basic._full_res_browse = True
         with patch("plookingII.core.image_processing.get_config", return_value=True):
             result = mock_image_processor_basic.load_image_optimized(temp_image_file, target_size=(800, 600))
 

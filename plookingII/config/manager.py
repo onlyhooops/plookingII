@@ -116,9 +116,25 @@ class ConfigManager:
         )
 
         # 监控配置
-        self._register_schema("monitor.enabled", True, ConfigType.BOOLEAN, "启用性能监控")
+        self._register_schema(
+            "monitor.enabled", True, ConfigType.BOOLEAN, "启用性能监控", env_var="PLOOKINGII_PERF_ENABLED"
+        )
         self._register_schema("monitor.interval_seconds", 5.0, ConfigType.FLOAT, "监控间隔(秒)")
         self._register_schema("monitor.history_size", 1000, ConfigType.INTEGER, "监控历史记录数")
+        self._register_schema(
+            "monitor.sample_rate", 1, ConfigType.INTEGER, "性能采样频率(每N次记录1次)", self._validate_positive_int
+        )
+        self._register_schema("monitor.report_dir", "", ConfigType.STRING, "性能报告输出目录(留空使用默认目录)")
+        self._register_schema(
+            "monitor.max_report_files", 20, ConfigType.INTEGER, "保留的性能报告数量", self._validate_positive_int
+        )
+        self._register_schema(
+            "monitor.auto_flush_seconds",
+            300,
+            ConfigType.INTEGER,
+            "性能报告自动落盘间隔(秒)",
+            self._validate_non_negative_int,
+        )
 
         # 文件监听配置
         self._register_schema("file_watcher.enabled", True, ConfigType.BOOLEAN, "启用文件监听")
@@ -396,6 +412,22 @@ class ConfigManager:
         return 0.0 <= value <= 1.0
 
     @staticmethod
+    def _validate_positive_int(value: Any) -> bool:
+        """验证正整数（≥1）"""
+        try:
+            return int(value) >= 1
+        except (TypeError, ValueError):
+            return False
+
+    @staticmethod
+    def _validate_non_negative_int(value: Any) -> bool:
+        """验证非负整数（≥0，0 表示关闭自动落盘）"""
+        try:
+            return int(value) >= 0
+        except (TypeError, ValueError):
+            return False
+
+    @staticmethod
     def _validate_log_level(value: str) -> bool:
         """验证日志级别"""
         return value.upper() in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
@@ -483,4 +515,15 @@ class Config:
             "enabled": get_config("monitor.enabled", True),
             "interval": get_config("monitor.interval_seconds", 5.0),
             "history_size": get_config("monitor.history_size", 1000),
+        }
+
+    @staticmethod
+    def get_perf_tracker_config() -> dict[str, Any]:
+        """获取性能监测跟踪器配置"""
+        return {
+            "enabled": get_config("monitor.enabled", True),
+            "sample_rate": get_config("monitor.sample_rate", 1),
+            "report_dir": get_config("monitor.report_dir", ""),
+            "max_report_files": get_config("monitor.max_report_files", 20),
+            "auto_flush_seconds": get_config("monitor.auto_flush_seconds", 300),
         }

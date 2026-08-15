@@ -546,3 +546,80 @@ class TestSystemMemoryWarning:
             callback()
             assert cleanup.call_count == 1, f"cleanup called {cleanup.call_count} times"
             cleanup.assert_called_once()
+
+
+class TestDecodeExperienceTable:
+    """测试 P2-1 解码耗时经验表"""
+
+    def test_size_bucket_partition(self, image_manager):
+        """文件大小分档覆盖各区间"""
+        assert image_manager._decode_size_bucket(0.5) == "0-1MB"
+        assert image_manager._decode_size_bucket(3.0) == "1-5MB"
+        assert image_manager._decode_size_bucket(10.0) == "5-12MB"
+        assert image_manager._decode_size_bucket(20.0) == "12-30MB"
+        assert image_manager._decode_size_bucket(50.0) == "30-80MB"
+        assert image_manager._decode_size_bucket(500.0) == "80MB+"
+
+    def test_record_and_query_slow(self, image_manager):
+        """归档慢解码后，经验判断触发两阶段"""
+        with patch.object(image_manager, "_get_file_size_safely", return_value=3.0):
+            for _ in range(3):
+                image_manager._record_decode_experience("/a.jpg", 200.0)
+            assert image_manager._is_decode_slow_by_experience("/a.jpg") is True
+
+    def test_record_and_query_fast(self, image_manager):
+        """归档快解码后，经验判断不触发两阶段"""
+        with patch.object(image_manager, "_get_file_size_safely", return_value=3.0):
+            for _ in range(3):
+                image_manager._record_decode_experience("/a.jpg", 20.0)
+            assert image_manager._is_decode_slow_by_experience("/a.jpg") is False
+
+    def test_insufficient_samples_no_trigger(self, image_manager):
+        """样本不足（<2）时不误判为慢"""
+        with patch.object(image_manager, "_get_file_size_safely", return_value=3.0):
+            image_manager._record_decode_experience("/a.jpg", 300.0)
+            assert image_manager._is_decode_slow_by_experience("/a.jpg") is False
+
+    def test_reset_clears_experience(self, image_manager):
+        """重置入口清空经验表"""
+        with patch.object(image_manager, "_get_file_size_safely", return_value=3.0):
+            image_manager._record_decode_experience("/a.jpg", 200.0)
+            image_manager.reset_decode_experience()
+            assert image_manager.get_decode_experience_stats()["buckets"] == {}
+            assert image_manager._is_decode_slow_by_experience("/a.jpg") is False
+
+    def test_lru_bounded(self, image_manager):
+        """经验表 LRU 上限：超出淘汰最久未更新分档"""
+        image_manager._DECODE_EXPERIENCE_MAX_BUCKETS = 2
+        buckets = ["0-1MB", "1-5MB", "5-12MB"]
+        with patch.object(
+            image_manager, "_get_file_size_safely", side_effect=[1.0, 2.0, 5.0]
+        ) as mock_size:
+            for b in buckets:
+                image_manager._record_decode_experience(f"/{b}.jpg", 100.0)
+            assert len(image_manager._decode_experience) == 2
+            # 最久未更新的 "0-1MB" 被淘汰
+            assert "0-1MB" not in image_manager._decode_experience
+            assert mock_size.call_count == 3
+
+    def test_maybe_two_stage_uses_experience(self, image_manager):
+        """经验表判定慢解码时启用两阶段（P2-1 自适应）"""
+        with patch.object(image_manager, "_get_file_size_safely", return_value=3.0), patch.object(
+            image_manager, "_get_cached_dimensions_only", return_value=None
+        ), patch.object(image_manager, "_load_and_display_progressive") as progressive:
+            for _ in range(3):
+                image_manager._record_decode_experience("/a.jpg", 250.0)
+            result = image_manager._maybe_two_stage_for_ultra("/a.jpg", (800, 600))
+            assert result is True
+            progressive.assert_called_once()
+
+    def test_maybe_two_stage_fast_no_progressive(self, image_manager):
+        """经验表判定快解码时不启用两阶段"""
+        with patch.object(image_manager, "_get_file_size_safely", return_value=3.0), patch.object(
+            image_manager, "_get_cached_dimensions_only", return_value=None
+        ), patch.object(image_manager, "_load_and_display_progressive") as progressive:
+            for _ in range(3):
+                image_manager._record_decode_experience("/a.jpg", 30.0)
+            result = image_manager._maybe_two_stage_for_ultra("/a.jpg", (800, 600))
+            assert result is False
+            progressive.assert_not_called()

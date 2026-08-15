@@ -56,6 +56,195 @@ from ..imports import logging, objc, time
 # 新增：模块级日志记录器
 logger = logging.getLogger(APP_NAME)
 
+# P3-1 CATiledLayer 分片渲染开关与阈值
+# 默认关闭（原型阶段）：开启后超高分辨率图片（≥阈值像素）走 CATiledLayer
+# 按需分片绘制，仅解码可见区域，避免全分辨率 CGImage 首帧 GPU 同步解码卡顿。
+# 经真机对比（首帧延迟/滚动流畅度/内存占用）达标后可默认开启。
+TILED_RENDERING_ENABLED = False
+TILED_RENDERING_PIXEL_THRESHOLD = 10_000_000  # ≥10MP（约 3465×2885）走分片
+
+
+class TiledImageView(NSView):
+    """CATiledLayer 按需分片渲染视图（P3-1 原型）
+
+    超高分辨率图片（10000px+）全分辨率 CGImage 首次绘制时由 GPU 同步解码，
+    首帧可能卡顿。本视图以 CATiledLayer 为 backing layer，系统仅请求绘制
+    可见 tile：每个 tile 从源 CGImage 裁剪对应区域绘制，配合 ImageIO 懒解码
+    只解码可见部分，实现 Preview.app 式"按需渲染"。
+
+    特性：
+    - 分片绘制：drawLayer_inContext_ 中按 tile 矩形从源图裁剪
+    - 零 EXIF 变换：与主路径一致，不处理方向信息
+    - 异常安全：任何绘制失败回退空白，不影响应用稳定性
+    """
+
+    def initWithFrame_(self, frame):
+        self = objc.super(TiledImageView, self).initWithFrame_(frame)  # type: ignore
+        if self is None:
+            return None
+        self._cgimage = None
+        self._tile_layer = None
+        self.zoom_scale = 1.0
+        self.offset_x = 0.0
+        self.offset_y = 0.0
+        self._setup_tiled_layer()
+        return self
+
+    def _setup_tiled_layer(self):
+        """配置 CATiledLayer backing layer"""
+        try:
+            from Quartz import CATiledLayer, kCAFilterLinear
+
+            layer = CATiledLayer.layer()
+            # tile 尺寸：256×256（点），系统按需创建/销毁 tile
+            layer.setTileSize_((256.0, 256.0))
+            # 支持两级细节（缩小显示时用低分辨率 mipmap）
+            layer.setLevelsOfDetail_(1)
+            layer.setLevelsOfDetailBias_(1)
+            layer.setMagnificationFilter_(kCAFilterLinear)
+            # 视图边界变化时无需整体重绘，按需请求新 tile
+            layer.setNeedsDisplayOnBoundsChange_(False)
+            self.setLayer_(layer)
+            self.setWantsLayer_(True)
+            self._tile_layer = layer
+            # 设置 layer 代理为自身，接收 drawLayer:inContext: 回调
+            layer.setDelegate_(self)
+        except Exception:
+            logger.debug("CATiledLayer 初始化失败，回退普通绘制", exc_info=True)
+            self._tile_layer = None
+
+    def setCGImage_(self, cgimage):
+        """设置待分片绘制的源 CGImage"""
+        self._cgimage = cgimage
+        if self._tile_layer is not None:
+            self._tile_layer.setNeedsDisplay_()
+        self.setNeedsDisplay_(True)
+
+    def drawLayer_inContext_(self, layer, ctx):
+        """CATiledLayer 回调：仅绘制系统请求的 tile 区域
+
+        Args:
+            layer: 发起绘制的 CATiledLayer
+            ctx: 目标 CGContext（当前 tile 的绘制上下文）
+        """
+        try:
+            cgimage = getattr(self, "_cgimage", None)
+            if cgimage is None:
+                return
+            from Quartz import (
+                CGContextClipToRect,
+                CGContextDrawImage,
+                CGContextGetClipBoundingBox,
+                CGImageGetHeight,
+                CGImageGetWidth,
+                CGRectMake,
+            )
+
+            # 1. 系统请求的绘制区域（当前 tile，layer 坐标系）
+            clip = CGContextGetClipBoundingBox(ctx)
+
+            # 2. 计算源图显示区域（与主路径一致的边距/居中几何）
+            img_rect = self._get_display_rect()
+            if img_rect is None or img_rect.size.width <= 0 or img_rect.size.height <= 0:
+                return
+
+            # 3. 计算当前 tile 与显示区域的交集（可见部分）
+            inter = self._rect_intersection(clip, img_rect)
+            if inter is None:
+                return
+
+            # 4. 将 tile 交集映射回源图坐标（源图裁剪矩形）
+            img_w = float(CGImageGetWidth(cgimage) or 1)
+            img_h = float(CGImageGetHeight(cgimage) or 1)
+            scale_x = img_w / img_rect.size.width
+            scale_y = img_h / img_rect.size.height
+            src_x = (inter.origin.x - img_rect.origin.x) * scale_x
+            src_y = (inter.origin.y - img_rect.origin.y) * scale_y
+            src_w = inter.size.width * scale_x
+            src_h = inter.size.height * scale_y
+            if src_w <= 0 or src_h <= 0:
+                return
+
+            # 5. 裁剪源图对应区域并绘制到当前 tile：
+            #    仅请求 ImageIO 解码该区域像素（配合懒解码实现"按需渲染"），
+            #    避免全分辨率图片整体解码的内存与时间开销。
+            from Quartz import CGImageCreateWithImageInRect
+
+            tile_src = CGImageCreateWithImageInRect(cgimage, CGRectMake(src_x, src_y, src_w, src_h))
+            if tile_src is None:
+                return
+            CGContextClipToRect(ctx, inter)
+            CGContextDrawImage(
+                ctx,
+                CGRectMake(inter.origin.x, inter.origin.y, inter.size.width, inter.size.height),
+                tile_src,
+            )
+            # 记录已绘制区域（供调试/统计）
+            if not hasattr(self, "_drawn_tiles"):
+                self._drawn_tiles = 0
+            self._drawn_tiles += 1
+        except Exception:
+            logger.debug("TiledImageView drawLayer failed", exc_info=True)
+
+    def _get_display_rect(self):
+        """计算源图在视图中的显示区域（与 AdaptiveImageView 一致的几何）
+
+        Returns:
+            NSRect 或 None
+        """
+        try:
+            cgimage = getattr(self, "_cgimage", None)
+            if cgimage is None:
+                return None
+            from Quartz import CGImageGetHeight, CGImageGetWidth
+
+            img_w = float(CGImageGetWidth(cgimage) or 1)
+            img_h = float(CGImageGetHeight(cgimage) or 1)
+            bounds = self.bounds()
+            view_w = bounds.size.width
+            view_h = bounds.size.height
+
+            # 自适应边距（与 _get_image_display_rect 保持一致）
+            min_margin = 8
+            max_margin = 40
+            margin_ratio = 0.03
+            margin = int(min(max(view_w, view_h) * margin_ratio, max_margin))
+            margin = max(margin, min_margin)
+            avail_w = max(0.0, view_w - 2 * margin)
+            avail_h = max(0.0, view_h - 2 * margin)
+            scale = min(avail_w / img_w, avail_h / img_h)
+            scaled_w = img_w * scale
+            scaled_h = img_h * scale
+            x = bounds.origin.x + (view_w - scaled_w) / 2.0
+            y = bounds.origin.y + (view_h - scaled_h) / 2.0
+
+            # 应用缩放与平移
+            scaled_w *= self.zoom_scale
+            scaled_h *= self.zoom_scale
+            x += self.offset_x
+            y += self.offset_y
+            return NSMakeRect(x, y, scaled_w, scaled_h)
+        except Exception:
+            return None
+
+    @staticmethod
+    def _rect_intersection(a, b):
+        """计算两个 NSRect 的交集；无交集返回 None"""
+        try:
+            ax0, ay0 = a.origin.x, a.origin.y
+            ax1, ay1 = a.origin.x + a.size.width, a.origin.y + a.size.height
+            bx0, by0 = b.origin.x, b.origin.y
+            bx1, by1 = b.origin.x + b.size.width, b.origin.y + b.size.height
+            x0 = max(ax0, bx0)
+            y0 = max(ay0, by0)
+            x1 = min(ax1, bx1)
+            y1 = min(ay1, by1)
+            if x1 <= x0 or y1 <= y0:
+                return None
+            return NSMakeRect(x0, y0, x1 - x0, y1 - y0)
+        except Exception:
+            return None
+
 
 class OverlayView(NSView):
     def initWithFrame_andImageView_(self, frame, image_view):
@@ -169,8 +358,25 @@ class AdaptiveImageView(NSImageView):
         self.last_image_id = id(image) if image else None
 
     def setCGImage_(self, cgimage):
-        """支持CGImage直通，不创建NSImage，绘制时直接用Quartz渲染。"""
+        """支持CGImage直通，不创建NSImage，绘制时直接用Quartz渲染。
+
+        超高分辨率图片（≥TILED_RENDERING_PIXEL_THRESHOLD 像素）且开关
+        TILED_RENDERING_ENABLED 开启时，路由到 TiledImageView 走 CATiledLayer
+        按需分片渲染（P3-1），仅解码可见区域，避免全分辨率首帧 GPU 同步解码卡顿。
+        """
         try:
+            # P3-1 分片渲染路由（默认关闭，原型阶段）
+            if TILED_RENDERING_ENABLED and cgimage is not None:
+                try:
+                    from Quartz import CGImageGetHeight, CGImageGetWidth
+
+                    w = CGImageGetWidth(cgimage) or 0
+                    h = CGImageGetHeight(cgimage) or 0
+                    if w * h >= TILED_RENDERING_PIXEL_THRESHOLD:
+                        self._route_to_tiled(cgimage)
+                        return
+                except Exception:
+                    pass
             # 清除NSImage，改走CGImage直通
             objc.super(AdaptiveImageView, self).setImage_(None)
             self._cgimage = cgimage
@@ -187,6 +393,33 @@ class AdaptiveImageView(NSImageView):
                     self.setImage_(nsimg)
                 except Exception:
                     pass
+
+    def _route_to_tiled(self, cgimage):
+        """将超高分辨率图片路由到 TiledImageView 分片渲染
+
+        以 TiledImageView 替换自身内容：本视图清空 CGImage 直通状态，
+        由持有方（ImageViewController）将 TiledImageView 挂到同一位置。
+        若替换失败（无持有方/父视图异常）则回退普通 CGImage 直通。
+        """
+        try:
+            tiled = TiledImageView.alloc().initWithFrame_(self.frame())
+            tiled.setCGImage_(cgimage)
+            # 若父视图存在，替换本视图位置
+            superview = self.superview()
+            if superview is not None:
+                self.removeFromSuperview()
+                superview.addSubview_(tiled)
+                self._tiled_substitute = tiled
+                logger.debug("超高分辨率图片已路由到 CATiledLayer 分片渲染")
+                return
+        except Exception:
+            logger.debug("CATiledLayer 路由失败，回退普通 CGImage 直通", exc_info=True)
+        # 回退：普通 CGImage 直通
+        objc.super(AdaptiveImageView, self).setImage_(None)
+        self._cgimage = cgimage
+        self.reset_view()
+        self.last_image_id = id(cgimage) if cgimage else None
+        self.setNeedsDisplay_(True)
 
     def scrollWheel_(self, event):
         # 滚轮平移功能 - 仅在缩放比率大于100%时生效
@@ -587,33 +820,13 @@ class AdaptiveImageView(NSImageView):
         # 优先绘制CGImage直通
         if hasattr(self, "_cgimage") and self._cgimage is not None:
             try:
-                from Quartz import CGContextDrawImage, CGImageGetHeight, CGImageGetWidth
+                from Quartz import CGContextDrawImage
 
-                view_rect = rect
-                img_w = float(CGImageGetWidth(self._cgimage) or 1)
-                img_h = float(CGImageGetHeight(self._cgimage) or 1)
-
-                # 计算自适应显示区域（与 _get_image_display_rect 等价）
-                min_margin = 8
-                max_margin = 40
-                margin_ratio = 0.03
-                margin = int(min(max(view_rect.size.width, view_rect.size.height) * margin_ratio, max_margin))
-                margin = max(margin, min_margin)
-                avail_w = max(0.0, view_rect.size.width - 2 * margin)
-                avail_h = max(0.0, view_rect.size.height - 2 * margin)
-                scale = min(avail_w / img_w, avail_h / img_h)
-                scaled_w = img_w * scale
-                scaled_h = img_h * scale
-                x = view_rect.origin.x + (view_rect.size.width - scaled_w) / 2.0
-                y = view_rect.origin.y + (view_rect.size.height - scaled_h) / 2.0
-
-                # 应用缩放和平移
-                if self.zoom_scale > 1.0 or self.offset_x != 0 or self.offset_y != 0:
-                    # 模拟 _get_transformed_rect
-                    scaled_w *= self.zoom_scale
-                    scaled_h *= self.zoom_scale
-                    x = x + self.offset_x
-                    y = y + self.offset_y
+                # 复用统一几何计算：与 NSImage 路径共用 _get_image_display_rect
+                # （含边界缓存，缩放/平移时复用缓存几何，避免重复计算），
+                # 并应用与 NSImage 路径一致的缩放/平移变换
+                img_rect = self._get_image_display_rect(rect)
+                img_rect = self._get_transformed_rect(img_rect)
 
                 # 获取当前图形上下文
                 try:
@@ -630,7 +843,16 @@ class AdaptiveImageView(NSImageView):
                     from Quartz import CGContextRestoreGState, CGContextSaveGState, CGRectMake
 
                     CGContextSaveGState(ctx)
-                    CGContextDrawImage(ctx, CGRectMake(x, y, scaled_w, scaled_h), self._cgimage)
+                    CGContextDrawImage(
+                        ctx,
+                        CGRectMake(
+                            img_rect.origin.x,
+                            img_rect.origin.y,
+                            img_rect.size.width,
+                            img_rect.size.height,
+                        ),
+                        self._cgimage,
+                    )
                     CGContextRestoreGState(ctx)
                 return
             except Exception:

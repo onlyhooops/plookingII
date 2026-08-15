@@ -494,15 +494,15 @@ class TestPerformanceOptimizerIntegration:
 
         with patch("plookingII.ui.controllers.navigation_controller.get_performance_optimizer") as mock_get:
             mock_optimizer = MagicMock()
-            mock_optimizer.optimize_navigation.return_value = {"optimal_debounce_sec": 0.01, "navigation_velocity": 10}
+            mock_optimizer.calculate_optimal_debounce.return_value = 0.01
             mock_get.return_value = mock_optimizer
 
             controller = NavigationController(mock_window)
             controller._last_index = 0
             controller._handle_navigation_key("right")
 
-            # 应该调用优化器
-            mock_optimizer.optimize_navigation.assert_called()
+            # 应该调用优化器的轻量防抖入口
+            mock_optimizer.calculate_optimal_debounce.assert_called()
 
     @patch("plookingII.ui.controllers.navigation_controller.NSTimer")
     @patch("plookingII.ui.controllers.navigation_controller.time.time")
@@ -514,7 +514,7 @@ class TestPerformanceOptimizerIntegration:
 
         with patch("plookingII.ui.controllers.navigation_controller.get_performance_optimizer") as mock_get:
             mock_optimizer = MagicMock()
-            mock_optimizer.optimize_navigation.side_effect = Exception("Optimizer failed")
+            mock_optimizer.calculate_optimal_debounce.side_effect = Exception("Optimizer failed")
             mock_get.return_value = mock_optimizer
 
             controller = NavigationController(mock_window)

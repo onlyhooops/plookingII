@@ -70,6 +70,13 @@ class HybridImageProcessor:
         # 轻量扩展名缓存
         self._ext_cache = {}
 
+        # 热路径配置缓存：full_res_browse 在每次图片加载/显示时读取，
+        # 配置为启动时加载、运行期不变，构造时快照避免热路径重复 RLock 查询
+        try:
+            self._full_res_browse = get_config("feature.full_res_browse", True)
+        except Exception:
+            self._full_res_browse = True
+
     def _init_quartz_components(self):
         """初始化Quartz图像处理组件"""
         if not self.quartz_enabled:
@@ -127,7 +134,7 @@ class HybridImageProcessor:
 
             # 执行加载
             # 原图优先：当开关启用时，不向策略层传递target_size以避免缩略图路径
-            effective_target = None if get_config("feature.full_res_browse", True) else target_size
+            effective_target = None if self._full_res_browse else target_size
             result = self._execute_loading_strategy(selected_strategy, file_path, effective_target, file_size_mb)
 
             # 更新统计信息（兼容旧签名，仅传文件扩展名与耗时）

@@ -194,8 +194,8 @@ cython_debug/
 *.tmp
 *.temp
 
-# 脚本和工具（开发用，不托管）
-scripts/
+# 脚本和工具（版本管理与基准工具已托管，随仓库维护）
+# scripts/
 
 # Makefile（测试相关，不托管）
 Makefile.test

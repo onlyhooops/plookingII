@@ -1,5 +1,9 @@
 .PHONY: help install test test-all lint format clean build
 
+# 优先使用项目虚拟环境（.venv），不存在时回退到系统 python3
+PYTHON ?= .venv/bin/python3
+PYTHON_BIN := $(shell test -x $(PYTHON) && echo $(PYTHON) || echo python3)
+
 # 默认目标
 help:
 	@echo "PlookingII - 开发工具集"
@@ -7,6 +11,7 @@ help:
 	@echo "可用命令:"
 	@echo "  make install          - 安装所有依赖"
 	@echo "  make install-dev      - 安装开发依赖"
+	@echo "  make run              - 启动应用"
 	@echo "  make test             - 运行所有测试"
 	@echo "  make test-coverage    - 运行测试并生成覆盖率报告"
 	@echo "  make verify-version   - 验证版本号一致性"
@@ -33,24 +38,24 @@ install-dev: install
 
 # 测试相关
 test:
-	python3 -m pytest -v
+	$(PYTHON_BIN) -m pytest -v
 
 test-coverage:
-	python3 -m pytest -v --cov=plookingII --cov-report=term-missing --cov-report=html --cov-report=xml
+	$(PYTHON_BIN) -m pytest -v --cov=plookingII --cov-report=term-missing --cov-report=html --cov-report=xml
 
 test-all: test
 
 # 版本管理
 verify-version:
 	@echo "🔍 验证版本号一致性..."
-	python3 scripts/verify_version_consistency.py
+	$(PYTHON_BIN) scripts/verify_version_consistency.py
 
 unify-version:
 	@echo "🔧 统一版本号管理..."
-	python3 scripts/unify_version.py
+	$(PYTHON_BIN) scripts/unify_version.py
 	@echo ""
 	@echo "✅ 运行验证检查..."
-	python3 scripts/verify_version_consistency.py
+	$(PYTHON_BIN) scripts/verify_version_consistency.py
 
 # 自动版本管理（python-semantic-release）
 release-dry-run:
@@ -64,7 +69,7 @@ release-version:
 
 clear-recent:
 	@echo "🧹 清理 macOS 最近项目记录..."
-	python3 scripts/clear_recent_items.py
+	$(PYTHON_BIN) scripts/clear_recent_items.py
 
 # 代码质量
 lint:
@@ -138,7 +143,7 @@ clean-all: clean
 # 构建
 build:
 	@echo "📦 构建应用程序..."
-	python3 tools/package_release.py --build
+	$(PYTHON_BIN) tools/package_release.py --build
 
 # CI模拟
 ci: clean verify-version lint type-check complexity security test-coverage
@@ -165,13 +170,13 @@ full-check: ci
 # 开发服务器(如果有的话)
 run:
 	@echo "🚀 启动应用..."
-	python3 -m plookingII
+	$(PYTHON_BIN) -m plookingII
 
 # 显示项目信息
 info:
 	@echo "📋 项目信息"
 	@echo "======================================"
-	@python3 -c "import sys; print(f'Python版本: {sys.version}')"
+	@$(PYTHON_BIN) -c "import sys; print(f'Python版本: {sys.version}')"
 	@echo "======================================"
 	@echo "依赖包:"
 	@pip list | grep -E "(pytest|ruff|flake8|mypy|radon)"

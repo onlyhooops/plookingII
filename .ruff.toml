@@ -146,6 +146,9 @@ ignore = [
 # 测试文件可以使用assert和print
 "tests/**/*.py" = ["S101", "T20"]
 
+# 独立脚本（CLI 工具）使用 print 输出进度
+"scripts/*.py" = ["T201"]
+
 # __init__.py文件允许未使用的导入（用于公共API）
 "**/__init__.py" = ["F401", "F403"]
 

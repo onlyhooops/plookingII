@@ -93,7 +93,7 @@ PlookingII 项目中重要问题的修复记录和解决方案（归档文档）
 ## 📚 相关文档
 
 - [架构简化文档](../architecture/) - 了解架构优化如何解决这些问题
-- [生产就绪报告](../reports/production-readiness.md) - 查看所有问题的修复状态
+- [项目报告](../reports/) - 查看所有问题的修复状态
 - [CHANGELOG](../../CHANGELOG.md) - 完整的变更记录
 
 ## 🔍 问题排查流程

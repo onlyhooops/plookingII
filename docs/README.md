@@ -46,9 +46,9 @@
 
 各类评估报告、审计报告和总结文档
 
-- [生产就绪报告](reports/production-readiness.md) - 生产环境就绪度评估
-- [安全审计报告](reports/security-audit.md) - 完整的安全审计结果
-- [最终发布总结](reports/final-release.md) - 重大版本发布总结
+- [技术质量审计报告](TECHNICAL_QUALITY_AUDIT_REPORT.md) - 完整技术质量审计
+- [质量审计摘要](QUALITY_AUDIT_SUMMARY.md) - 审计结论摘要
+- [技术自审报告](TECHNICAL_SELF_REVIEW_2026-08-05.md) - 最新技术自审
 
 ### 🚀 [发布记录](releases/)
 
@@ -76,8 +76,8 @@
 - **架构设计** → [架构文档](architecture/)
 - **版本管理** → [版本管理 V2 指南](development/version-management/guide-v2.md)
 - **发布历史** → [CHANGELOG.md](../CHANGELOG.md) 或 [发布记录](releases/)
-- **安全性** → [安全审计报告](reports/security-audit.md)
-- **生产部署** → [生产就绪报告](reports/production-readiness.md)
+- **安全性** → [项目报告](reports/)（安全审计结论见 [CI 安全检查流程](../.github/workflows/security.yml)）
+- **生产部署** → [项目报告](reports/)（生产就绪评估）
 - **历史质量审计** → [质量审计报告](QUALITY_AUDIT_SUMMARY.md)（归档）
 
 ## 📝 文档维护

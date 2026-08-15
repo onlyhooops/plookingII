@@ -19,7 +19,6 @@ import os
 import shutil
 import subprocess
 import sys
-import time
 from pathlib import Path
 
 # 项目根目录
@@ -299,7 +298,15 @@ def build():
     # 3.1 强力清理未使用的巨型库 (PyQt6 等)
     # py2app 即使排除也可能包含它们，手动删除以减小体积
     print("\n🧹 进一步清理未使用的库...")
-    lib_path = app_path / "Contents" / "Resources" / "lib" / "python3.11"
+    # 库目录随打包所用解释器版本变化（如 python3.11 / python3.14），动态探测
+    lib_dir = app_path / "Contents" / "Resources" / "lib"
+    lib_path = lib_dir / f"python{sys.version_info.major}.{sys.version_info.minor}"
+    if not lib_path.exists():
+        candidates = sorted(lib_dir.glob("python3.*")) if lib_dir.exists() else []
+        if candidates:
+            lib_path = candidates[-1]
+            print(f"   ⚠️ 未找到 {lib_dir.name}/python{sys.version_info.major}.{sys.version_info.minor}"
+                  f"，自动使用检测到的 {lib_path.name}")
     unused_libs = ["PyQt6", "PyQt5", "PySide6", "pyside2", "wx", "cv2", "numpy", "matplotlib"]
 
     for lib_name in unused_libs:
@@ -317,12 +324,16 @@ def build():
     print("\n🔐 处理应用签名和权限...")
     try:
         # 移除隔离属性 (修复 "应用已损坏" 提示)
-        run_command(["xattr", "-cr", str(app_path)])
-        print("   已移除隔离属性")
+        xattr_ok = run_command(["xattr", "-cr", str(app_path)])
+        print("   已移除隔离属性" if xattr_ok else "   ⚠️ 移除隔离属性失败（可忽略）")
 
         # Ad-hoc 签名
-        run_command(["codesign", "--force", "--deep", "-s", "-", str(app_path)])
-        print("   已应用 Ad-hoc 签名")
+        sign_ok = run_command(["codesign", "--force", "--deep", "-s", "-", str(app_path)])
+        if sign_ok:
+            print("   已应用 Ad-hoc 签名")
+        else:
+            print("   ⚠️ Ad-hoc 签名失败（py2app 产物在部分 macOS 版本上无法签名，"
+                  "应用可正常运行，仅 Gatekeeper 会提示）")
     except Exception as e:
         print(f"⚠️ 签名处理遇到警告 (可忽略): {e}")
 
@@ -370,6 +381,7 @@ def package(version, app_path):
 def main():
     parser = argparse.ArgumentParser(description="PlookingII Build Tool")
     parser.add_argument("--clean-only", action="store_true", help="仅清理")
+    parser.add_argument("--build", action="store_true", help="执行完整构建（默认行为，与 Makefile 保持一致）")
     args = parser.parse_args()
 
     if args.clean_only:

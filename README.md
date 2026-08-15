@@ -6,7 +6,7 @@ macOS 原生图片浏览器 - 高性能、智能化的图片浏览体验
 [![codecov](https://codecov.io/gh/onlyhooops/plookingII/branch/main/graph/badge.svg)](https://codecov.io/gh/onlyhooops/plookingII)
 [![Security](https://github.com/onlyhooops/plookingII/actions/workflows/security.yml/badge.svg)](https://github.com/onlyhooops/plookingII/actions/workflows/security.yml)
 [![Release](https://github.com/onlyhooops/plookingII/actions/workflows/release.yml/badge.svg)](https://github.com/onlyhooops/plookingII/actions/workflows/release.yml)
-[![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Ruff](https://img.shields.io/badge/linter-ruff-brightgreen.svg)](https://github.com/astral-sh/ruff)
@@ -25,7 +25,7 @@ macOS 原生图片浏览器 - 高性能、智能化的图片浏览体验
 
 - **操作系统**: macOS 10.15 (Catalina) 或更高版本
 - **架构**: Intel x86_64（不支持 Apple Silicon M1/M2，不支持 Linux/Windows）
-- **Python**: 3.9 或更高（推荐 3.11+）
+- **Python**: 3.11 或更高
 - **内存**: 建议 4GB 以上
 - **存储**: 至少 100MB 可用空间
 - **网络**: 支持 SMB 远程存储访问
@@ -57,8 +57,8 @@ macOS 原生图片浏览器 - 高性能、智能化的图片浏览体验
 ### 📊 项目报告
 
 - **[评估报告](docs/reports/)** - 各类评估和审计报告
-  - [生产就绪报告](docs/reports/production-readiness.md) - 生产环境评估
-  - [安全审计报告](docs/reports/security-audit.md) - 完整安全审计
+  - [技术质量审计报告](docs/TECHNICAL_QUALITY_AUDIT_REPORT.md) - 完整技术质量审计
+  - [质量审计摘要](docs/QUALITY_AUDIT_SUMMARY.md) - 审计结论摘要
 
 ### 🚀 发布记录
 
@@ -74,6 +74,9 @@ macOS 原生图片浏览器 - 高性能、智能化的图片浏览体验
 - **智能缓存系统** - 统一LRU缓存，基于实际像素内存的精确淘汰策略，
   配合 HOT3 强引用与双向预加载保证翻页零延迟
 - **目录级图片列表缓存** - 文件夹切换不再重复全量枚举与排序，以目录 mtime 自动失效
+- **内嵌性能跟踪** - 低开销聚合图片显示、导航、文件夹扫描/跳转等关键指标，
+  退出或定期输出 JSON/Markdown 会话报告（默认 `~/Library/Logs/PlookingII/perf`），
+  便于后续性能分析与优化
 - **异步文件夹跳转** - 跨界翻页后台加载，大文件夹/网络盘不冻结 UI
 - **内存安全** - 自动内存监控和分级清理，防止长期运行性能退化
 - **高效元数据预热** - 后台批量读取图片尺寸，导航热路径零磁盘 I/O
@@ -110,7 +113,7 @@ plookingII/
 ### 系统要求
 
 - macOS 10.15+
-- Python 3.9+（推荐 3.11+）
+- Python 3.11+
 - Xcode Command Line Tools
 
 ### 快速开始
@@ -171,5 +174,5 @@ git commit -m "refactor: refactor code"   # 代码重构
 ______________________________________________________________________
 
 **PlookingII Team** © 2025-2026
-**当前版本**: v2.4.0
+**当前版本**: v2.6.0
 **最后更新**: 2026-08-04

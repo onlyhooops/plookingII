@@ -36,7 +36,7 @@ jobs:
       # 准备环境
       # ------------------------------------------------------------------------
       - name: 📥 检出代码
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0  # 获取完整历史，用于生成 changelog
 

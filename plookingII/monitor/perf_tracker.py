@@ -71,7 +71,7 @@ def _coerce_bool(value: Any, default: bool) -> bool:
 
 def _coerce_int(value: Any, default: int) -> int:
     """安全整数转换，畸形值回退默认"""
-    if isinstance(value, bool) or not isinstance(value, (int, float, str)):
+    if isinstance(value, bool) or not isinstance(value, int | float | str):
         return default
     try:
         return int(value)

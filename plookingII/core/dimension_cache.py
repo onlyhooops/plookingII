@@ -99,7 +99,7 @@ class DirectoryDimensionCache:
                     isinstance(name, str)
                     and isinstance(dims, list)
                     and len(dims) == 2
-                    and all(isinstance(v, (int, float)) for v in dims)
+                    and all(isinstance(v, int | float) for v in dims)
                     and dims[0] > 0
                     and dims[1] > 0
                 ):

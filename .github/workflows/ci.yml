@@ -257,10 +257,10 @@ jobs:
         echo "安全检查:     ${{ needs.security.result }}"
         echo "================================================"
 
-        # macOS 专用应用，只要代码质量和 macOS 测试通过即可
+        # macOS 专用应用，代码质量与 macOS 测试必须同时通过才算 CI 绿
         if [[ "${{ needs.code-quality.result }}" == "success" ]] && \
-           [[ "${{ needs.test-macos.result }}" == "success" || "${{ needs.test-macos.result }}" == "failure" ]]; then
-          echo "✅ CI 检查通过（部分测试失败可接受）"
+           [[ "${{ needs.test-macos.result }}" == "success" ]]; then
+          echo "✅ CI 检查通过"
           exit 0
         else
           echo "❌ CI 检查失败"

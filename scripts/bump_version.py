@@ -23,7 +23,7 @@ Date: 2025-10-06
 import argparse
 import re
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 
@@ -47,9 +47,7 @@ class VersionBumper:
 
         return tuple(map(int, match.groups()))
 
-    def bump_version(
-        self, bump_type: str
-    ) -> tuple[tuple[int, int, int], tuple[int, int, int]]:
+    def bump_version(self, bump_type: str) -> tuple[tuple[int, int, int], tuple[int, int, int]]:
         """提升版本号
 
         Args:
@@ -71,10 +69,7 @@ class VersionBumper:
             # 尝试解析为具体版本号
             match = re.match(r"^(\d+)\.(\d+)\.(\d+)$", bump_type)
             if not match:
-                raise ValueError(
-                    f"无效的版本提升类型: {bump_type}\n"
-                    "支持: major, minor, patch 或具体版本号 (如 1.8.0)"
-                )
+                raise ValueError(f"无效的版本提升类型: {bump_type}\n支持: major, minor, patch 或具体版本号 (如 1.8.0)")
             new_version = tuple(map(int, match.groups()))
 
         return current, new_version
@@ -92,7 +87,7 @@ class VersionBumper:
         )
 
         # 更新 RELEASE_DATE
-        today = datetime.now().strftime("%Y-%m-%d")
+        today = datetime.now(UTC).strftime("%Y-%m-%d")
         content = re.sub(
             r'(RELEASE_DATE\s*=\s*["\'])\d{4}-\d{2}-\d{2}(["\'])',
             rf"\g<1>{today}\g<2>",
@@ -113,6 +108,7 @@ class VersionBumper:
                     [sys.executable, str(verify_script)],
                     capture_output=True,
                     text=True,
+                    check=False,
                 )
                 return result.returncode == 0
         except Exception as e:
@@ -224,4 +220,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-

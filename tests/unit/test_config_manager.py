@@ -509,18 +509,22 @@ class TestGlobalConfigManager:
     @patch("plookingII.config.manager.ConfigManager")
     def test_get_config_manager_singleton(self, mock_manager_class):
         """测试全局配置管理器是单例"""
-        # 重置全局变量
         import plookingII.config.manager as manager_module
+
+        # 保存原单例并在测试后恢复，避免 Mock 泄漏污染后续测试
+        original_manager = manager_module._config_manager
         manager_module._config_manager = None
+        try:
+            mock_instance = Mock()
+            mock_manager_class.return_value = mock_instance
 
-        mock_instance = Mock()
-        mock_manager_class.return_value = mock_instance
+            manager1 = manager_module.get_config_manager()
+            manager2 = manager_module.get_config_manager()
 
-        manager1 = manager_module.get_config_manager()
-        manager2 = manager_module.get_config_manager()
-
-        assert manager1 is manager2
-        assert mock_manager_class.call_count == 1
+            assert manager1 is manager2
+            assert mock_manager_class.call_count == 1
+        finally:
+            manager_module._config_manager = original_manager
 
 
 @pytest.mark.unit

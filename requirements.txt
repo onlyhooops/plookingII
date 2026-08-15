@@ -1,4 +1,4 @@
-psutil>=5.9.8
+psutil>=7.2.2
 pillow>=10.3.0
 pyobjc>=10.0; sys_platform == "darwin"
 pyobjc-framework-Cocoa>=10.0; sys_platform == "darwin"

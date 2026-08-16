@@ -100,13 +100,19 @@ def sync_file(rel_path: str, version: str, dry_run: bool) -> bool:
 
 
 def sync_changelog(version: str, dry_run: bool) -> bool:
-    """确保 CHANGELOG.md 最新条目与当前版本一致"""
+    """确保 CHANGELOG.md 最新条目与当前版本一致
+
+    兼容两种版本条目格式：
+    - 本地手动格式：`## [2.5.1] - 2026-08-15`
+    - semantic-release 生成格式：`## v2.5.1 (2026-08-15)`
+    """
     changelog_file = PROJECT_ROOT / "CHANGELOG.md"
     if not changelog_file.exists():
         return False
     content = changelog_file.read_text(encoding="utf-8")
-    match = re.search(r"^## \[(\d+\.\d+\.\d+)\]", content, re.MULTILINE)
-    if match and match.group(1) == version:
+    # 已存在对应版本的条目（无论哪种格式）则不插入
+    exists = re.search(rf"^## (v?{re.escape(version)})(\s|\b)", content, re.MULTILINE)
+    if exists:
         print(f"ℹ️  CHANGELOG.md 最新条目已是最新版本 {version}")
         return False
 
@@ -115,9 +121,12 @@ def sync_changelog(version: str, dry_run: bool) -> bool:
     if "<!--next-version-->" in content:
         new_content = content.replace("<!--next-version-->", "<!--next-version-->\n\n" + entry, 1)
     else:
-        # 插入到第一个 "## [" 版本条目之前
+        # 插入到第一个版本条目之前（兼容 "## [" 与 "## v" 两种开头）
         lines = content.splitlines()
-        insert_at = next((i for i, line in enumerate(lines) if line.startswith("## [")), len(lines))
+        insert_at = next(
+            (i for i, line in enumerate(lines) if line.startswith(("## [", "## v"))),
+            len(lines),
+        )
         lines.insert(insert_at, entry.rstrip("\n"))
         new_content = "\n".join(lines)
 

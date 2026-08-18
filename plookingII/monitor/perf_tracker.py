@@ -228,6 +228,11 @@ class PerfTracker:
         self._stop_event = threading.Event()
         self._worker_thread: threading.Thread | None = None
 
+        # 会话级单文件：一次运行（一次进程启动）只对应一份报告文件，
+        # 所有 flush（自动落盘 / 退出落盘）都覆盖写同一文件，避免产生
+        # 分散的 _auto / _quit 片段。文件名以会话启动时间戳命名。
+        self._report_base = f"perf_{time.strftime('%Y%m%d_%H%M%S', time.localtime(self._session_start))}"
+
         if self._enabled:
             self._start_worker()
             logger.debug(
@@ -356,7 +361,15 @@ class PerfTracker:
         }
 
     def flush_report(self, reason: str = "auto") -> str | None:
-        """将当前会话摘要写入 JSON + Markdown 报告，返回报告文件路径（失败返回 None）"""
+        """将当前会话摘要写入 JSON + Markdown 报告，返回报告文件路径（失败返回 None）
+
+        会话级单文件：一次运行只对应一份报告（文件名以会话启动时间戳命名），
+        自动落盘与退出落盘都覆盖写同一文件，latest_reason 记录最近一次触发
+        原因，供报告内容标注。
+
+        Args:
+            reason: 触发原因（"auto" 周期落盘 / "quit" 退出落盘）
+        """
         if not self._enabled:
             return None
         report_dir = self._ensure_report_dir()
@@ -365,10 +378,10 @@ class PerfTracker:
             return None
 
         summary = self.get_summary()
-        timestamp = time.strftime("%Y%m%d_%H%M%S")
-        base_name = f"perf_{timestamp}_{reason}"
-        json_path = os.path.join(report_dir, f"{base_name}.json")
-        md_path = os.path.join(report_dir, f"{base_name}.md")
+        summary["latest_reason"] = reason
+        summary["session_id"] = self._report_base
+        json_path = os.path.join(report_dir, f"{self._report_base}.json")
+        md_path = os.path.join(report_dir, f"{self._report_base}.md")
 
         try:
             with open(json_path, "w", encoding="utf-8") as f:
@@ -377,7 +390,7 @@ class PerfTracker:
                 f.write(self._render_markdown(summary))
             self._rotate_reports()
             self._last_flush_at = time.time()
-            logger.info("性能报告已写入: %s", json_path)
+            logger.info("性能报告已更新: %s", json_path)
             return json_path
         except Exception:
             logger.debug("写入性能报告失败", exc_info=True)
@@ -406,14 +419,22 @@ class PerfTracker:
 
     @staticmethod
     def _render_markdown(summary: dict[str, Any]) -> str:
-        """将摘要渲染为人类可读的 Markdown 报告"""
+        """将摘要渲染为人类可读的 Markdown 报告（单会话完整记录）"""
+        reason_label = {"auto": "周期自动落盘", "quit": "应用退出", "test": "测试触发"}.get(
+            summary.get("latest_reason", ""), summary.get("latest_reason", "未知")
+        )
         lines = [
             "# PlookingII 性能报告",
             "",
             f"- 版本: {summary.get('version', '')}",
+            f"- 会话 ID: `{summary.get('session_id', '')}`",
             f"- 会话开始: {summary.get('session_start', '')}",
             f"- 会话时长: {summary.get('session_duration_s', 0)} 秒",
             f"- 采样频率: 每 {summary.get('sample_rate', 1)} 次记录 1 次",
+            f"- 最近更新: {reason_label}",
+            "",
+            "> 本文件为**单次运行的完整会话记录**：周期自动落盘与退出落盘",
+            "> 均覆盖写入同一文件，会话结束后保留的是最终完整状态。",
             "",
             "## 操作统计（毫秒）",
             "",

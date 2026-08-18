@@ -180,16 +180,61 @@ class TestPerfTrackerReport:
             assert "## 操作统计" in f.read()
 
     def test_report_rotation_keeps_max_files(self, tmp_path):
-        """轮转仅保留最近 max_report_files 份报告"""
+        """轮转仅保留最近 max_report_files 份会话报告"""
         tracker = PerfTracker(enabled=True, report_dir=str(tmp_path), max_report_files=2, auto_flush_seconds=0)
+
+        # 单会话多次 flush 只产生一份文件（会话级单文件语义）
         for i in range(5):
             tracker.record("x", 1.0)
             tracker.flush_report(reason=f"r{i}")
+        jsons = [f for f in os.listdir(str(tmp_path)) if f.endswith(".json")]
+        assert len(jsons) == 1, f"单会话应只有一份报告，实际: {jsons}"
 
+        # 模拟多会话：手工创建多份报告文件，验证轮转
+        for i in range(5):
+            name = f"perf_2026010{i}_000000.json"
+            p = tmp_path / name
+            p.write_text('{"app": "PlookingII", "session_id": "x"}', encoding="utf-8")
+            (tmp_path / f"perf_2026010{i}_000000.md").write_text("# x", encoding="utf-8")
+
+        tracker._rotate_reports()
+        jsons = sorted(f for f in os.listdir(str(tmp_path)) if f.endswith(".json"))
+        mds = sorted(f for f in os.listdir(str(tmp_path)) if f.endswith(".md"))
+        # 保留最近 2 份（按 mtime，手工文件最新 + 会话文件）
+        assert len(jsons) <= 2, f"轮转后 JSON 应≤2，实际: {jsons}"
+        assert len(mds) <= 2
+
+    def test_single_session_single_file(self, tmp_path):
+        """一次运行（一次 flush + 多次 flush）只生成一份报告文件"""
+        tracker = PerfTracker(enabled=True, report_dir=str(tmp_path), auto_flush_seconds=0)
+        tracker.record("nav", 1.0)
+        p1 = tracker.flush_report(reason="auto")
+        tracker.record("nav", 2.0)
+        tracker.record("image_display", 3.0, method="cache_hit")
+        p2 = tracker.flush_report(reason="auto")
+        tracker.record("keep_move", 4.0)
+        p3 = tracker.flush_report(reason="quit")
+
+        # 三次 flush 指向同一文件
+        assert p1 == p2 == p3
         jsons = [f for f in os.listdir(str(tmp_path)) if f.endswith(".json")]
         mds = [f for f in os.listdir(str(tmp_path)) if f.endswith(".md")]
-        assert len(jsons) == 2
-        assert len(mds) == 2
+        assert len(jsons) == 1
+        assert len(mds) == 1
+
+        # 内容为最终完整状态
+        with open(p1, encoding="utf-8") as f:
+            data = json.load(f)
+        assert set(data["operations"].keys()) == {"image_display", "keep_move", "nav"}
+        assert data["latest_reason"] == "quit"
+        assert data["session_id"] == os.path.splitext(os.path.basename(p1))[0]
+
+        # MD 标注单会话说明
+        md_path = os.path.splitext(p1)[0] + ".md"
+        with open(md_path, encoding="utf-8") as f:
+            md = f.read()
+        assert "单次运行的完整会话记录" in md
+        assert "应用退出" in md
 
     def test_report_includes_session_info(self, tmp_path):
         """报告包含会话元信息"""

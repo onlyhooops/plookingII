@@ -1,5 +1,23 @@
 # CHANGELOG
 
+## v2.5.7 (2026-08-18)
+
+### 🐛 Bug Fixes
+
+- **移除主线程 recycleAutoreleasePool 定时器（修复启动崩溃）**：v2.5.5 的
+  `objc.recycleAutoreleasePool()` 周期调用在 NSTimer 回调（RunLoop 已压
+  autorelease pool）中触发 `AutoreleasePoolPage::badPop` → SIGABRT（该 API
+  官方标注 "for system use only"）。回滚后 window.py 恢复 v2.5.4 稳定状态
+
+### ⚡ 已知问题
+
+- 长会话内存增长问题保留：PyObjC 12 无安全周期 drain 全局 pool 的官方 API
+  （recycle / autorelease_pool / 手写 drain 均已验证不可行），内存方案需
+  架构级重构（见 `docs/reports/memory-pipeline-design.md`）
+
+### 🧪 测试与工程化
+
+- 全量测试通过（1620 passed）
 
 ## v2.6.0 (2026-08-18)
 

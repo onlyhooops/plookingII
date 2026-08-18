@@ -1,6 +1,23 @@
 # CHANGELOG
 
 
+## v2.5.4 (2026-08-18)
+
+### Bug Fixes
+
+- 回滚 autorelease 方案修复启动崩溃，full_res_browse 默认改视图级解码
+  ([`13962f9`](https://github.com/onlyhooops/plookingII/commit/13962f963808a415e7cc30c3c948a42da0bbb711))
+
+崩溃（logs/崩溃报告.md，v2.5.3）：PyObjC 桥接下手动 NSAutoreleasePool 与 PyObjC 对象引用管理冲突，解码线程池中 pool drain 后 Python
+  侧 del/帧清理二次释放 ObjC 对象 → use-after-free SIGSEGV（启动即崩）。
+
+修复： - 完全回滚 v2.5.3 的 autorelease pool 方案（删除 core/autorelease.py 及所有解码路径包裹，源码恢复 v2.5.2 稳定状态） -
+  feature.full_res_browse 默认 True → False：主线程绘制解码从全分辨率 （6000×4000 ≈ 168MB/张）改为视图级（~1920 ≈
+  10-20MB/张）， 消除长会话内存增长与 swap 卡顿主因，不触碰 autorelease 机制
+
+验证：产品路径 60 次翻页 RSS 净增 +7.4MB（对比全分辨率 +2.5GB/15张）； 全量测试 1619 passed。分析报告已更新记录崩溃根因与经验教训。
+
+
 ## v2.5.3 (2026-08-18)
 
 ### Bug Fixes

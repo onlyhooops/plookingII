@@ -84,7 +84,7 @@ def check_changelog(version: str) -> bool:
         return True
     content = changelog_file.read_text(encoding="utf-8")
     # 兼容本地 "## [x.y.z]" 与 semantic-release "## vx.y.z" 两种条目格式
-    match = re.search(r"^## v?(\d+\.\d+\.\d+)", content, re.MULTILINE)
+    match = re.search(r"^## \[?v?(\d+\.\d+\.\d+)\]?", content, re.MULTILINE)
     if match and match.group(1) != version:
         print(f"❌ CHANGELOG.md 最新条目={match.group(1)}，期望 {version}")
         return False

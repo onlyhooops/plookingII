@@ -1,5 +1,28 @@
 # CHANGELOG
 
+## v2.5.5 (2026-08-18)
+
+### 🐛 Bug Fixes
+
+- **主线程周期释放 ObjC 自动释放池（内存管理核心）**：PyObjC 桥接下图像
+  绘制触发的解码位图挂在主线程全局 NSAutoreleasePool，从不释放导致长会话
+  线性累积内存（实测 6 分钟 74MB→8.5GB）。采用 PyObjC 官方
+  `objc.recycleAutoreleasePool()`（桥接感知的"释放全局池并新建"接口），
+  主线程 30 秒周期回收绘制解码产生的中间对象
+
+### ⚡ 性能优化
+
+- 主线程注册 30s 周期 `NSTimer` → `recycleAutoreleasePool:`（仅在 PyObjC
+  提供该 API 时启用，环境降级安全）
+- 量化验证：90 次真实解码 + 6 次 recycle → **RSS 净增 +84MB（平台型）**，
+  对比修复前 ~+15GB；持有对象有效性保持（无 use-after-free）
+- 调研文档：`docs/reports/memory-pipeline-design.md`（官方方案对比与
+  完整管线设计：HOT3 强引用 + 视图级解码 LRU + 磁盘缓存 + 周期回收）
+
+### 🧪 测试与工程化
+
+- 修复 `verify_version_consistency.py` 对 `## [x.y.z]` 占位格式的兼容
+- 全量测试通过（1619 passed）
 
 ## v2.5.4 (2026-08-18)
 

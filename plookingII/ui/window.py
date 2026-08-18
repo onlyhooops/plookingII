@@ -170,6 +170,20 @@ class MainWindow(NSWindow):
             0.1, self, "initializeRecentMenu:", None, False
         )
 
+        # 主线程周期释放 ObjC 自动释放池（内存管理核心）
+        # PyObjC 桥接下，绘制触发的解码位图等 autoreleased 对象挂在主线程
+        # 全局 NSAutoreleasePool 上，若不释放则随长会话线性累积（实测
+        # 6 分钟 74MB→8.5GB）。objc.recycleAutoreleasePool() 是 PyObjC
+        # 官方提供的"释放全局池并新建"接口（桥接感知，不破坏引用计数），
+        # 每 30 秒在主线程执行一次即可回收解码中间对象。
+        try:
+            if hasattr(objc, "recycleAutoreleasePool"):
+                self._recycle_timer = NSTimer.scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(
+                    30.0, self, "recycleAutoreleasePool:", None, True
+                )
+        except Exception:
+            logger.debug("注册自动释放池回收定时器失败", exc_info=True)
+
         # 注册拖拽接收功能
         self._setup_drag_and_drop()
 
@@ -684,6 +698,24 @@ class MainWindow(NSWindow):
     def initializeRecentMenu_(self, timer):
         """委托给 MenuController"""
         self.menu_controller.initialize_recent_menu(timer)
+
+    def recycleAutoreleasePool_(self, timer):
+        """主线程周期释放 ObjC 自动释放池（内存管理核心回调）
+
+        PyObjC 桥接下，图像绘制触发的解码位图等 autoreleased 对象挂在
+        主线程全局 NSAutoreleasePool，不释放则长会话线性累积内存。
+        objc.recycleAutoreleasePool() 释放全局池并新建，是 PyObjC 官方
+        提供的桥接感知方案（不破坏引用计数，已验证对象有效性保持）。
+
+        Note:
+            - 必须在主线程调用（AppKit 要求），由 NSTimer 驱动
+            - 仅在启动时注册成功时被调度（无 recycle 能力的环境直接跳过）
+        """
+        try:
+            if hasattr(objc, "recycleAutoreleasePool"):
+                objc.recycleAutoreleasePool()
+        except Exception:
+            logger.debug("recycleAutoreleasePool 失败", exc_info=True)
 
     # ==================== 内部方法 ====================
 

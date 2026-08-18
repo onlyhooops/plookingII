@@ -115,3 +115,50 @@ Python 侧 del/gc/NSCache 驱逐 都无法触发 ObjC dealloc
 - 单次解码内存占用从 ~168MB 降至 ~0.1MB（可回收）
 - 长会话内存曲线从线性增长变为平台型
 - 导航延迟不再因系统 swap 恶化（p95 455ms → 应回落至 ~10ms 量级）
+
+---
+
+## 七、崩溃回归与最终修复（2026-08-18 深夜修订）
+
+### 问题：autorelease pool 方案导致启动即崩溃
+
+v2.5.3 实施 autorelease pool 方案后，构建的 App 启动后浏览文件夹/恢复历史
+**直接崩溃**（logs/崩溃报告.md，Version 2.5.3）：
+
+```
+Thread 16 Crashed:: imgmgr_3
+objc_release → object_dealloc → subtype_dealloc → _PyFrame_ClearExceptCode
+```
+
+**根因**：PyObjC 桥接下手动创建并 drain `NSAutoreleasePool` 与 PyObjC 自身的
+对象引用管理冲突。解码返回的 CGImage/NSImage 对象被 PyObjC 持有引用，
+pool drain 释放一次，随后 Python 侧 `del`/帧清理又触发 `object_dealloc →
+objc_release` 二次释放 → **use-after-free / SIGSEGV**。
+多层嵌套 pool（`load_image_with_strategy` + `OptimizedStrategy.load` +
+`_load_image_with_concurrency` 三层）加剧了跨层释放冲突。
+
+验证结论：**PyObjC 12 下任何手动 NSAutoreleasePool（含官方 objc.autorelease_pool）
+在解码线程池场景均不安全**（官方版本多线程并发测试同样 SIGSEGV）。
+
+### 修复（回滚 + 安全替代）
+
+1. **完全回滚 autorelease 方案**：删除 `core/autorelease.py`，撤销所有
+   pool 包裹，源码恢复到 v2.5.2 稳定状态（崩溃回归消除）
+2. **安全内存缓解（不触碰 autorelease）**：`feature.full_res_browse`
+   默认从 `True` 改为 `False` —— 主线程绘制解码从全分辨率（6000×4000 ≈
+   168MB/张）改为视图级分辨率（~1920×1280 ≈ 10-20MB/张）
+   - `_calculate_target_size` 返回视图动态尺寸
+   - `_maybe_upgrade_cached_image` 后台全分辨率升级路径跳过
+   - 缓存继续存懒代理（已验证懒代理不占解码内存）
+
+验证（产品路径，60 次翻页）：视图级懒代理 **RSS 净增 +7.4MB**
+（对比全分辨率强制解码 +2.5GB/15张），长会话内存受控。
+
+### 经验教训
+
+- PyObjC 桥接对象的内存管理必须遵循 PyObjC 自身的引用计数规则，
+  手动操作 ObjC 自动释放池会破坏 PyObjC 的对象生命周期 → 崩溃
+- 内存优化应优先"减少解码规模/避免全分辨率常驻"这类架构手段，
+  而非尝试绕过桥接层的释放机制
+- 量化验证脚本需使用产品真实路径（Quartz 懒代理），
+  用 AppKit 非线程安全 API 模拟会得出误导性结论

@@ -71,11 +71,14 @@ class HybridImageProcessor:
         self._ext_cache = {}
 
         # 热路径配置缓存：full_res_browse 在每次图片加载/显示时读取，
-        # 配置为启动时加载、运行期不变，构造时快照避免热路径重复 RLock 查询
+        # 配置为启动时加载、运行期不变，构造时快照避免热路径重复 RLock 查询。
+        # 默认关闭（视图级分辨率解码）：主线程绘制 CGContextDrawImage 时
+        # 全分辨率解码（6000×4000 ≈ 168MB/张）是长会话内存增长与系统 swap
+        # 卡顿的主因；视图级解码可显著降低单图内存与累积速度
         try:
-            self._full_res_browse = get_config("feature.full_res_browse", True)
+            self._full_res_browse = get_config("feature.full_res_browse", False)
         except Exception:
-            self._full_res_browse = True
+            self._full_res_browse = False
 
     def _init_quartz_components(self):
         """初始化Quartz图像处理组件"""

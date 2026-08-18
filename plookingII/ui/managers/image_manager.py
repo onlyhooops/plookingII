@@ -57,8 +57,10 @@ class ImageManager:
         self.perf = get_perf_tracker()
         self.slim_mode = get_config("feature.slim_mode", False)
         # 热路径配置缓存：full_res_browse 在每次显示/升级路径读取，
-        # 配置启动时加载、运行期不变，构造时快照避免热路径重复 RLock 查询
-        self._full_res_browse = get_config("feature.full_res_browse", True)
+        # 配置启动时加载、运行期不变，构造时快照避免热路径重复 RLock 查询。
+        # 默认关闭（视图级分辨率解码）——主线程全分辨率绘制解码是长会话
+        # 内存增长主因，视图级解码显著降低单图内存占用
+        self._full_res_browse = get_config("feature.full_res_browse", False)
 
         # 高级图像缓存（max_items 自适应物理内存）
         adaptive_max_items, adaptive_max_memory = self._compute_cache_params()
@@ -891,12 +893,7 @@ class ImageManager:
                 self._decode_semaphore = threading.BoundedSemaphore(value=max(2, cpu_count // 2))
             start = time.time()
             with self._decode_semaphore:
-                # 解码产生的 ObjC 中间对象由局部自动释放池回收，
-                # 防止 PyObjC 桥接下解码内存随全局 pool 永久残留
-                from ...core.autorelease import objc_autorelease_pool
-
-                with objc_autorelease_pool():
-                    result = self._load_image_optimized(image_path, target_size=target_size)
+                result = self._load_image_optimized(image_path, target_size=target_size)
             # 归档实际解码耗时到经验表（供 P2-1 自适应两阶段消费）
             if result is not None:
                 self._record_decode_experience(image_path, (time.time() - start) * 1000)
@@ -1010,11 +1007,7 @@ class ImageManager:
                         return
                     from plookingII.core.loading.helpers import extract_embedded_preview
 
-                    # 解码产生的 ObjC 中间对象由局部自动释放池回收
-                    from ...core.autorelease import objc_autorelease_pool
-
-                    with objc_autorelease_pool():
-                        preview = extract_embedded_preview(image_path)
+                    preview = extract_embedded_preview(image_path)
                     if preview is None:
                         self._remember_no_mpf(image_path)
                         return
@@ -1503,14 +1496,9 @@ class ImageManager:
 
             file_size_mb = self.image_cache.get_file_size_mb(img_path)
             strategy, eff_target = self._select_load_strategy(file_size_mb, prefer_preview, adjusted_target_size)
-            # 解码产生的 ObjC 中间对象由局部自动释放池回收
-            # （覆盖 fast 路径与 load_image_with_strategy 两条解码链）
-            from ...core.autorelease import objc_autorelease_pool
-
-            with objc_autorelease_pool():
-                if strategy == "fast" and self.image_processor:
-                    return self.image_processor.load_image_optimized(img_path, strategy="fast")
-                return self.image_cache.load_image_with_strategy(img_path, strategy, eff_target)
+            if strategy == "fast" and self.image_processor:
+                return self.image_processor.load_image_optimized(img_path, strategy="fast")
+            return self.image_cache.load_image_with_strategy(img_path, strategy, eff_target)
         except Exception:
             logger.exception("_load_image_optimized failed for %s", img_path)
             return None

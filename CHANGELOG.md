@@ -1,23 +1,28 @@
 # CHANGELOG
 
-## v2.5.7 (2026-08-18)
 
-### 🐛 Bug Fixes
+## v2.6.1 (2026-08-18)
 
-- **移除主线程 recycleAutoreleasePool 定时器（修复启动崩溃）**：v2.5.5 的
-  `objc.recycleAutoreleasePool()` 周期调用在 NSTimer 回调（RunLoop 已压
-  autorelease pool）中触发 `AutoreleasePoolPage::badPop` → SIGABRT（该 API
-  官方标注 "for system use only"）。回滚后 window.py 恢复 v2.5.4 稳定状态
+### Bug Fixes
 
-### ⚡ 已知问题
+- 移除主线程 recycleAutoreleasePool 定时器（修复启动崩溃）
+  ([`27d0494`](https://github.com/onlyhooops/plookingII/commit/27d04941f6bc8b8fa5d4b5288a10be2a79d67057))
 
-- 长会话内存增长问题保留：PyObjC 12 无安全周期 drain 全局 pool 的官方 API
-  （recycle / autorelease_pool / 手写 drain 均已验证不可行），内存方案需
-  架构级重构（见 `docs/reports/memory-pipeline-design.md`）
+崩溃报告（logs/崩溃报告.md）：v2.5.5 的主线程周期 recycleAutoreleasePool 在 NSTimer 回调（RunLoop 已压 autorelease pool）中调用
+  objc.recycleAutoreleasePool() 导致 AutoreleasePoolPage::badPop -> SIGABRT（该 API 官方标注 for system use
+  only）。回滚 recycle 定时器，window.py 恢复 v2.5.4 稳定状态。
 
-### 🧪 测试与工程化
+内存问题保留：PyObjC 12 无安全周期 drain 全局 pool 的官方 API（已验证 recycle / autorelease_pool / 手写 drain
+  均不可行），内存方案需架构级 重构（见 docs/reports/memory-pipeline-design.md 后续）。
 
-- 全量测试通过（1620 passed）
+### Chores
+
+- 同步版本断言至 v2.6.0
+  ([`f8a96a7`](https://github.com/onlyhooops/plookingII/commit/f8a96a7858664fe108f671188757886d08b294a0))
+
+- 同步版本至 v2.5.7 并记录 recycle 回滚
+  ([`8ecb5aa`](https://github.com/onlyhooops/plookingII/commit/8ecb5aa8a3e3eea0570a1a251a2c8c248835ef5b))
+
 
 ## v2.6.0 (2026-08-18)
 

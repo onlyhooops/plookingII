@@ -1,32 +1,34 @@
 # CHANGELOG
 
+
 ## v2.5.3 (2026-08-18)
 
-### 🐛 Bug Fixes
+### Bug Fixes
 
-- **修复"越用越卡"内存泄漏（核心修复）**：PyObjC 桥接下解码产生的 ObjC
-  中间对象（TIFF 数据、位图缓冲）默认进入全局 NSAutoreleasePool 且从不
-  drain，Python 侧 del/gc/缓存驱逐均无法触发 ObjC dealloc，导致解码内存
-  （实测 168-255MB/张）永久残留、长会话线性增长至数 GB（实测 6 分钟
-  84MB → 9.5GB，导航 p95 恶化至 455ms）
+- 修复 PyObjC 桥接内存泄漏（越用越卡根因）
+  ([`0df83a9`](https://github.com/onlyhooops/plookingII/commit/0df83a98544f8ce5c7e4dcca3ade03ca3fd09500))
 
-### ⚡ 性能优化
+量化定位：解码产生的 ObjC 中间对象进入全局 NSAutoreleasePool 且从不 drain，Python 侧 del/gc/缓存驱逐均无法触发 ObjC dealloc，导致解码内存
+  （实测 168-255MB/张）永久残留、长会话线性增长（6 分钟 84MB→9.5GB）。
 
-- 新增 `core/autorelease.py`：`objc_autorelease_pool()` 上下文管理器，
-  在解码/图像操作外围创建并立即 drain 局部 NSAutoreleasePool
-- 解码路径全面接入：`OptimizedStrategy.load` / `PreviewStrategy.load` /
-  `AdvancedImageCache.load_image_with_strategy` / `_load_image_optimized` /
-  `_load_image_with_concurrency` / 内嵌预览提取
-- 设计保证：返回值由 Python 引用计数持有（with 后仍有效）、非 macOS 自动
-  降级、嵌套安全
+修复： - 新增 core/autorelease.py：objc_autorelease_pool() 上下文管理器， 在解码/图像操作外围创建并立即 drain 局部
+  NSAutoreleasePool - 解码路径全面接入：OptimizedStrategy/PreviewStrategy.load、
+  load_image_with_strategy、_load_image_optimized、 _load_image_with_concurrency、内嵌预览提取 - 返回值由 Python
+  引用计数持有（with 后仍有效），非 macOS 自动降级
 
-### 🧪 测试与工程化
+验证：15 张解码净增 2526MB → 1MB（回收率 99.96%）； 120 次翻页模拟 RSS 平台型（+28MB）。
 
-- 新增 `tests/unit/test_core_autorelease.py`（上下文/异常/嵌套/对象有效性 4 例）
-- 量化验证（6000×4000 JPEG，15 张解码）：修复前 +2526.6MB → 修复后 +1.0MB
-  （回收率 99.96%）；120 次翻页模拟 RSS 平台型（+28MB）
-- 分析报告：`docs/reports/memory-analysis-2026-08-18.md`（完整根因与验证）
-- 全量测试通过（1619 → 1623 passed）
+分析报告：docs/reports/memory-analysis-2026-08-18.md； 解除 docs/reports/ 忽略（README 索引 + 报告随仓库托管）； 新增 logs/
+  忽略（运行时性能报告不入库）。
+
+### Chores
+
+- 同步版本断言至 v2.5.2，版本脚本兼容 semantic-release 格式
+  ([`118d6e3`](https://github.com/onlyhooops/plookingII/commit/118d6e3d65317ce8aafc375acb398a51d4ae019a))
+
+semantic-release 自动发布 v2.5.2 后同步测试断言与 README； verify/unify 脚本的 CHANGELOG 检查兼容 '## vX.Y.Z' 生成格式，
+  避免误插占位条目。
+
 
 ## v2.5.2 (2026-08-16)
 

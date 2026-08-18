@@ -449,8 +449,13 @@ class AdvancedImageCache(SimpleImageCache):
 
             loader = get_loader(strategy)
 
-            # 加载图片
-            image = loader.load(image_path, target_size=target_size)
+            # 加载图片（解码产生的 ObjC 中间对象由局部自动释放池回收，
+            # 防止 PyObjC 桥接下解码内存随全局 pool 永久残留——见
+            # docs/reports/memory-analysis-2026-08-18.md）
+            from ..core.autorelease import objc_autorelease_pool
+
+            with objc_autorelease_pool():
+                image = loader.load(image_path, target_size=target_size)
 
             if image is not None:
                 size_mb = self._estimate_image_memory(image)

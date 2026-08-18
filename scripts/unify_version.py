@@ -110,8 +110,8 @@ def sync_changelog(version: str, dry_run: bool) -> bool:
     if not changelog_file.exists():
         return False
     content = changelog_file.read_text(encoding="utf-8")
-    # 已存在对应版本的条目（无论哪种格式）则不插入
-    exists = re.search(rf"^## (v?{re.escape(version)})(\s|\b)", content, re.MULTILINE)
+    # 已存在对应版本的条目（兼容 "## [x.y.z]"、"## vx.y.z" 两种格式）则不插入
+    exists = re.search(rf"^## \[?v?{re.escape(version)}\]?", content, re.MULTILINE)
     if exists:
         print(f"ℹ️  CHANGELOG.md 最新条目已是最新版本 {version}")
         return False

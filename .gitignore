@@ -55,7 +55,8 @@ tox.ini
 # ==================== 文档相关 ====================
 # Sphinx documentation
 docs/_build/
-docs/reports/
+# 项目报告目录随仓库托管（docs/reports/README.md 为导航索引）
+# docs/reports/
 docs/testing/
 docs/archive/
 
@@ -191,6 +192,7 @@ cython_debug/
 # ==================== 项目特定 ====================
 # 日志文件
 *.log
+logs/
 *.tmp
 *.temp
 

@@ -21,7 +21,7 @@ Date: 2025-10-06
 """
 
 # 🎯 唯一版本号定义 - 发布新版本时只需修改这里
-__version__ = "2.5.2"
+__version__ = "2.5.3"
 
 # 版本号别名（向后兼容）
 VERSION = __version__
@@ -35,7 +35,7 @@ MAJOR, MINOR, PATCH = VERSION_INFO
 VERSION_DESCRIPTION = "Stability Fixes, Coverage Boost & Automated Versioning"
 
 # 发布日期
-RELEASE_DATE = "2026-08-15"
+RELEASE_DATE = "2026-08-18"
 
 
 def get_version() -> str:

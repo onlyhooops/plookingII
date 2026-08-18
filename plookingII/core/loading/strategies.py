@@ -98,6 +98,22 @@ class OptimizedStrategy:
         start_time = time.time()
 
         try:
+            # 解码产生的 ObjC 中间对象由局部自动释放池回收：
+            # PyObjC 桥接下若放任全局 pool 累积，解码内存（实测 160-255MB/张）
+            # 无法被 Python del/gc/缓存驱逐回收，长会话线性增长至数 GB。
+            # 见 docs/reports/memory-analysis-2026-08-18.md
+            from ...core.autorelease import objc_autorelease_pool
+
+            with objc_autorelease_pool():
+                return self._load_inner(file_path, target_size, start_time)
+        except Exception:
+            logger.exception("加载失败 %s", file_path)
+            self.stats.record_failure()
+            return None
+
+    def _load_inner(self, file_path: str, target_size, start_time: float) -> Any | None:
+        """加载内部实现（在 objc_autorelease_pool 内执行）"""
+        try:
             # 检查文件格式
             ext = os.path.splitext(file_path)[1].lower()
             if ext not in (".jpg", ".jpeg", ".png"):
@@ -135,7 +151,6 @@ class OptimizedStrategy:
                 self.stats.record_failure()
 
             return image
-
         except Exception:
             logger.exception("加载失败 %s", file_path)
             self.stats.record_failure()
@@ -240,6 +255,19 @@ class PreviewStrategy:
         """
         start_time = time.time()
 
+        try:
+            # 解码产生的 ObjC 中间对象由局部自动释放池回收（见 OptimizedStrategy 注释）
+            from ...core.autorelease import objc_autorelease_pool
+
+            with objc_autorelease_pool():
+                return self._load_inner(file_path, target_size, start_time)
+        except Exception:
+            logger.exception("预览加载失败 %s", file_path)
+            self.stats.record_failure()
+            return None
+
+    def _load_inner(self, file_path: str, target_size, start_time: float) -> Any | None:
+        """预览加载内部实现（在 objc_autorelease_pool 内执行）"""
         try:
             # 检查文件格式
             ext = os.path.splitext(file_path)[1].lower()

@@ -300,6 +300,14 @@ class AppDelegate(NSObject):
         except Exception:
             pass
 
+        # 9) 关闭解码子进程池（回收子进程解码内存）
+        try:
+            from ..core.decode_pool import shutdown_decode_pool
+
+            shutdown_decode_pool()
+        except Exception:
+            pass
+
         return True
 
 

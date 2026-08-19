@@ -86,3 +86,37 @@ PyObjC 桥接下，**图像绘制触发的解码位图**挂在主线程全局 NS
   为平台型（峰值受 L2 预算控制，~1.5GB 内），导航 p95 应回落
 - 可选后续：L3 磁盘缓存落地（P3-4 已有 `dimension_cache` 先例，
   可扩展为图片数据缓存）；导航 p95 ~400ms 独立排查（与内存泄漏解耦）
+
+---
+
+## 六、根治方案落地：解码子进程隔离（2026-08-19）
+
+### 背景
+v2.5.5 的 recycleAutoreleasePool 在主线程 NSTimer 回调触发 badPop 崩溃
+（v2.5.7 回滚）。真机 v2.6.1 报告确认：任何主进程触发的 ObjC 图像解码
+（fast 路径 `NSImage.initWithContentsOfFile_` 全分辨率）其解码缓冲都挂
+主线程 autorelease pool 永不释放 → 43 次解码 ≈ 8.6GB。
+
+### 方案
+**解码子进程隔离**（decode_worker.py + decode_pool.py）：
+- 图像解码在独立子进程（spawn），解码内存（全分辨率 ~242MB）全在子进程
+- 子进程解码后写显示级 JPEG 临时文件，主进程只接收文件路径并加载小图
+- 子进程累计 MAX_TASKS 次后重启 → autorelease pool 随进程销毁彻底释放
+- 主进程 fast 路径在 `full_res_browse=False` 时改用子进程解码
+
+### 验证（6000×4000 JPEG）
+| 指标 | 主进程解码（旧） | 子进程解码（新） |
+|---|---|---|
+| 30 次解码父进程 RSS | ~+5GB | **-0.3MB（平台型）** |
+| 单次解码内存归属 | 主进程 +170MB | 子进程 +242MB（退出即回收） |
+| 显示级图加载 | 全分辨率 NSImage | 1920×1280 小图（正常显示） |
+
+### 接入点
+- `image_manager._load_image_optimized`：fast 路径非全分辨率时走
+  `_load_image_via_subprocess`（子进程解码显示级图）
+- `app/main.py` 退出清理：`shutdown_decode_pool()`
+- 配置：可经 `feature.decode_in_subprocess` 扩展开关（当前默认启用）
+
+### 已知限制
+- 子进程通信 + 文件 I/O 有少量开销（~6ms/张，实测显示级解码）
+- 仅覆盖 fast 路径（当前泄漏主源）；懒代理路径本身不占内存，保持不变

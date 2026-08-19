@@ -11,6 +11,7 @@ import threading
 import time
 from collections import OrderedDict, deque
 from concurrent.futures import ThreadPoolExecutor
+from typing import Any
 
 from ...config.constants import APP_NAME, IMAGE_PROCESSING_CONFIG
 from ...config.manager import get_config, set_config
@@ -1497,10 +1498,54 @@ class ImageManager:
             file_size_mb = self.image_cache.get_file_size_mb(img_path)
             strategy, eff_target = self._select_load_strategy(file_size_mb, prefer_preview, adjusted_target_size)
             if strategy == "fast" and self.image_processor:
+                # fast 路径（小文件全分辨率 NSImage）是主进程解码内存泄漏主源：
+                # 非全分辨率浏览模式下，改用子进程解码显示级图，解码内存隔离
+                # 在子进程（随进程退出彻底释放，见 decode_pool.py 设计说明）
+                if not self._full_res_browse:
+                    return self._load_image_via_subprocess(img_path, adjusted_target_size or eff_target)
                 return self.image_processor.load_image_optimized(img_path, strategy="fast")
             return self.image_cache.load_image_with_strategy(img_path, strategy, eff_target)
         except Exception:
             logger.exception("_load_image_optimized failed for %s", img_path)
+            return None
+
+    def _load_image_via_subprocess(self, img_path: str, target_size) -> Any | None:
+        """通过解码子进程加载显示级图像（内存根治方案）
+
+        主进程触发的 ObjC 图像解码，其解码缓冲挂主线程全局 autorelease
+        pool 且从不被 drain（PyObjC 结构性限制，已验证所有官方释放 API
+        均不可行）。解码子进程方案：解码在独立子进程完成（内存全在子
+        进程），产出显示级临时文件回传，子进程周期重启彻底回收内存。
+
+        Args:
+            img_path: 源图片路径
+            target_size: 目标尺寸 (w, h)；None 使用视图级默认
+
+        Returns:
+            显示级 NSImage 对象（失败返回 None）
+        """
+        try:
+            from ...core.decode_pool import get_decode_pool
+
+            if target_size is None or target_size[0] <= 0 or target_size[1] <= 0:
+                target_size = self._get_target_size_for_view(scale_factor=1)
+
+            pool = get_decode_pool()
+            tmp_file = pool.decode(img_path, target_size=target_size)
+            if not tmp_file:
+                logger.warning("子进程解码失败，回退主进程: %s", img_path)
+                return None
+
+            # 主进程加载显示级小图（~10MB，远小于全分辨率 170MB）
+            try:
+                from AppKit import NSImage
+
+                image = NSImage.alloc().initWithContentsOfFile_(tmp_file)
+            finally:
+                pool.cleanup_file(tmp_file)
+            return image
+        except Exception:
+            logger.exception("子进程解码加载失败 %s", img_path)
             return None
 
     def _select_load_strategy(self, file_size_mb: float, prefer_preview: bool, target_size):

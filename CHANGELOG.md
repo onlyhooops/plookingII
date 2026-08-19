@@ -1,28 +1,26 @@
 # CHANGELOG
 
+
 ## v2.7.0 (2026-08-19)
 
-### ✨ 新特性
+### Chores
 
-- **解码子进程隔离（内存根治方案）**：新增 `core/decode_worker.py` +
-  `core/decode_pool.py`——图像解码迁移到独立子进程执行：
-  - 解码内存（全分辨率实测 ~242MB/张）全部隔离在子进程
-  - 子进程解码后写显示级 JPEG 临时文件回传，主进程只加载小图
-  - 子进程累计任务上限后重启 → 解码内存随进程销毁**彻底释放**
-  - fast 路径在非全分辨率浏览时改用子进程解码（消除主进程解码泄漏主源）
+- 同步版本断言至 v2.6.1
+  ([`b35571e`](https://github.com/onlyhooops/plookingII/commit/b35571e75487fc278d2d663da5b8754b6a990a5b))
 
-### ⚡ 性能优化
+### Features
 
-- 量化验证（6000×4000 JPEG）：30 次解码父进程 RSS 净增 **-0.3MB**
-  （对比主进程解码 ~+5GB，泄漏彻底消除）
-- 应用退出时 `shutdown_decode_pool()` 回收子进程
+- 解码子进程隔离——根治主进程 ObjC 解码内存泄漏
+  ([`863e0e9`](https://github.com/onlyhooops/plookingII/commit/863e0e9e63bcc3be48e74a732d502ebc4b9e5c4c))
 
-### 🧪 测试与工程化
+真机 v2.6.1 确认：主进程任何 ObjC 图像解码（fast 路径 NSImage 全分辨率） 其解码缓冲挂主线程 autorelease pool 永不释放（43 次解码 ≈ 8.6GB）。
+  已验证所有官方释放 API（drain/autorelease_pool/recycle）均不可行或崩溃。
 
-- 新增 `tests/unit/test_core_decode_pool.py`（7 例：子进程启动、解码、
-  文件清理、周期重启、失败降级、shutdown、单例）
-- 设计文档更新：`docs/reports/memory-pipeline-design.md` 第六节
-- 全量测试通过（1620 → 1627 passed）
+根治：图像解码迁移到独立子进程（spawn）—— - 解码内存（~242MB/张）全部隔离在子进程 - 子进程解码后写显示级 JPEG 临时文件回传，主进程只加载小图 - 子进程累计任务上限后重启 →
+  解码内存随进程销毁彻底释放 - fast 路径非全分辨率时改用子进程解码
+
+验证：30 次解码父进程 RSS 净增 -0.3MB（对比 ~+5GB）； 全量测试 1627 passed（新增 7 例 decode_pool 测试）。
+
 
 ## v2.6.1 (2026-08-18)
 

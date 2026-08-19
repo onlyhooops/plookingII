@@ -121,6 +121,14 @@ def main():
 
 
 if __name__ == "__main__":
+    # py2app 打包环境下 multiprocessing spawn 必需：
+    # 确保子进程重新导入主模块时不重复执行应用启动逻辑
+    try:
+        import multiprocessing
+
+        multiprocessing.freeze_support()
+    except Exception:
+        pass
     # 当模块作为主程序运行时，启动应用程序
     # 支持以下启动方式：
     # - python3 -m plookingII

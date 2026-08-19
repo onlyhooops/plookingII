@@ -143,6 +143,13 @@ def create_setup_py(version):
         "Foundation",
         "AppKit",
         "Quartz",
+        # multiprocessing 相关：解码子进程池（decode_pool）依赖 spawn 子进程，
+        # 必须显式包含，否则打包后子进程无法启动
+        "multiprocessing",
+        "multiprocessing.pool",
+        "concurrent",
+        "concurrent.futures",
+        "queue",
     ]
 
     packages = [
@@ -227,7 +234,7 @@ def verify_arch(app_path):
         return False
 
     try:
-        result = subprocess.run(["file", str(binary)], capture_output=True, text=True)
+        result = subprocess.run(["file", str(binary)], capture_output=True, text=True, check=False)
         output = result.stdout
         print(f"   Binary info: {output.strip()}")
 
@@ -257,6 +264,7 @@ def _patch_py2app_zlib():
     # 为 zlib 注入临时 __file__，指向 _zlib C 扩展模块
     try:
         import _zlib
+
         _z.__file__ = getattr(_zlib, "__file__", "")
     except ImportError:
         _z.__file__ = ""
@@ -305,8 +313,10 @@ def build():
         candidates = sorted(lib_dir.glob("python3.*")) if lib_dir.exists() else []
         if candidates:
             lib_path = candidates[-1]
-            print(f"   ⚠️ 未找到 {lib_dir.name}/python{sys.version_info.major}.{sys.version_info.minor}"
-                  f"，自动使用检测到的 {lib_path.name}")
+            print(
+                f"   ⚠️ 未找到 {lib_dir.name}/python{sys.version_info.major}.{sys.version_info.minor}"
+                f"，自动使用检测到的 {lib_path.name}"
+            )
     unused_libs = ["PyQt6", "PyQt5", "PySide6", "pyside2", "wx", "cv2", "numpy", "matplotlib"]
 
     for lib_name in unused_libs:
@@ -332,8 +342,9 @@ def build():
         if sign_ok:
             print("   已应用 Ad-hoc 签名")
         else:
-            print("   ⚠️ Ad-hoc 签名失败（py2app 产物在部分 macOS 版本上无法签名，"
-                  "应用可正常运行，仅 Gatekeeper 会提示）")
+            print(
+                "   ⚠️ Ad-hoc 签名失败（py2app 产物在部分 macOS 版本上无法签名，应用可正常运行，仅 Gatekeeper 会提示）"
+            )
     except Exception as e:
         print(f"⚠️ 签名处理遇到警告 (可忽略): {e}")
 

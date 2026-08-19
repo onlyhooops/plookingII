@@ -120,3 +120,33 @@ v2.5.5 的 recycleAutoreleasePool 在主线程 NSTimer 回调触发 badPop 崩�
 ### 已知限制
 - 子进程通信 + 文件 I/O 有少量开销（~6ms/张，实测显示级解码）
 - 仅覆盖 fast 路径（当前泄漏主源）；懒代理路径本身不占内存，保持不变
+
+---
+
+## 七、打包环境修复：子进程不可用时的图片显示（2026-08-19）
+
+### 问题
+v2.7.0 打包 .app 真机：内存平台型（82-103MB）✅，但**图片不显示**、
+翻页正常。perf 报告 image_display 全部 background_or_progressive 且
+仅 9 次。
+
+### 根因
+1. **py2app 打包缺 multiprocessing 模块**：setup.py includes 未包含
+   multiprocessing/concurrent.futures/queue → spawn 子进程无法启动
+   → decode 返回 None
+2. **子进程失败无回退**：`_load_image_via_subprocess` 直接 return None，
+   图片路径断裂 → 空白
+3. **缺 freeze_support**：py2app 下 spawn 子进程重新导入主模块会重复
+   执行启动逻辑
+
+### 修复
+1. `__main__.py`：启动前 `multiprocessing.freeze_support()`
+2. `setup.py`：includes 补 multiprocessing / concurrent.futures / queue
+3. `image_manager._load_image_via_subprocess`：子进程失败时**回退主进程
+   视图级解码**（load_with_quartz thumbnail 或 NSImage），保证图片始终
+   可显示——子进程仅是内存优化手段，不阻塞功能
+
+### 验证
+- 真实 ImageManager 实例：子进程路径返回 NSImage 1920×1280 ✅
+- 回退分支（注入失败池）：主进程视图级解码 ✅
+- 全量测试通过

@@ -1517,6 +1517,9 @@ class ImageManager:
         均不可行）。解码子进程方案：解码在独立子进程完成（内存全在子
         进程），产出显示级临时文件回传，子进程周期重启彻底回收内存。
 
+        子进程不可用（如 py2app 打包环境 spawn 受限）时回退主进程解码，
+        保证图片始终可显示——子进程仅是内存优化手段，不阻塞功能。
+
         Args:
             img_path: 源图片路径
             target_size: 目标尺寸 (w, h)；None 使用视图级默认
@@ -1532,20 +1535,34 @@ class ImageManager:
 
             pool = get_decode_pool()
             tmp_file = pool.decode(img_path, target_size=target_size)
-            if not tmp_file:
-                logger.warning("子进程解码失败，回退主进程: %s", img_path)
-                return None
+            if tmp_file:
+                # 主进程加载显示级小图（~10MB，远小于全分辨率 170MB）
+                try:
+                    from AppKit import NSImage
 
-            # 主进程加载显示级小图（~10MB，远小于全分辨率 170MB）
-            try:
+                    image = NSImage.alloc().initWithContentsOfFile_(tmp_file)
+                    if image is not None:
+                        return image
+                finally:
+                    pool.cleanup_file(tmp_file)
+                logger.warning("子进程解码结果无法加载，回退主进程: %s", img_path)
+            else:
+                logger.warning("子进程解码失败，回退主进程: %s", img_path)
+        except Exception:
+            logger.exception("子进程解码异常，回退主进程: %s", img_path)
+
+        # 回退：主进程视图级解码（懒代理 + 显示时按视图尺寸，内存可接受）
+        try:
+            from ..core.loading.helpers import load_with_nsimage, load_with_quartz
+
+            cg = load_with_quartz(img_path, target_size, thumbnail=True)
+            if cg is not None:
                 from AppKit import NSImage
 
-                image = NSImage.alloc().initWithContentsOfFile_(tmp_file)
-            finally:
-                pool.cleanup_file(tmp_file)
-            return image
+                return NSImage.alloc().initWithCGImage_(cg)
+            return load_with_nsimage(img_path)
         except Exception:
-            logger.exception("子进程解码加载失败 %s", img_path)
+            logger.exception("主进程回退解码失败 %s", img_path)
             return None
 
     def _select_load_strategy(self, file_size_mb: float, prefer_preview: bool, target_size):

@@ -1,27 +1,21 @@
 # CHANGELOG
 
+
 ## v2.7.1 (2026-08-19)
 
-### 🐛 Bug Fixes
+### Bug Fixes
 
-- **修复 v2.7.0 打包 App 图片不显示**：真机报告内存平台型但窗口空白。
-  根因三处：
-  1. py2app 打包缺 multiprocessing 模块（spawn 子进程无法启动）
-  2. 子进程解码失败时 `_load_image_via_subprocess` 直接返回 None 无回退
-  3. 缺 `multiprocessing.freeze_support()`（spawn 子进程重复导入主模块）
+- 修复 v2.7.0 打包 App 图片不显示（子进程解码不可用回退）
+  ([`b54b696`](https://github.com/onlyhooops/plookingII/commit/b54b696374540bec62f296097c895099ea7f5900))
 
-  修复：
-  - `__main__.py` 启动前调用 `multiprocessing.freeze_support()`
-  - `setup.py` includes 补 multiprocessing / concurrent.futures / queue
-  - 子进程失败时**回退主进程视图级解码**（load_with_quartz thumbnail /
-    NSImage），保证图片始终可显示——子进程仅是内存优化手段，不阻塞功能
+真机 v2.7.0：内存平台型但窗口空白、翻页正常。根因： 1. py2app 打包缺 multiprocessing 模块（spawn 子进程无法启动） -> setup.py
+  生成器（tools/package_release.py create_setup_py） includes 补 multiprocessing/concurrent.futures/queue
+  2. 子进程失败无回退 -> _load_image_via_subprocess 直接返回 None -> 回退主进程视图级解码（load_with_quartz
+  thumbnail/NSImage）， 保证图片始终可显示（子进程仅是内存优化，不阻塞功能） 3. 缺 multiprocessing.freeze_support() ->
+  __main__.py 启动前调用
 
-### 🧪 测试与工程化
+验证：真实 ImageManager 子进程路径返回 NSImage 1920×1280；回退分支 主进程解码正常；全量测试 1627 passed。
 
-- 验证：真实 ImageManager 子进程路径返回 NSImage 1920×1280；回退分支
-  主进程解码正常
-- 设计文档更新：`docs/reports/memory-pipeline-design.md` 第七节
-- 全量测试通过（1627 passed）
 
 ## v2.7.0 (2026-08-19)
 

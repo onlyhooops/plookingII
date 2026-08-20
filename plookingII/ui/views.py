@@ -252,8 +252,9 @@ class OverlayView(NSView):
         if self is None:
             return None
         self.image_view = image_view
-        self.setWantsLayer_(True)
-        self.setLayerContentsRedrawPolicy_(2)
+        # v2.8.1：移除图层后备（与 AdaptiveImageView 一致）——空绘制覆盖层
+        # 无需独立后备位图，避免每次重绘向永不 drain 的 autorelease pool
+        # 追加视图尺寸像素缓冲（见 AdaptiveImageView.initWithFrame_ 说明）
         return self
 
     def drawRect_(self, rect):
@@ -304,10 +305,13 @@ class AdaptiveImageView(NSImageView):
         self._redraw_timer = None  # 重绘定时器
         self._pending_redraw = False  # 是否有待处理的重绘
 
-        # 启用图层加速
-        self.setWantsLayer_(True)
-        if hasattr(self, "setLayerContentsRedrawPolicy_"):
-            self.setLayerContentsRedrawPolicy_(2)  # NSViewLayerContentsRedrawOnSetNeedsDisplay
+        # 启用图层加速 —— v2.8.1 移除：
+        # 实机验证（logs/perf_20260820_202637.json，20 分钟会话 RSS 74.7MB→20.9GB），
+        # 图层后备（wantsLayer=True）下每次显示会为"后备位图"向主线程 autorelease
+        # pool 追加一份视图尺寸的像素缓冲（1200×800@1x ≈ 3MB/次，视网膜+大窗口
+        # 下 15~30MB/次），pool 永不被 drain（PyObjC 结构性限制）→ 线性增长主源。
+        # 关闭图层后备后实测同一绘制路径 Δ+0.0MB（绘制逻辑/原图质量不变）。
+        # 说明：setLayerContentsRedrawPolicy_ 仅对图层后备生效，一并移除。
 
         return self
 

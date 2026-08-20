@@ -93,6 +93,29 @@ class TestOptimizedStrategy:
             assert strategy.load("/a/b.jpg") == "mmap"
         assert strategy.stats.memory_map_loads == 1
 
+    def test_load_large_prefers_cgimage_proxy(self):
+        """大文件优先懒解码 CGImage 代理（NSImage 内存映射为回退，避免泄漏）"""
+        strategy = OptimizedStrategy()
+        strategy.quartz_available = True
+        with (
+            patch("plookingII.core.loading.strategies.get_file_size_mb", return_value=500.0),
+            patch("plookingII.core.loading.strategies.load_with_quartz", return_value="cg"),
+            patch("plookingII.core.loading.strategies.load_with_memory_map", return_value="mmap") as mmap,
+        ):
+            assert strategy.load("/a/b.jpg") == "cg"
+            mmap.assert_not_called()
+
+    def test_load_large_falls_back_to_memory_map(self):
+        """Quartz 懒代理失败时回退内存映射"""
+        strategy = OptimizedStrategy()
+        strategy.quartz_available = True
+        with (
+            patch("plookingII.core.loading.strategies.get_file_size_mb", return_value=500.0),
+            patch("plookingII.core.loading.strategies.load_with_quartz", return_value=None),
+            patch("plookingII.core.loading.strategies.load_with_memory_map", return_value="mmap"),
+        ):
+            assert strategy.load("/a/b.jpg") == "mmap"
+
     def test_load_failure_records_failure(self):
         strategy = OptimizedStrategy()
         with patch("plookingII.core.loading.strategies.get_file_size_mb", side_effect=OSError("boom")):

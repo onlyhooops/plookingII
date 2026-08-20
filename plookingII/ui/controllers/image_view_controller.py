@@ -1,4 +1,4 @@
-from AppKit import NSColor, NSRect, NSView
+from AppKit import NSRect, NSView
 
 """
 图像视图控制器模块
@@ -84,8 +84,10 @@ class ImageViewController:
         # 创建主图片显示区域（容器视图）
         main_image_frame = NSRect((0, status_bar_height), (frame.size.width, frame.size.height - status_bar_height))
         self.main_image_view = NSView.alloc().initWithFrame_(main_image_frame)
-        self.main_image_view.setWantsLayer_(True)
-        self.main_image_view.setBackgroundColor_(NSColor.windowBackgroundColor())
+        # v2.8.1：移除图层后备——图层后备会强制子视图（AdaptiveImageView）也
+        # 走图层合成，每次显示向永不 drain 的 autorelease pool 追加视图尺寸
+        # 后备位图（实机 20 分钟会话 74.7MB→20.9GB 的主源；关闭后实测 Δ+0.0MB）。
+        # 原背景色为系统窗口背景色，关闭图层后由窗口背景透出，视觉一致。
         content_view.addSubview_(self.main_image_view)
 
         # 创建自适应图片视图（主要的图像显示组件）

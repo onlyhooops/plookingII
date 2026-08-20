@@ -10,6 +10,7 @@
 - 目标尺寸计算
 """
 
+import contextlib
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -71,7 +72,7 @@ class TestSetupUI:
             with patch("plookingII.ui.controllers.image_view_controller.AdaptiveImageView") as mock_adaptive:
                 with patch("plookingII.ui.controllers.image_view_controller.OverlayView") as mock_overlay:
                     with patch("plookingII.ui.controllers.image_view_controller.NSRect") as mock_rect:
-                        with patch("plookingII.ui.controllers.image_view_controller.NSColor"):
+                        with contextlib.nullcontext():
                             mock_content_view = MagicMock()
                             mock_frame = MagicMock()
                             mock_frame.size.width = 800
@@ -100,7 +101,7 @@ class TestSetupUI:
             with patch("plookingII.ui.controllers.image_view_controller.AdaptiveImageView") as mock_adaptive:
                 with patch("plookingII.ui.controllers.image_view_controller.OverlayView") as mock_overlay:
                     with patch("plookingII.ui.controllers.image_view_controller.NSRect"):
-                        with patch("plookingII.ui.controllers.image_view_controller.NSColor"):
+                        with contextlib.nullcontext():
                             mock_content_view = MagicMock()
                             mock_frame = MagicMock()
                             mock_frame.size.width = 800
@@ -121,7 +122,7 @@ class TestSetupUI:
             with patch("plookingII.ui.controllers.image_view_controller.AdaptiveImageView") as mock_adaptive:
                 with patch("plookingII.ui.controllers.image_view_controller.OverlayView"):
                     with patch("plookingII.ui.controllers.image_view_controller.NSRect"):
-                        with patch("plookingII.ui.controllers.image_view_controller.NSColor"):
+                        with contextlib.nullcontext():
                             mock_content_view = MagicMock()
                             mock_frame = MagicMock()
                             mock_frame.size.width = 800
@@ -141,7 +142,7 @@ class TestSetupUI:
             with patch("plookingII.ui.controllers.image_view_controller.AdaptiveImageView"):
                 with patch("plookingII.ui.controllers.image_view_controller.OverlayView"):
                     with patch("plookingII.ui.controllers.image_view_controller.NSRect"):
-                        with patch("plookingII.ui.controllers.image_view_controller.NSColor"):
+                        with contextlib.nullcontext():
                             mock_content_view = MagicMock()
                             mock_frame = MagicMock()
                             mock_frame.size.width = 800
@@ -395,9 +396,9 @@ class TestGetTargetSizeForView:
         image_view_controller.image_view = MagicMock()
         image_view_controller.image_view.frame.side_effect = Exception("Frame error")
 
-        with patch("plookingII.ui.controllers.image_view_controller.IMAGE_PROCESSING_CONFIG", {
-            "max_preview_resolution": 2048
-        }):
+        with patch(
+            "plookingII.ui.controllers.image_view_controller.IMAGE_PROCESSING_CONFIG", {"max_preview_resolution": 2048}
+        ):
             width, height = image_view_controller.get_target_size_for_view()
 
             # 应该返回默认值
@@ -408,9 +409,9 @@ class TestGetTargetSizeForView:
         """测试没有图像视图"""
         image_view_controller.image_view = None
 
-        with patch("plookingII.ui.controllers.image_view_controller.IMAGE_PROCESSING_CONFIG", {
-            "max_preview_resolution": 1024
-        }):
+        with patch(
+            "plookingII.ui.controllers.image_view_controller.IMAGE_PROCESSING_CONFIG", {"max_preview_resolution": 1024}
+        ):
             width, height = image_view_controller.get_target_size_for_view()
 
             # 应该返回默认值
@@ -430,7 +431,7 @@ class TestIntegration:
             with patch("plookingII.ui.controllers.image_view_controller.AdaptiveImageView"):
                 with patch("plookingII.ui.controllers.image_view_controller.OverlayView"):
                     with patch("plookingII.ui.controllers.image_view_controller.NSRect"):
-                        with patch("plookingII.ui.controllers.image_view_controller.NSColor"):
+                        with contextlib.nullcontext():
                             controller = ImageViewController(mock_main_window)
 
                             # 设置UI
@@ -547,4 +548,3 @@ class TestEdgeCases:
 
         # 不应该抛出异常
         image_view_controller.display_image(None)
-

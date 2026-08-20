@@ -66,9 +66,7 @@ class TestTiledDisplayRect:
 
     def test_centered_with_margins(self, tiled_view):
         """常规图片居中显示，带自适应边距"""
-        with patch("Quartz.CGImageGetWidth", return_value=400), patch(
-            "Quartz.CGImageGetHeight", return_value=300
-        ):
+        with patch("Quartz.CGImageGetWidth", return_value=400), patch("Quartz.CGImageGetHeight", return_value=300):
             rect = tiled_view._get_display_rect()
             assert rect.size.width > 0
             assert rect.size.height > 0
@@ -80,9 +78,7 @@ class TestTiledDisplayRect:
 
     def test_zoom_and_offset_applied(self, tiled_view):
         """缩放与平移应用到显示区域"""
-        with patch("Quartz.CGImageGetWidth", return_value=100), patch(
-            "Quartz.CGImageGetHeight", return_value=100
-        ):
+        with patch("Quartz.CGImageGetWidth", return_value=100), patch("Quartz.CGImageGetHeight", return_value=100):
             # 基准：无缩放时的显示宽度（100px 图适配 800x600 视图）
             base_rect = tiled_view._get_display_rect()
             base_w = base_rect.size.width
@@ -103,6 +99,20 @@ class TestTiledDisplayRect:
         assert tiled_view._get_display_rect() is None
 
 
+class TestAdaptiveImageViewMemory:
+    """v2.8.1 防回归：图像视图不使用图层后备（显示泄漏修复）"""
+
+    def test_image_view_not_layer_backed(self):
+        """AdaptiveImageView 默认非图层后备（避免每次显示泄漏视图尺寸后备位图）"""
+        from AppKit import NSMakeRect
+
+        view = AdaptiveImageView.alloc().initWithFrame_(NSMakeRect(0, 0, 800, 600))
+        try:
+            assert view.wantsLayer() is False
+        finally:
+            view = None
+
+
 class TestTiledRouting:
     """测试 setCGImage_ 的分片路由逻辑"""
 
@@ -115,10 +125,11 @@ class TestTiledRouting:
     def test_routing_disabled_by_default(self, image_view):
         """开关默认关闭：超高分辨率图也不路由，走普通 CGImage 直通"""
         image_view.setNeedsDisplay_ = MagicMock()  # 实例级覆盖 selector
-        with patch("plookingII.ui.views.TILED_RENDERING_ENABLED", False), patch(
-            "plookingII.ui.views.AdaptiveImageView._route_to_tiled"
-        ) as route, patch("Quartz.CGImageGetWidth", return_value=8000), patch(
-            "Quartz.CGImageGetHeight", return_value=6000
+        with (
+            patch("plookingII.ui.views.TILED_RENDERING_ENABLED", False),
+            patch("plookingII.ui.views.AdaptiveImageView._route_to_tiled") as route,
+            patch("Quartz.CGImageGetWidth", return_value=8000),
+            patch("Quartz.CGImageGetHeight", return_value=6000),
         ):
             image_view.setCGImage_(MagicMock())
             route.assert_not_called()
@@ -126,20 +137,22 @@ class TestTiledRouting:
     def test_routing_enabled_but_small_image(self, image_view):
         """开关开启但图片未超阈值：不路由"""
         image_view.setNeedsDisplay_ = MagicMock()
-        with patch("plookingII.ui.views.TILED_RENDERING_ENABLED", True), patch(
-            "plookingII.ui.views.AdaptiveImageView._route_to_tiled"
-        ) as route, patch("Quartz.CGImageGetWidth", return_value=1920), patch(
-            "Quartz.CGImageGetHeight", return_value=1080
+        with (
+            patch("plookingII.ui.views.TILED_RENDERING_ENABLED", True),
+            patch("plookingII.ui.views.AdaptiveImageView._route_to_tiled") as route,
+            patch("Quartz.CGImageGetWidth", return_value=1920),
+            patch("Quartz.CGImageGetHeight", return_value=1080),
         ):
             image_view.setCGImage_(MagicMock())
             route.assert_not_called()
 
     def test_routing_enabled_ultra_image(self, image_view):
         """开关开启且图片超阈值：路由到 TiledImageView"""
-        with patch("plookingII.ui.views.TILED_RENDERING_ENABLED", True), patch(
-            "plookingII.ui.views.AdaptiveImageView._route_to_tiled"
-        ) as route, patch("Quartz.CGImageGetWidth", return_value=8000), patch(
-            "Quartz.CGImageGetHeight", return_value=6000
+        with (
+            patch("plookingII.ui.views.TILED_RENDERING_ENABLED", True),
+            patch("plookingII.ui.views.AdaptiveImageView._route_to_tiled") as route,
+            patch("Quartz.CGImageGetWidth", return_value=8000),
+            patch("Quartz.CGImageGetHeight", return_value=6000),
         ):
             image_view.setCGImage_(MagicMock())
             route.assert_called_once()
@@ -147,11 +160,14 @@ class TestTiledRouting:
     def test_routing_fallback_on_exception(self, image_view):
         """路由异常时回退普通 CGImage 直通（不崩溃）"""
         image_view.setNeedsDisplay_ = MagicMock()
-        with patch("plookingII.ui.views.TILED_RENDERING_ENABLED", True), patch(
-            "plookingII.ui.views.AdaptiveImageView._route_to_tiled",
-            side_effect=Exception("routing failed"),
-        ), patch("Quartz.CGImageGetWidth", return_value=8000), patch(
-            "Quartz.CGImageGetHeight", return_value=6000
+        with (
+            patch("plookingII.ui.views.TILED_RENDERING_ENABLED", True),
+            patch(
+                "plookingII.ui.views.AdaptiveImageView._route_to_tiled",
+                side_effect=Exception("routing failed"),
+            ),
+            patch("Quartz.CGImageGetWidth", return_value=8000),
+            patch("Quartz.CGImageGetHeight", return_value=6000),
         ):
             cg = MagicMock()
             image_view.setCGImage_(cg)  # 不应抛异常

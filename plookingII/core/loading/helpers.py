@@ -197,11 +197,15 @@ def load_with_quartz(file_path: str, target_size: tuple[int, int] | None = None,
                 # - FromImageIfAbsent: 优先使用文件内嵌缩略图（JPEG/HEIC），减少全图解码
                 # - SubsampleFactor:      解码阶段跳过像素行/列，像素量降至 1/factor²
                 # - MaxPixelSize:         配合SubsampleFactor，ImageIO内部自动选择最优组合
+                # - ShouldCacheImmediately: v2.8.1 改为 False —— 实机验证 True 时每次
+                #   缩略图解码向永不 drain 的 autorelease pool 泄漏整张缩略图缓冲
+                #   （800×600 ≈ 1.63MB/张）；False 为懒解码，缓冲随 CGImage 包装器
+                #   释放（实测 +0.01MB/张），解码时机延后到首次绘制，像素结果不变
                 options = {
                     kCGImageSourceThumbnailMaxPixelSize: max_size,
                     kCGImageSourceSubsampleFactor: 2,
                     kCGImageSourceShouldCache: True,
-                    kCGImageSourceShouldCacheImmediately: True,
+                    kCGImageSourceShouldCacheImmediately: False,
                     kCGImageSourceCreateThumbnailFromImageIfAbsent: True,
                     kCGImageSourceShouldAllowFloat: True,
                 }

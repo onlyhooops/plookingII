@@ -177,7 +177,19 @@ class OptimizedStrategy:
         return cgimage_to_nsimage(cgimage)
 
     def _load_large(self, file_path: str, target_size: tuple[int, int] | None) -> Any | None:
-        """大文件：内存映射加载"""
+        """大文件：优先懒解码 CGImage 代理，回退内存映射 NSImage
+
+        v2.8.1 变更：内存映射路径产出 NSImage（autoreleased，解码缓冲挂
+        永不 drain 的 pool，实机实测 ~11MB/张泄漏）。改为优先创建懒解码
+        CGImage 代理（CF Create 语义、随包装器释放回收），且加载时不做
+        全文件读取（ImageIO 按需读源）；Quartz 不可用时回退内存映射。
+        """
+        if self.quartz_available and self.config.prefer_cgimage_pipeline:
+            cgimage = load_with_quartz(file_path, target_size, thumbnail=False)
+            if cgimage is not None:
+                return cgimage
+            logger.warning("Quartz 懒代理加载失败，回退内存映射: %s", file_path)
+
         if not self.memory_mapping_available:
             # 内存映射不可用，回退到Quartz
             return self._load_medium(file_path, target_size)

@@ -1,6 +1,32 @@
 # CHANGELOG
 
 
+## v2.8.1 (2026-08-20)
+
+### Bug Fixes
+
+- 修复显示/解码路径主线程 autorelease pool 泄漏（实机 20 分钟 20.9GB）
+  ([`1cc1967`](https://github.com/onlyhooops/plookingII/commit/1cc19679fef924e1dfd45451c68ecdefb119fa67))
+
+实机验证（logs/perf_20260820_202637.json）：v2.8.0 会话 74.7MB→20.9GB， 看门狗阈值触发正常但 evict 无效——根因是解码缓冲挂永不 drain
+  的线程 autorelease pool（PyObjC 仅在线程退出时 drain），不在 Python 可达引用内。
+
+6000×4000 JPEG 实机实验定位三个主泄漏源并修复： 1. 图层后备（wantsLayer=True）：每次显示向主线程池追加视图尺寸后备位图 （1200×800 ≈
+  3MB/次，视网膜+大窗口 15~30MB/次）——会话 18.6GB 主源。 AdaptiveImageView/OverlayView/主容器全部关闭图层后备（绘制逻辑不变， 实测
+  Δ+0.0MB）。 2. JPEG 缩略图 eager 解码（ShouldCacheImmediately=True）：+1.63MB/张。 改为懒解码（False），实测
+  +0.01MB/张，像素结果不变。 3. 大文件内存映射 NSImage（>100MB）：+11MB/张。_load_large 优先懒解码 CGImage 代理（CF
+  语义可回收），内存映射降为回退。
+
+调研报告：docs/reports/display-pipeline-research-2026-08-20.md （qView 管线分析 + macOS 生态调研 + 实测数据表）
+
+新增防回归测试：AdaptiveImageView 非图层后备、_load_large 懒代理优先。 全量测试 1669 passed。
+
+### Chores
+
+- 同步版本断言至 v2.8.0
+  ([`67e6645`](https://github.com/onlyhooops/plookingII/commit/67e6645d6b62a3ba1315f9a53ead981f028656c9))
+
+
 ## v2.8.0 (2026-08-20)
 
 ### Features

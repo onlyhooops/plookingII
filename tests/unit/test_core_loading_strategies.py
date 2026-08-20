@@ -24,17 +24,53 @@ class TestOptimizedStrategy:
 
     def test_load_small_uses_nsimage(self):
         strategy = OptimizedStrategy()
-        with patch("plookingII.core.loading.strategies.get_file_size_mb", return_value=1.0), patch(
-            "plookingII.core.loading.strategies.load_with_nsimage", return_value="img"
+        with (
+            patch("plookingII.core.loading.strategies.get_file_size_mb", return_value=1.0),
+            patch("plookingII.core.loading.strategies.load_with_nsimage", return_value="img"),
         ):
             assert strategy.load("/a/b.jpg") == "img"
         assert strategy.stats.fast_loads == 1
 
+    def test_load_small_prefers_cgimage_proxy(self):
+        """小文件优先懒解码 CGImage 代理（缓冲可回收，画质不变）"""
+        strategy = OptimizedStrategy()
+        strategy.quartz_available = True
+        with (
+            patch("plookingII.core.loading.strategies.get_file_size_mb", return_value=1.0),
+            patch("plookingII.core.loading.strategies.load_with_quartz", return_value="cg"),
+            patch("plookingII.core.loading.strategies.load_with_nsimage", return_value="ns") as nsimage,
+        ):
+            assert strategy.load("/a/b.jpg") == "cg"
+            nsimage.assert_not_called()
+
+    def test_load_small_falls_back_to_nsimage_when_quartz_fails(self):
+        """Quartz 懒代理失败时回退 NSImage"""
+        strategy = OptimizedStrategy()
+        strategy.quartz_available = True
+        with (
+            patch("plookingII.core.loading.strategies.get_file_size_mb", return_value=1.0),
+            patch("plookingII.core.loading.strategies.load_with_quartz", return_value=None),
+            patch("plookingII.core.loading.strategies.load_with_nsimage", return_value="ns"),
+        ):
+            assert strategy.load("/a/b.jpg") == "ns"
+
+    def test_load_small_quartz_disabled_uses_nsimage(self):
+        """Quartz 不可用时直接走 NSImage"""
+        strategy = OptimizedStrategy()
+        strategy.quartz_available = False
+        with (
+            patch("plookingII.core.loading.strategies.get_file_size_mb", return_value=1.0),
+            patch("plookingII.core.loading.strategies.load_with_quartz", return_value="cg"),
+            patch("plookingII.core.loading.strategies.load_with_nsimage", return_value="ns"),
+        ):
+            assert strategy.load("/a/b.jpg") == "ns"
+
     def test_load_medium_uses_quartz(self):
         strategy = OptimizedStrategy()
         strategy.quartz_available = True
-        with patch("plookingII.core.loading.strategies.get_file_size_mb", return_value=50.0), patch(
-            "plookingII.core.loading.strategies.load_with_quartz", return_value="cg"
+        with (
+            patch("plookingII.core.loading.strategies.get_file_size_mb", return_value=50.0),
+            patch("plookingII.core.loading.strategies.load_with_quartz", return_value="cg"),
         ):
             assert strategy.load("/a/b.jpg") == "cg"
         assert strategy.stats.quartz_loads == 1
@@ -42,15 +78,17 @@ class TestOptimizedStrategy:
     def test_load_medium_fallback_when_quartz_unavailable(self):
         strategy = OptimizedStrategy()
         strategy.quartz_available = False
-        with patch("plookingII.core.loading.strategies.get_file_size_mb", return_value=50.0), patch(
-            "plookingII.core.loading.strategies.load_with_nsimage", return_value="img"
+        with (
+            patch("plookingII.core.loading.strategies.get_file_size_mb", return_value=50.0),
+            patch("plookingII.core.loading.strategies.load_with_nsimage", return_value="img"),
         ):
             assert strategy.load("/a/b.jpg") == "img"
 
     def test_load_large_uses_memory_map(self):
         strategy = OptimizedStrategy()
-        with patch("plookingII.core.loading.strategies.get_file_size_mb", return_value=500.0), patch(
-            "plookingII.core.loading.strategies.load_with_memory_map", return_value="mmap"
+        with (
+            patch("plookingII.core.loading.strategies.get_file_size_mb", return_value=500.0),
+            patch("plookingII.core.loading.strategies.load_with_memory_map", return_value="mmap"),
         ):
             assert strategy.load("/a/b.jpg") == "mmap"
         assert strategy.stats.memory_map_loads == 1
@@ -90,8 +128,9 @@ class TestPreviewStrategy:
     def test_load_falls_back_to_nsimage(self):
         strategy = PreviewStrategy()
         strategy.quartz_available = False
-        with patch("plookingII.core.loading.strategies.load_with_nsimage", return_value="ns"), patch.object(
-            strategy, "_resize_nsimage", return_value="resized"
+        with (
+            patch("plookingII.core.loading.strategies.load_with_nsimage", return_value="ns"),
+            patch.object(strategy, "_resize_nsimage", return_value="resized"),
         ):
             assert strategy.load("/a/b.jpg") == "resized"
 

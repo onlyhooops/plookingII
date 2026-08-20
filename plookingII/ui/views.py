@@ -57,9 +57,9 @@ from ..imports import logging, objc, time
 logger = logging.getLogger(APP_NAME)
 
 # P3-1 CATiledLayer 分片渲染开关与阈值
-# 默认关闭（原型阶段）：开启后超高分辨率图片（≥阈值像素）走 CATiledLayer
-# 按需分片绘制，仅解码可见区域，避免全分辨率 CGImage 首帧 GPU 同步解码卡顿。
-# 经真机对比（首帧延迟/滚动流畅度/内存占用）达标后可默认开启。
+# 默认关闭：保持原有 CGImage/NSImage 直通显示管线（产品决策——显示管线
+# 不变更），内存控制由 MemoryWatchdog（RSS 阈值触发 + 定期回收）负责，
+# 详见 core/memory_watchdog.py。TiledImageView 类保留供后续原型验证。
 TILED_RENDERING_ENABLED = False
 TILED_RENDERING_PIXEL_THRESHOLD = 10_000_000  # ≥10MP（约 3465×2885）走分片
 

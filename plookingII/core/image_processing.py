@@ -72,13 +72,13 @@ class HybridImageProcessor:
 
         # 热路径配置缓存：full_res_browse 在每次图片加载/显示时读取，
         # 配置为启动时加载、运行期不变，构造时快照避免热路径重复 RLock 查询。
-        # 默认关闭（视图级分辨率解码）：主线程绘制 CGContextDrawImage 时
-        # 全分辨率解码（6000×4000 ≈ 168MB/张）是长会话内存增长与系统 swap
-        # 卡顿的主因；视图级解码可显著降低单图内存与累积速度
+        # 默认开启（全分辨率/原图质量浏览）：项目初衷为 Preview.app 风格
+        # 懒解码——懒代理持有全分辨率源图（不降采样、不损失画质），内存
+        # 控制由 MemoryWatchdog（RSS 阈值触发回收）负责（core/memory_watchdog.py）
         try:
-            self._full_res_browse = get_config("feature.full_res_browse", False)
+            self._full_res_browse = get_config("feature.full_res_browse", True)
         except Exception:
-            self._full_res_browse = False
+            self._full_res_browse = True
 
     def _init_quartz_components(self):
         """初始化Quartz图像处理组件"""

@@ -142,8 +142,20 @@ class OptimizedStrategy:
             return None
 
     def _load_small(self, file_path: str, target_size: tuple[int, int] | None) -> Any | None:
-        """小文件：NSImage快速加载"""
-        # 统计由 load() 统一通过 record_success 记录，避免重复计数
+        """小文件：优先懒解码 CGImage 代理，次选 NSImage 快速加载
+
+        v2.8.0 变更：<10MB 文件此前一律走 load_with_nsimage —— 其解码
+        缓冲挂主线程全局 autorelease pool 且从不被 drain（PyObjC 结构性
+        限制），是长会话内存线性增长的主源。改为优先创建全分辨率懒解码
+        CGImage 代理（CF Create 语义，PyObjC 包装器释放即回收，配合
+        MemoryWatchdog 的 RSS 阈值回收可真正回落内存），显示质量不变
+        （仍为全分辨率原图，无降采样）；Quartz 不可用或失败时回退 NSImage。
+        """
+        if self.quartz_available and self.config.prefer_cgimage_pipeline:
+            cgimage = load_with_quartz(file_path, target_size, thumbnail=False)
+            if cgimage is not None:
+                return cgimage
+            logger.warning("Quartz 懒代理加载失败，回退 NSImage: %s", file_path)
         return load_with_nsimage(file_path)
 
     def _load_medium(self, file_path: str, target_size: tuple[int, int] | None) -> Any | None:

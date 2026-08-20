@@ -224,6 +224,118 @@ class TestSimpleImageCacheLRU:
         assert cache.get("key1") is not None
 
 
+class TestSimpleImageCacheEvictOldest:
+    """测试 evict_oldest（v2.8.0 修复：真正按 LRU 端淘汰 N 项）"""
+
+    @patch("plookingII.core.simple_cache._NSCACHE_AVAILABLE", False)
+    def test_evict_oldest_removes_lru_items(self):
+        """OrderedDict 分支：淘汰最旧的 N 项"""
+        cache = SimpleImageCache(max_items=10)
+        cache.put("key1", "v1")
+        cache.put("key2", "v2")
+        cache.put("key3", "v3")
+        cache.put("key4", "v4")
+
+        evicted = cache.evict_oldest(2)
+
+        assert evicted == 2
+        assert len(cache) == 2
+        assert cache.get("key1") is None
+        assert cache.get("key2") is None
+        assert cache.get("key3") is not None
+        assert cache.get("key4") is not None
+
+    @patch("plookingII.core.simple_cache._NSCACHE_AVAILABLE", False)
+    def test_evict_oldest_respects_lru_access(self):
+        """最近访问过的项优先保留（命中更新 LRU 顺序）"""
+        cache = SimpleImageCache(max_items=10)
+        cache.put("key1", "v1")
+        cache.put("key2", "v2")
+        cache.put("key3", "v3")
+        cache.get("key1")  # key1 变为最近使用
+
+        cache.evict_oldest(2)
+
+        assert cache.get("key2") is None
+        assert cache.get("key3") is None
+        assert cache.get("key1") is not None
+
+    @patch("plookingII.core.simple_cache._NSCACHE_AVAILABLE", False)
+    def test_evict_oldest_keep_one(self):
+        """ImageManager 紧急清理语义：evict_oldest(n-1) 仅保留 1 项"""
+        cache = SimpleImageCache(max_items=10)
+        for i in range(5):
+            cache.put(f"key{i}", f"v{i}")
+
+        evicted = cache.evict_oldest(len(cache) - 1)
+
+        assert evicted == 4
+        assert len(cache) == 1
+        assert cache.get("key4") is not None
+
+    @patch("plookingII.core.simple_cache._NSCACHE_AVAILABLE", False)
+    def test_evict_oldest_count_greater_than_items(self):
+        """count 超过条目数时全部淘汰"""
+        cache = SimpleImageCache(max_items=10)
+        cache.put("key1", "v1")
+        cache.put("key2", "v2")
+
+        evicted = cache.evict_oldest(10)
+
+        assert evicted == 2
+        assert len(cache) == 0
+
+    @patch("plookingII.core.simple_cache._NSCACHE_AVAILABLE", False)
+    def test_evict_oldest_zero_or_negative_noop(self):
+        """count<=0 时不动作"""
+        cache = SimpleImageCache(max_items=10)
+        cache.put("key1", "v1")
+
+        assert cache.evict_oldest(0) == 0
+        assert cache.evict_oldest(-3) == 0
+        assert len(cache) == 1
+
+    @patch("plookingII.core.simple_cache._NSCACHE_AVAILABLE", False)
+    def test_evict_oldest_updates_memory_and_stats(self):
+        """淘汰后内存记账与淘汰计数同步更新"""
+        cache = SimpleImageCache(max_items=10)
+        cache.put("key1", "v1", size_mb=5.0)
+        cache.put("key2", "v2", size_mb=7.0)
+
+        cache.evict_oldest(1)
+
+        stats = cache.get_stats()
+        assert stats["memory_mb"] == 7.0
+        assert stats["evictions"] == 1
+
+    def test_evict_oldest_nscache_branch(self):
+        """NSCache 分支：同样淘汰 N 项（近似 LRU）"""
+        cache = SimpleImageCache(max_items=10)
+        cache.put("key1", "v1")
+        cache.put("key2", "v2")
+        cache.put("key3", "v3")
+
+        evicted = cache.evict_oldest(2)
+
+        assert evicted == 2
+        assert len(cache) == 1
+        assert cache.get("key3") is not None
+
+    def test_evict_oldest_nscache_hit_updates_order(self):
+        """NSCache 分支：命中更新近似 LRU 顺序，淘汰时保护热条目"""
+        cache = SimpleImageCache(max_items=10)
+        cache.put("key1", "v1")
+        cache.put("key2", "v2")
+        cache.put("key3", "v3")
+        cache.get("key1")  # 命中 → 移至 LRU 末尾（受保护）
+
+        cache.evict_oldest(2)
+
+        assert cache.get("key1") is not None
+        assert cache.get("key2") is None
+        assert cache.get("key3") is None
+
+
 class TestSimpleImageCacheRemove:
     """测试缓存移除"""
 

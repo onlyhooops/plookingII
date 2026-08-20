@@ -11,12 +11,21 @@ import threading
 import time
 from collections import OrderedDict, deque
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any
 
 from ...config.constants import APP_NAME, IMAGE_PROCESSING_CONFIG
 from ...config.manager import get_config, set_config
 from ...core.bounded_executor import BoundedExecutor
 from ...core.image_processing import HybridImageProcessor
+from ...core.memory_watchdog import (
+    LEVEL_AGGRESSIVE,
+    LEVEL_EMERGENCY,
+    LEVEL_MODERATE,
+    LEVEL_NONE,
+    LEVEL_PREVENTIVE,
+    choose_cleanup_level,
+    get_physical_memory_mb,
+    get_process_rss_mb,
+)
 from ...core.simple_cache import (
     AdvancedImageCache,
     BidirectionalCachePool,
@@ -59,9 +68,9 @@ class ImageManager:
         self.slim_mode = get_config("feature.slim_mode", False)
         # 热路径配置缓存：full_res_browse 在每次显示/升级路径读取，
         # 配置启动时加载、运行期不变，构造时快照避免热路径重复 RLock 查询。
-        # 默认关闭（视图级分辨率解码）——主线程全分辨率绘制解码是长会话
-        # 内存增长主因，视图级解码显著降低单图内存占用
-        self._full_res_browse = get_config("feature.full_res_browse", False)
+        # 默认开启（原图质量）：懒代理持有全分辨率源图，不降采样；内存
+        # 控制由 MemoryWatchdog（RSS 阈值触发 + 定期回收）负责
+        self._full_res_browse = get_config("feature.full_res_browse", True)
 
         # 高级图像缓存（max_items 自适应物理内存）
         adaptive_max_items, adaptive_max_memory = self._compute_cache_params()
@@ -1498,71 +1507,10 @@ class ImageManager:
             file_size_mb = self.image_cache.get_file_size_mb(img_path)
             strategy, eff_target = self._select_load_strategy(file_size_mb, prefer_preview, adjusted_target_size)
             if strategy == "fast" and self.image_processor:
-                # fast 路径（小文件全分辨率 NSImage）是主进程解码内存泄漏主源：
-                # 非全分辨率浏览模式下，改用子进程解码显示级图，解码内存隔离
-                # 在子进程（随进程退出彻底释放，见 decode_pool.py 设计说明）
-                if not self._full_res_browse:
-                    return self._load_image_via_subprocess(img_path, adjusted_target_size or eff_target)
                 return self.image_processor.load_image_optimized(img_path, strategy="fast")
             return self.image_cache.load_image_with_strategy(img_path, strategy, eff_target)
         except Exception:
             logger.exception("_load_image_optimized failed for %s", img_path)
-            return None
-
-    def _load_image_via_subprocess(self, img_path: str, target_size) -> Any | None:
-        """通过解码子进程加载显示级图像（内存根治方案）
-
-        主进程触发的 ObjC 图像解码，其解码缓冲挂主线程全局 autorelease
-        pool 且从不被 drain（PyObjC 结构性限制，已验证所有官方释放 API
-        均不可行）。解码子进程方案：解码在独立子进程完成（内存全在子
-        进程），产出显示级临时文件回传，子进程周期重启彻底回收内存。
-
-        子进程不可用（如 py2app 打包环境 spawn 受限）时回退主进程解码，
-        保证图片始终可显示——子进程仅是内存优化手段，不阻塞功能。
-
-        Args:
-            img_path: 源图片路径
-            target_size: 目标尺寸 (w, h)；None 使用视图级默认
-
-        Returns:
-            显示级 NSImage 对象（失败返回 None）
-        """
-        try:
-            from ...core.decode_pool import get_decode_pool
-
-            if target_size is None or target_size[0] <= 0 or target_size[1] <= 0:
-                target_size = self._get_target_size_for_view(scale_factor=1)
-
-            pool = get_decode_pool()
-            tmp_file = pool.decode(img_path, target_size=target_size)
-            if tmp_file:
-                # 主进程加载显示级小图（~10MB，远小于全分辨率 170MB）
-                try:
-                    from AppKit import NSImage
-
-                    image = NSImage.alloc().initWithContentsOfFile_(tmp_file)
-                    if image is not None:
-                        return image
-                finally:
-                    pool.cleanup_file(tmp_file)
-                logger.warning("子进程解码结果无法加载，回退主进程: %s", img_path)
-            else:
-                logger.warning("子进程解码失败，回退主进程: %s", img_path)
-        except Exception:
-            logger.exception("子进程解码异常，回退主进程: %s", img_path)
-
-        # 回退：主进程视图级解码（懒代理 + 显示时按视图尺寸，内存可接受）
-        try:
-            from ..core.loading.helpers import load_with_nsimage, load_with_quartz
-
-            cg = load_with_quartz(img_path, target_size, thumbnail=True)
-            if cg is not None:
-                from AppKit import NSImage
-
-                return NSImage.alloc().initWithCGImage_(cg)
-            return load_with_nsimage(img_path)
-        except Exception:
-            logger.exception("主进程回退解码失败 %s", img_path)
             return None
 
     def _select_load_strategy(self, file_size_mb: float, prefer_preview: bool, target_size):
@@ -1797,15 +1745,21 @@ class ImageManager:
 
         def memory_monitor_worker():
             self._memory_monitor_running = True
+            # 看门狗检查周期（秒）：RSS 阈值触发 + 定期回收
+            interval = get_config("memory.check_interval_sec", 5.0)
             try:
                 while self._memory_monitor_running:
-                    time.sleep(10)
+                    time.sleep(max(1.0, float(interval)))
                     if not self._memory_monitor_running or getattr(self.main_window, "_shutting_down", False):
                         break
                     try:
                         _monitor_once()
                     except Exception:
                         logger.debug("Memory monitor cycle failed", exc_info=True)
+                    try:
+                        self._run_rss_memory_check()
+                    except Exception:
+                        logger.debug("RSS memory check failed", exc_info=True)
             except Exception:
                 pass
             finally:
@@ -1813,6 +1767,71 @@ class ImageManager:
 
         self._memory_monitor_running = True
         threading.Thread(target=memory_monitor_worker, daemon=True).start()
+
+    def _run_rss_memory_check(self):
+        """RSS 阈值触发式内存回收（看门狗核心）
+
+        采样本进程 RSS（psutil → mach task_info → resource 三级回退），
+        按 choose_cleanup_level 判定的等级执行递进清理：
+
+        - preventive: 缓存收缩至 ≤8 项
+        - moderate:   缓存减半
+        - aggressive: 缓存保留 ≤3 项 + 释放预取双缓冲
+        - emergency:  缓存保留 ≤1 项 + 释放 HOT3 非当前项 + 清空小缓存 + gc
+
+        RSS 采样失败时静默跳过本周期（不影响主流程）。
+        不触碰当前显示的图片与显示管线（仅回收可安全丢弃的引用）。
+        """
+        if getattr(self.main_window, "_shutting_down", False):
+            return
+        rss_mb = get_process_rss_mb()
+        if rss_mb is None:
+            return
+        level = choose_cleanup_level(rss_mb, get_physical_memory_mb())
+        if level == LEVEL_NONE:
+            self._last_watchdog_level = LEVEL_NONE
+            return
+        # 等级变化才告警，避免 RSS 持续超标时每周期刷屏
+        if level != getattr(self, "_last_watchdog_level", LEVEL_NONE):
+            logger.warning("内存看门狗触发 [%s]: 进程 RSS=%.0fMB", level, rss_mb)
+        self._last_watchdog_level = level
+
+        if level == LEVEL_PREVENTIVE:
+            self._preventive_memory_cleanup()
+        elif level == LEVEL_MODERATE:
+            self._moderate_memory_cleanup()
+        elif level == LEVEL_AGGRESSIVE:
+            self._aggressive_memory_cleanup()
+            self._release_double_buffer()
+        elif level == LEVEL_EMERGENCY:
+            self._emergency_memory_cleanup()
+            self._release_double_buffer()
+            self._trim_hot3_keep_current()
+            with contextlib.suppress(Exception):
+                self._no_mpf_cache.clear()
+            import gc
+
+            gc.collect()
+
+    def _release_double_buffer(self):
+        """释放"下一张就绪"双缓冲（非当前显示图，可安全回收）"""
+        self._next_ready_image = None
+        self._next_ready_path = None
+
+    def _trim_hot3_keep_current(self):
+        """HOT3 强引用锁：仅保留当前路径，其余邻居引用可被回收"""
+        try:
+            images = self.main_window.images
+            if not images or self.main_window.current_index >= len(images):
+                self._hot3_lock.clear()
+                return
+            current = images[self.main_window.current_index]
+            for p in list(self._hot3_lock):
+                if p != current:
+                    del self._hot3_lock[p]
+        except Exception:
+            with contextlib.suppress(Exception):
+                self._hot3_lock.clear()
 
     def _apply_background_policy(self):
         """应用后台策略"""

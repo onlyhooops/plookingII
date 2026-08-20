@@ -9,6 +9,7 @@
 - 预加载和预取
 """
 
+import time
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -31,6 +32,8 @@ def mock_window():
     window.current_folder = "/test/folder"
     window.subfolders = ["/test/folder"]
     window.current_subfolder_index = 0
+    # MagicMock 自动属性为 truthy，需显式关闭"正在关闭"标志
+    window._shutting_down = False
     return window
 
 
@@ -446,9 +449,7 @@ class TestDimensionsCacheLRU:
     def test_get_cached_dimensions_only_no_io(self, image_manager):
         """缓存命中时仅读缓存，不触发完整查询"""
         image_manager._cache_image_dimensions("/p.jpg", (10, 20))
-        with patch.object(
-            image_manager, "_get_cached_dimensions", wraps=image_manager._get_cached_dimensions
-        ) as full:
+        with patch.object(image_manager, "_get_cached_dimensions", wraps=image_manager._get_cached_dimensions) as full:
             assert image_manager._get_cached_dimensions_only("/p.jpg") == (10, 20)
             full.assert_not_called()
 
@@ -536,9 +537,10 @@ class TestSystemMemoryWarning:
 
     def test_memory_warning_triggers_emergency_cleanup(self, image_manager):
         """系统内存警告应投递到主线程并触发紧急清理"""
-        with patch.object(image_manager, "_post_to_main") as post, patch.object(
-            image_manager, "_emergency_memory_cleanup"
-        ) as cleanup:
+        with (
+            patch.object(image_manager, "_post_to_main") as post,
+            patch.object(image_manager, "_emergency_memory_cleanup") as cleanup,
+        ):
             image_manager._on_system_memory_warning()
 
             post.assert_called_once()
@@ -592,9 +594,7 @@ class TestDecodeExperienceTable:
         """经验表 LRU 上限：超出淘汰最久未更新分档"""
         image_manager._DECODE_EXPERIENCE_MAX_BUCKETS = 2
         buckets = ["0-1MB", "1-5MB", "5-12MB"]
-        with patch.object(
-            image_manager, "_get_file_size_safely", side_effect=[1.0, 2.0, 5.0]
-        ) as mock_size:
+        with patch.object(image_manager, "_get_file_size_safely", side_effect=[1.0, 2.0, 5.0]) as mock_size:
             for b in buckets:
                 image_manager._record_decode_experience(f"/{b}.jpg", 100.0)
             assert len(image_manager._decode_experience) == 2
@@ -604,9 +604,11 @@ class TestDecodeExperienceTable:
 
     def test_maybe_two_stage_uses_experience(self, image_manager):
         """经验表判定慢解码时启用两阶段（P2-1 自适应）"""
-        with patch.object(image_manager, "_get_file_size_safely", return_value=3.0), patch.object(
-            image_manager, "_get_cached_dimensions_only", return_value=None
-        ), patch.object(image_manager, "_load_and_display_progressive") as progressive:
+        with (
+            patch.object(image_manager, "_get_file_size_safely", return_value=3.0),
+            patch.object(image_manager, "_get_cached_dimensions_only", return_value=None),
+            patch.object(image_manager, "_load_and_display_progressive") as progressive,
+        ):
             for _ in range(3):
                 image_manager._record_decode_experience("/a.jpg", 250.0)
             result = image_manager._maybe_two_stage_for_ultra("/a.jpg", (800, 600))
@@ -615,11 +617,114 @@ class TestDecodeExperienceTable:
 
     def test_maybe_two_stage_fast_no_progressive(self, image_manager):
         """经验表判定快解码时不启用两阶段"""
-        with patch.object(image_manager, "_get_file_size_safely", return_value=3.0), patch.object(
-            image_manager, "_get_cached_dimensions_only", return_value=None
-        ), patch.object(image_manager, "_load_and_display_progressive") as progressive:
+        with (
+            patch.object(image_manager, "_get_file_size_safely", return_value=3.0),
+            patch.object(image_manager, "_get_cached_dimensions_only", return_value=None),
+            patch.object(image_manager, "_load_and_display_progressive") as progressive,
+        ):
             for _ in range(3):
                 image_manager._record_decode_experience("/a.jpg", 30.0)
             result = image_manager._maybe_two_stage_for_ultra("/a.jpg", (800, 600))
             assert result is False
             progressive.assert_not_called()
+
+
+class TestRssMemoryWatchdog:
+    """测试 RSS 阈值触发式内存回收（v2.8.0 看门狗）"""
+
+    def test_rss_none_skips(self, image_manager):
+        """RSS 采样失败时静默跳过本周期"""
+        with (
+            patch("plookingII.ui.managers.image_manager.get_process_rss_mb", return_value=None),
+            patch.object(image_manager, "_emergency_memory_cleanup") as cleanup,
+        ):
+            image_manager._run_rss_memory_check()
+            cleanup.assert_not_called()
+
+    def test_rss_none_level_skips(self, image_manager):
+        """RSS 低于预防阈值时不动作"""
+        with (
+            patch("plookingII.ui.managers.image_manager.get_process_rss_mb", return_value=400.0),
+            patch("plookingII.ui.managers.image_manager.get_physical_memory_mb", return_value=16384.0),
+            patch.object(image_manager, "_preventive_memory_cleanup") as cleanup,
+        ):
+            image_manager._run_rss_memory_check()
+            cleanup.assert_not_called()
+
+    def test_preventive_level(self, image_manager):
+        """预防级：缓存收缩"""
+        with (
+            patch("plookingII.ui.managers.image_manager.get_process_rss_mb", return_value=5000.0),
+            patch("plookingII.ui.managers.image_manager.get_physical_memory_mb", return_value=16384.0),
+            patch.object(image_manager, "_preventive_memory_cleanup") as cleanup,
+        ):
+            image_manager._run_rss_memory_check()
+            cleanup.assert_called_once()
+
+    def test_moderate_level(self, image_manager):
+        """适度级：缓存减半"""
+        with (
+            patch("plookingII.ui.managers.image_manager.get_process_rss_mb", return_value=7000.0),
+            patch("plookingII.ui.managers.image_manager.get_physical_memory_mb", return_value=16384.0),
+            patch.object(image_manager, "_moderate_memory_cleanup") as cleanup,
+        ):
+            image_manager._run_rss_memory_check()
+            cleanup.assert_called_once()
+
+    def test_aggressive_level_releases_double_buffer(self, image_manager):
+        """激进级：缓存保留 HOT3 + 释放预取双缓冲"""
+        image_manager._next_ready_image = "img"
+        image_manager._next_ready_path = "/p.jpg"
+        with (
+            patch("plookingII.ui.managers.image_manager.get_process_rss_mb", return_value=9500.0),
+            patch("plookingII.ui.managers.image_manager.get_physical_memory_mb", return_value=16384.0),
+            patch.object(image_manager, "_aggressive_memory_cleanup") as cleanup,
+        ):
+            image_manager._run_rss_memory_check()
+            cleanup.assert_called_once()
+            assert image_manager._next_ready_image is None
+            assert image_manager._next_ready_path is None
+
+    def test_emergency_level_full_cleanup(self, image_manager):
+        """紧急级：缓存保留1项 + HOT3 仅保留当前 + 双缓冲释放 + 小缓存清空"""
+        image_manager._next_ready_image = "img"
+        image_manager._hot3_lock = {"/test/img1.jpg": "a", "/test/img2.jpg": "b", "/test/img3.jpg": "c"}
+        image_manager._no_mpf_cache = {"/x.jpg": True}
+        with (
+            patch("plookingII.ui.managers.image_manager.get_process_rss_mb", return_value=12000.0),
+            patch("plookingII.ui.managers.image_manager.get_physical_memory_mb", return_value=16384.0),
+            patch.object(image_manager, "_emergency_memory_cleanup") as cleanup,
+        ):
+            image_manager._run_rss_memory_check()
+            cleanup.assert_called_once()
+            assert image_manager._next_ready_image is None
+            # 仅保留当前路径（current_index=0 → /test/img1.jpg）
+            assert image_manager._hot3_lock == {"/test/img1.jpg": "a"}
+            assert image_manager._no_mpf_cache == {}
+
+    def test_shutting_down_skips(self, image_manager):
+        """关闭中跳过看门狗"""
+        image_manager.main_window._shutting_down = True
+        with (
+            patch("plookingII.ui.managers.image_manager.get_process_rss_mb", return_value=12000.0),
+            patch("plookingII.ui.managers.image_manager.get_physical_memory_mb", return_value=16384.0),
+            patch.object(image_manager, "_emergency_memory_cleanup") as cleanup,
+        ):
+            image_manager._run_rss_memory_check()
+            cleanup.assert_not_called()
+
+    def test_monitor_worker_calls_rss_check(self, image_manager):
+        """监控循环周期执行 RSS 检查（看门狗挂接监控线程）"""
+        image_manager._memory_monitor_running = False
+        image_manager.main_window._shutting_down = False
+        with (
+            patch("plookingII.ui.managers.image_manager.get_config", return_value=1.0),
+            patch("plookingII.ui.managers.image_manager.time.sleep"),
+            patch.object(image_manager, "_run_rss_memory_check") as rss_check,
+        ):
+            image_manager._start_background_memory_monitor()
+            deadline = time.time() + 2.0
+            while time.time() < deadline and not rss_check.called:
+                time.sleep(0.01)
+            image_manager._memory_monitor_running = False
+            assert rss_check.called

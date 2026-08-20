@@ -165,7 +165,9 @@ class SimpleImageCache:
             self._items = OrderedDict()
 
         # 统计信息（手动追踪，NSCache 不暴露内部计数）
-        self._item_sizes: dict[str, float] = {}
+        # 使用 OrderedDict 记录插入/命中顺序，作为 NSCache 分支的近似 LRU
+        # 顺序（供 evict_oldest 按"最久未用"优先淘汰）
+        self._item_sizes: OrderedDict[str, float] = OrderedDict()
         self._item_count = 0
         self._current_memory_mb = 0.0
         self._hits = 0
@@ -194,6 +196,10 @@ class SimpleImageCache:
                     self._items.move_to_end(key)
             if value is not None:
                 self._hits += 1
+                # 统一维护近似 LRU 顺序：命中即移至末尾，供 evict_oldest
+                # 按"最久未用"优先淘汰（_item_sizes 为 OrderedDict，O(1)）
+                if key in self._item_sizes:
+                    self._item_sizes.move_to_end(key)
                 return value
             self._misses += 1
             return None
@@ -264,25 +270,33 @@ class SimpleImageCache:
             logger.info("Cache CLEAR [%s]: removed %s items, freed %.2fMB", self.name, count, memory)
 
     def evict_oldest(self, count: int = 1) -> int:
-        """公开方法：淘汰缓存项
+        """从 LRU 端淘汰 count 个条目（NSCache 与 OrderedDict 分支通用）
 
-        NSCache 自动管理系统内存压力淘汰，此方法为兼容性保留。
-        仅在 count >= 当前项数时执行强制清空。
+        修复说明 (v2.8.0)：旧实现仅在 count >= 条目总数时才清空，导致
+        ImageManager 的清理函数（evict_oldest(size-1) 等"保留 N 项"调用）
+        在正常规模下永远空转，缓存强引用无法释放。现改为真正淘汰 count 个
+        LRU 端条目；NSCache 分支以 _item_sizes 的插入/命中顺序近似 LRU。
 
         Args:
-            count: 要淘汰的项数
+            count: 要淘汰的条目数（<=0 时无动作）
 
         Returns:
-            实际淘汰的项数
+            实际淘汰的条目数
         """
         with self._lock:
-            if count >= self._item_count and self._item_count > 0:
-                evicted = self._item_count
-                self.clear()
+            evicted = 0
+            for key in list(self._item_sizes.keys())[: max(0, count)]:
+                self._current_memory_mb -= self._item_sizes.pop(key)
+                self._item_count -= 1
+                if self._ns_cache is not None:
+                    self._ns_cache.removeObjectForKey_(key)
+                else:
+                    self._items.pop(key, None)
+                evicted += 1
+            if evicted:
                 self._evictions += evicted
-                return evicted
-            # NSCache 自动管理淘汰，无需手动干预
-            return 0
+                logger.debug("Cache EVICT_OLDEST [%s]: evicted %d items", self.name, evicted)
+            return evicted
 
     def _evict_lru_if_needed(self):
         """OrderedDict 降级实现：超出限制时淘汰最旧项"""

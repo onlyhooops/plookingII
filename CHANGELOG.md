@@ -1,6 +1,29 @@
 # CHANGELOG
 
 
+## v2.8.0 (2026-08-20)
+
+### Features
+
+- 内存看门狗（rss 阈值触发 + 定期回收）——根治长会话内存增长
+  ([`c8986f9`](https://github.com/onlyhooops/plookingII/commit/c8986f98a564c051606d33f520ababd89307ac16))
+
+产品决策：显示管线保持不变（原图/全分辨率直通），内存控制改为 "RSS 阈值触发 + 定期回收"看门狗，替代被否的分片渲染与子进程方案。
+
+真机 v2.6.1/v2.7.x 确认：主进程 ObjC 解码缓冲挂主线程 autorelease pool 且从不被 drain（PyObjC 结构性限制，所有官方释放 API 均已实测
+  崩溃）。因此内存只能靠"及时释放 Python 侧可回收引用"收敛：
+
+1. 新增 core/memory_watchdog.py：进程 RSS 采样（psutil → mach task_info → resource 三级回退）+ 清理等级判定（preventive
+  / moderate / aggressive / emergency，阈值随物理内存自适应，可配置）。 2. ImageManager 监控线程每 5s 检查 RSS，按等级递进回收：缓存收缩/
+  减半/保留HOT3/仅保留当前图 + 释放预取双缓冲 + 清空小缓存 + gc。 3. 修复 SimpleImageCache.evict_oldest 永不生效的缺陷（旧实现仅在
+  count>=条目数时清空，导致既有清理函数全部空转）；统一 NSCache/ OrderedDict 分支的近似 LRU 顺序维护。 4. 加载侧少制造不可回收对象：小文件路径（<10MB）由
+  NSImage 改为 懒解码 CGImage 代理（CF Create 语义、包装器释放即回收），显示 质量不变（仍为全分辨率原图、无降采样）；Quartz 失败回退 NSImage。 5.
+  移除已废弃的 _load_image_via_subprocess（死代码 + 错误相对导入， 子进程方案不再使用）。 6. TILED_RENDERING_ENABLED
+  恢复默认关闭，显示管线保持原有直通路径。
+
+验证：全量测试 1666 passed（新增 watchdog 28 例、evict_oldest 9 例、 _load_small 代理 3 例、RSS 升级 8 例）。
+
+
 ## v2.7.1 (2026-08-19)
 
 ### Bug Fixes

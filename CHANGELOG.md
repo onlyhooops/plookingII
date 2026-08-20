@@ -1,6 +1,22 @@
 # CHANGELOG
 
 
+## v2.9.1 (2026-08-20)
+
+### Bug Fixes
+
+- 渐进加载阶段2策略名 quartz→optimized（消除告警刷屏）
+  ([`25a9984`](https://github.com/onlyhooops/plookingII/commit/25a99842c2acd86bb40a83a93436f4c28204d150))
+
+实机日志（21:36:55-21:37:07）发现 load_image_with_strategy(img_path, "quartz", ...) 传入未注册策略名，每次触发 get_loader
+  告警并回退 auto。 "optimized" 即懒解码代理路径，语义一致且不再告警。
+
+### Chores
+
+- 同步版本断言至 v2.9.0
+  ([`8b5fb14`](https://github.com/onlyhooops/plookingII/commit/8b5fb1465c8bfe0398397755a7936b688f8d66db))
+
+
 ## v2.9.0 (2026-08-20)
 
 ### Chores

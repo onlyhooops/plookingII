@@ -1,6 +1,34 @@
 # CHANGELOG
 
 
+## v2.9.0 (2026-08-20)
+
+### Chores
+
+- 同步版本断言至 v2.8.1
+  ([`b7bbd98`](https://github.com/onlyhooops/plookingII/commit/b7bbd981dae3505cb21f51f2ffefaa74b7f8954c))
+
+### Features
+
+- 解码走临时线程（线程退出即回收 autorelease pool）——补全内存架构
+  ([`5d00d5c`](https://github.com/onlyhooops/plookingII/commit/5d00d5c6c9e26e96cdf9dd80730d6f2d28716bcf))
+
+实机验证结论（见 docs/reports/display-pipeline-research-2026-08-20.md）： PyObjC 只为每个线程懒创建 autorelease pool
+  且仅在线程退出时 drain。 主线程与 ThreadPoolExecutor 常驻池线程永不退出 → 池内解码缓冲永不 释放（实测：主线程/常驻池 NSImage +10~11MB/张；新线程
+  30 张 +0.1MB）。
+
+v2.8.1 已消除主泄漏源（图层后备/懒缩略图/大文件懒代理），本版本把 剩余的 ObjC 对象创建路径（NSImage 回退、内嵌预览 NSData）全部迁入
+  "新建线程、任务结束即退出"的执行模型：
+
+1. 新增 core/decode_threads.py： - run_decode()：临时线程同步执行（线程退出 → pool drain，返回的 ObjC 对象由 Python
+  包装器持有，随后可回收） - run_decode_async()：异步 fire-and-forget，线程退出自动回收 2. strategies.py：NSImage
+  回退路径（load_with_nsimage / cgimage_to_nsimage / load_with_memory_map）一律经 run_decode 执行 ——
+  无论调用方在主线程还是常驻池线程均不再泄漏。 3. image_manager：extract_embedded_preview（内部创建 NSData）经 run_decode 执行，消除常驻
+  prefetch 池的 MPF 提取泄漏。
+
+主路径不变：懒解码 CGImage 代理（CF 语义、任意线程安全）仍为首选。 新增 8 例 decode_threads 测试；全量测试 1677 passed。
+
+
 ## v2.8.1 (2026-08-20)
 
 ### Bug Fixes

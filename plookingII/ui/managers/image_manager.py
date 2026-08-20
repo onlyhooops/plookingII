@@ -1309,9 +1309,11 @@ class ImageManager:
                     self._post_to_main(lambda: self._display_image_immediate(preview_image, is_preview=True))
 
                     # 阶段2：懒解码代理CGImage（毫秒级创建）→替换预览
+                    # 注意：策略名用 "optimized"（懒代理路径）；"quartz" 非注册
+                    # 策略名，会触发 get_loader 告警并回退 auto
                     if gen != self._load_generation:
                         return
-                    full_image = self.image_cache.load_image_with_strategy(image_path, "quartz", local_target_size)
+                    full_image = self.image_cache.load_image_with_strategy(image_path, "optimized", local_target_size)
                     if full_image is None:
                         full_image = self._load_image_optimized(image_path, target_size=local_target_size)
                     if full_image and gen == self._load_generation:

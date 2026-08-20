@@ -1015,9 +1015,13 @@ class ImageManager:
                 try:
                     if gen != self._load_generation:
                         return
+                    from plookingII.core.decode_threads import run_decode
                     from plookingII.core.loading.helpers import extract_embedded_preview
 
-                    preview = extract_embedded_preview(image_path)
+                    # v2.9.0：extract_embedded_preview 内部创建 NSData（autoreleased），
+                    # 若在常驻池线程执行将挂池永不释放（实机 +10MB/张 级泄漏）。
+                    # 放入临时线程：线程退出 → autorelease pool 被 drain。
+                    preview = run_decode(extract_embedded_preview, image_path)
                     if preview is None:
                         self._remember_no_mpf(image_path)
                         return

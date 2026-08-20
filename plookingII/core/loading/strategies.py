@@ -12,6 +12,7 @@ import os
 import time
 from typing import Any
 
+from ..decode_threads import run_decode
 from .config import LoadingConfig, get_default_config
 from .helpers import (
     cgimage_to_nsimage,
@@ -156,7 +157,9 @@ class OptimizedStrategy:
             if cgimage is not None:
                 return cgimage
             logger.warning("Quartz 懒代理加载失败，回退 NSImage: %s", file_path)
-        return load_with_nsimage(file_path)
+        # v2.9.0：NSImage 在临时线程中创建（线程退出 → autorelease pool 被
+        # drain，实测零泄漏）；返回对象由包装器持有，线程退出后依然有效
+        return run_decode(load_with_nsimage, file_path)
 
     def _load_medium(self, file_path: str, target_size: tuple[int, int] | None) -> Any | None:
         """中等文件：Quartz优化加载"""
@@ -171,10 +174,10 @@ class OptimizedStrategy:
             logger.warning("Quartz加载失败，回退到NSImage: %s", file_path)
             return self._load_small(file_path, target_size)
 
-        # 如果需要NSImage，转换CGImage
+        # 如果需要NSImage，转换CGImage（v2.9.0：临时线程执行，避免池泄漏）
         if self.config.prefer_cgimage_pipeline:
             return cgimage
-        return cgimage_to_nsimage(cgimage)
+        return run_decode(cgimage_to_nsimage, cgimage)
 
     def _load_large(self, file_path: str, target_size: tuple[int, int] | None) -> Any | None:
         """大文件：优先懒解码 CGImage 代理，回退内存映射 NSImage
@@ -194,7 +197,8 @@ class OptimizedStrategy:
             # 内存映射不可用，回退到Quartz
             return self._load_medium(file_path, target_size)
 
-        image = load_with_memory_map(file_path, target_size)
+        # v2.9.0：内存映射产出 NSImage（autoreleased），临时线程中执行
+        image = run_decode(load_with_memory_map, file_path, target_size)
         if image is None:
             # 加载失败，回退到Quartz
             logger.warning("内存映射加载失败，回退到Quartz: %s", file_path)
@@ -281,13 +285,13 @@ class PreviewStrategy:
                     duration = time.time() - start_time
                     self.stats.record_success("quartz", duration)
 
-                    # 转换为NSImage
+                    # 转换为NSImage（v2.9.0：临时线程执行，避免池泄漏）
                     if self.config.prefer_cgimage_pipeline:
                         return cgimage
-                    return cgimage_to_nsimage(cgimage)
+                    return run_decode(cgimage_to_nsimage, cgimage)
 
-            # Quartz不可用或失败，使用NSImage
-            image = load_with_nsimage(file_path)
+            # Quartz不可用或失败，使用NSImage（v2.9.0：临时线程创建）
+            image = run_decode(load_with_nsimage, file_path)
             if image is not None:
                 # 缩放到目标尺寸
                 image = self._resize_nsimage(image, target_size)
